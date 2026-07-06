@@ -2,11 +2,15 @@
 
 import { AuthError } from 'next-auth'
 import { signIn, signOut } from '@/auth'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export async function login(
   _prev: { error?: string },
   formData: FormData,
 ): Promise<{ error?: string }> {
+  if (!rateLimit(`login:${await clientIp()}`, 10, 60_000)) {
+    return { error: 'Terlalu banyak percobaan login. Tunggu sebentar.' }
+  }
   try {
     await signIn('credentials', {
       email: formData.get('email'),

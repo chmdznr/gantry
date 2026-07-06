@@ -4,6 +4,24 @@ import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { login } from '@/actions/login'
+import { resendVerification } from '@/actions/signup'
+
+function ResendForm() {
+  const [state, action, pending] = useActionState(resendVerification, {})
+  return (
+    <details className="mt-4 text-sm">
+      <summary className="cursor-pointer text-gray-600">Tidak menerima email verifikasi?</summary>
+      <form action={action} className="mt-2 flex gap-2">
+        <input name="email" type="email" required placeholder="Email" className="flex-1 rounded border px-3 py-2" />
+        <button disabled={pending} className="rounded border px-3 py-2 disabled:opacity-50">
+          {pending ? 'Mengirim…' : 'Kirim ulang'}
+        </button>
+      </form>
+      {state.error && <p className="mt-1 text-red-600">{state.error}</p>}
+      {state.ok && <p className="mt-1 text-green-700">{state.ok}</p>}
+    </details>
+  )
+}
 
 function LoginForm() {
   const [state, action, pending] = useActionState(login, {})
@@ -23,6 +41,7 @@ function LoginForm() {
         </button>
       </form>
       <p className="mt-4 text-sm">Belum punya akun? <a href="/auth/signup" className="text-blue-600 underline">Daftar</a></p>
+      <ResendForm />
     </main>
   )
 }

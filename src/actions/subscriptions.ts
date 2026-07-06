@@ -27,8 +27,21 @@ export async function requestSubscription(_prev: ActionState, formData: FormData
   const plan = await db.query.plans.findFirst({ where: eq(plans.id, planId) })
   if (!plan) return { error: 'Plan tidak valid.' }
 
+  // re-subscribe: baris rejected/revoked dipakai ulang, bukan insert baru (unique app+product)
+  const prior = await db.query.subscriptions.findFirst({
+    where: and(eq(subscriptions.applicationId, appId), eq(subscriptions.apiProductId, productId)),
+  })
+  if (prior && (prior.status === 'requested' || prior.status === 'approved')) {
+    return { error: 'Application ini sudah punya subscription aktif/menunggu untuk API tersebut.' }
+  }
   try {
-    await db.insert(subscriptions).values({ applicationId: appId, apiProductId: productId, planId })
+    if (prior) {
+      await db.update(subscriptions).set({
+        planId, status: 'requested', requestedAt: new Date(), decidedBy: null, decidedAt: null,
+      }).where(eq(subscriptions.id, prior.id))
+    } else {
+      await db.insert(subscriptions).values({ applicationId: appId, apiProductId: productId, planId })
+    }
   } catch (err) {
     const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
     if (code === '23505') return { error: 'Application ini sudah punya subscription untuk API tersebut.' }

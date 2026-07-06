@@ -1,15 +1,32 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { captchaDigest, verifyCaptchaAnswer } from '../captcha'
+import { issueCaptchaToken, verifyCaptchaToken } from '../captcha'
 
 beforeAll(() => { process.env.AUTH_SECRET = 'test-secret' })
 
-describe('captcha', () => {
-  it('verifies correct answer case-insensitively', () => {
-    const digest = captchaDigest('AbC3d')
-    expect(verifyCaptchaAnswer('abc3D', digest)).toBe(true)
+describe('captcha token', () => {
+  it('verifikasi jawaban benar, case-insensitive', () => {
+    const token = issueCaptchaToken('AbC3d')
+    expect(verifyCaptchaToken('abc3D', token)).toBe(true)
   })
-  it('rejects wrong answer', () => {
-    const digest = captchaDigest('AbC3d')
-    expect(verifyCaptchaAnswer('xxxxx', digest)).toBe(false)
+
+  it('menolak jawaban salah', () => {
+    const token = issueCaptchaToken('AbC3d')
+    expect(verifyCaptchaToken('xxxxx', token)).toBe(false)
+  })
+
+  it('menolak replay (single-use nonce)', () => {
+    const token = issueCaptchaToken('AbC3d')
+    expect(verifyCaptchaToken('abc3d', token)).toBe(true)
+    expect(verifyCaptchaToken('abc3d', token)).toBe(false)
+  })
+
+  it('menolak token kedaluwarsa', () => {
+    const token = issueCaptchaToken('AbC3d', Date.now() - 11 * 60_000)
+    expect(verifyCaptchaToken('abc3d', token)).toBe(false)
+  })
+
+  it('menolak token cacat', () => {
+    expect(verifyCaptchaToken('abc3d', 'bukan.token')).toBe(false)
+    expect(verifyCaptchaToken('abc3d', '')).toBe(false)
   })
 })

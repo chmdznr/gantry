@@ -44,7 +44,8 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
       }))
     }
   }
-  const subscribableApps = myApps.filter((a) => !mySubs.some((s) => s.applicationId === a.id))
+  const subscribableApps = myApps.filter((a) =>
+    !mySubs.some((s) => s.applicationId === a.id && (s.status === 'requested' || s.status === 'approved')))
   const spec = product.openapiSpec as OpenApiSpec | null
 
   return (
