@@ -9,6 +9,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div>
       <nav className="flex items-center gap-4 border-b bg-gray-900 px-6 py-3 text-white">
         <span className="font-bold">DevPortal Admin</span>
+        <Link href="/admin/apis" className="text-sm hover:underline">APIs</Link>
+        <Link href="/admin/plans" className="text-sm hover:underline">Plans</Link>
+        <Link href="/admin/subscriptions" className="text-sm hover:underline">Subscriptions</Link>
         <Link href="/admin/users" className="text-sm hover:underline">Users</Link>
         <Link href="/" className="ml-auto text-sm hover:underline">← Portal</Link>
       </nav>

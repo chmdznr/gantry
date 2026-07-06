@@ -1,0 +1,115 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { and, eq, inArray } from 'drizzle-orm'
+import { auth } from '@/auth'
+import { db } from '@/db'
+import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
+import SubscribeForm from '@/components/SubscribeForm'
+
+function fmtLimits(rl: Record<string, number>) {
+  return Object.entries(rl).map(([k, v]) => `${v}/${k}`).join(', ') || '-'
+}
+
+type OpenApiSpec = { paths?: Record<string, Record<string, { summary?: string }>> }
+
+export default async function ApiDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const product = await db.query.apiProducts.findFirst({
+    where: and(eq(apiProducts.slug, slug), eq(apiProducts.status, 'published')),
+  })
+  if (!product) notFound()
+
+  const session = await auth()
+  const allPlans = await db.select().from(plans).orderBy(plans.name)
+
+  let myApps: { id: string; name: string }[] = []
+  let mySubs: { applicationId: string; appName: string; status: string; planName: string }[] = []
+  if (session?.user) {
+    myApps = await db.select({ id: applications.id, name: applications.name })
+      .from(applications).where(eq(applications.ownerUserId, session.user.id))
+    if (myApps.length > 0) {
+      mySubs = (await db.select({
+        applicationId: subscriptions.applicationId,
+        status: subscriptions.status,
+        planId: subscriptions.planId,
+      }).from(subscriptions).where(and(
+        eq(subscriptions.apiProductId, product.id),
+        inArray(subscriptions.applicationId, myApps.map((a) => a.id)),
+      ))).map((s) => ({
+        applicationId: s.applicationId,
+        appName: myApps.find((a) => a.id === s.applicationId)?.name ?? '?',
+        status: s.status,
+        planName: allPlans.find((p) => p.id === s.planId)?.name ?? '?',
+      }))
+    }
+  }
+  const subscribableApps = myApps.filter((a) => !mySubs.some((s) => s.applicationId === a.id))
+  const spec = product.openapiSpec as OpenApiSpec | null
+
+  return (
+    <main className="mx-auto max-w-4xl p-8">
+      <Link href="/" className="text-sm text-blue-600 underline">← Katalog</Link>
+      <div className="mt-2 flex items-baseline gap-3">
+        <h1 className="text-2xl font-bold">{product.name}</h1>
+        <span className="text-sm text-gray-500">v{product.version}</span>
+      </div>
+      <p className="mt-2 whitespace-pre-line text-gray-700">{product.description}</p>
+      <p className="mt-2 text-sm text-gray-500">Base URL: <code className="rounded bg-gray-100 px-1">{product.proxyBaseUrl}</code></p>
+
+      <h2 className="mt-8 mb-2 text-lg font-semibold">Plans</h2>
+      <table className="w-full max-w-lg border-collapse text-sm">
+        <thead><tr className="border-b text-left"><th className="py-1">Plan</th><th>Rate limit</th><th>Deskripsi</th></tr></thead>
+        <tbody>
+          {allPlans.map((p) => (
+            <tr key={p.id} className="border-b">
+              <td className="py-1 font-medium">{p.name}</td>
+              <td>{fmtLimits(p.rateLimit as Record<string, number>)}</td>
+              <td className="text-gray-600">{p.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2 className="mt-8 mb-2 text-lg font-semibold">Subscribe</h2>
+      {!session?.user ? (
+        <p className="text-sm text-gray-600"><Link href="/auth/login" className="text-blue-600 underline">Masuk</Link> untuk subscribe ke API ini.</p>
+      ) : (
+        <>
+          {mySubs.length > 0 && (
+            <ul className="mb-3 space-y-1 text-sm">
+              {mySubs.map((s) => (
+                <li key={s.applicationId}>
+                  <b>{s.appName}</b> — plan {s.planName} — <span className="rounded bg-gray-100 px-2 py-0.5">{s.status}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <SubscribeForm
+            productId={product.id}
+            apps={subscribableApps}
+            plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
+          />
+        </>
+      )}
+
+      {spec?.paths && (
+        <>
+          <h2 className="mt-8 mb-2 text-lg font-semibold">Endpoints</h2>
+          <table className="w-full border-collapse text-sm">
+            <tbody>
+              {Object.entries(spec.paths).flatMap(([path, methods]) =>
+                Object.entries(methods).map(([method, op]) => (
+                  <tr key={method + path} className="border-b">
+                    <td className="py-1 pr-3 font-mono text-xs font-bold uppercase text-blue-700">{method}</td>
+                    <td className="pr-3 font-mono text-xs">{path}</td>
+                    <td className="text-gray-600">{op?.summary ?? ''}</td>
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
+    </main>
+  )
+}

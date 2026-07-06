@@ -2,16 +2,10 @@
 
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { auth } from '@/auth'
 import { db } from '@/db'
 import { users } from '@/db/schema'
 import { audit } from '@/lib/audit'
-
-async function requireAdmin() {
-  const session = await auth()
-  if (session?.user?.role !== 'portal-admin') throw new Error('Forbidden')
-  return session
-}
+import { requireAdmin } from '@/lib/require-admin'
 
 async function setStatus(id: string, status: 'active' | 'suspended', action: string) {
   const session = await requireAdmin()

@@ -106,11 +106,18 @@ export async function createConsumerRateLimit(
 }
 
 // Cari plugin rate-limiting milik portal untuk consumer ini (untuk revoke).
-export async function findConsumerRateLimits(consumerId: string): Promise<{ id: string }[]> {
-  const { data } = await kong<{ data: { id: string; name: string; tags?: string[] }[] }>(
-    `/consumers/${consumerId}/plugins?size=1000`,
-  )
+export async function findConsumerRateLimits(
+  consumerId: string,
+): Promise<{ id: string; service?: { id: string } | null }[]> {
+  const { data } = await kong<{
+    data: { id: string; name: string; tags?: string[]; service?: { id: string } | null }[]
+  }>(`/consumers/${consumerId}/plugins?size=1000`)
   return data.filter((p) => p.name === 'rate-limiting' && p.tags?.includes(TAG))
+}
+
+export async function getServiceId(name: string): Promise<string> {
+  const svc = await kong<{ id: string }>(`/services/${name}`)
+  return svc.id
 }
 
 export async function deletePlugin(id: string): Promise<void> {
