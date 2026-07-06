@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts, appCredentials, applications, plans, subscriptions } from '@/db/schema'
 import { deleteApp, revokeCredential } from '@/actions/apps'
+import AppStats from '@/components/AppStats'
 import CredentialCreator from '@/components/CredentialCreator'
 
 const statusBadge: Record<string, string> = {
@@ -70,6 +71,9 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           </tbody>
         </table>
       )}
+
+      <h2 className="mt-8 mb-2 text-lg font-semibold">Pemakaian API</h2>
+      <AppStats consumerUsername={app.kongConsumerUsername} />
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">Subscriptions</h2>
       {subs.length === 0 ? (
