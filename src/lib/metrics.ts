@@ -11,6 +11,8 @@ export async function consumerRequestStats(
 ): Promise<ConsumerStat[] | null> {
   const base = process.env.PROMETHEUS_URL
   if (!base) return null // analytics tidak dikonfigurasi
+  // guard injeksi PromQL: username selalu `app-<uuid>` buatan portal, tapi jangan percaya pemanggil
+  if (!/^[A-Za-z0-9_-]+$/.test(consumerUsername) || !/^[0-9]+[smhd]$/.test(range)) return null
   const q = `sum by (service, code) (increase(kong_http_requests_total{consumer="${consumerUsername}"}[${range}]))`
   try {
     const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
