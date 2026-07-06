@@ -90,6 +90,18 @@ export const appCredentials = pgTable('app_credentials', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+export const apiProductSpecVersions = pgTable('api_product_spec_versions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  apiProductId: uuid('api_product_id').notNull().references(() => apiProducts.id, { onDelete: 'cascade' }),
+  version: text('version').notNull(),
+  spec: jsonb('spec'),
+  // { added: string[], removed: string[], changed: string[] }
+  changelog: jsonb('changelog'),
+  note: text('note'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
   actorUserId: uuid('actor_user_id').references(() => users.id),

@@ -4,12 +4,24 @@ import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/db'
-import { apiProducts } from '@/db/schema'
+import { apiProducts, apiProductSpecVersions } from '@/db/schema'
 import { requireAdmin } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
 import { isUniqueViolation } from '@/lib/db-errors'
+import { diffEndpoints, isEmptyDiff } from '@/lib/openapi-diff'
 
 export type ActionState = { error?: string }
+
+// Simpan snapshot spec + changelog endpoint saat spec diganti.
+async function snapshotSpec(
+  productId: string, version: string, oldSpec: unknown, newSpec: unknown,
+  note: string, actorId: string,
+) {
+  const changelog = diffEndpoints(oldSpec, newSpec)
+  await db.insert(apiProductSpecVersions).values({
+    apiProductId: productId, version, spec: newSpec, changelog, note: note || null, createdBy: actorId,
+  })
+}
 
 function parseForm(formData: FormData) {
   const slug = String(formData.get('slug') ?? '').trim().toLowerCase()
@@ -59,6 +71,9 @@ export async function createProduct(_prev: ActionState, formData: FormData): Pro
     if (isUniqueViolation(err)) return { error: 'Slug sudah dipakai.' }
     throw err
   }
+  if (spec !== null) {
+    await snapshotSpec(id, parsed.values.version, null, spec, String(formData.get('changeNote') ?? ''), session.user.id)
+  }
   await audit(session.user.id, 'product.create', 'api_product', id, { slug: parsed.values.slug })
   revalidatePath('/admin/apis')
   redirect(`/admin/apis/${id}`)
@@ -72,6 +87,11 @@ export async function updateProduct(_prev: ActionState, formData: FormData): Pro
   const { spec, error } = await parseSpec(formData)
   if (error) return { error }
 
+  // ambil spec lama untuk changelog sebelum menimpa
+  const prior = await db.query.apiProducts.findFirst({
+    where: eq(apiProducts.id, id), columns: { openapiSpec: true },
+  })
+
   try {
     await db.update(apiProducts).set({
       ...parsed.values,
@@ -81,6 +101,14 @@ export async function updateProduct(_prev: ActionState, formData: FormData): Pro
   } catch (err) {
     if (isUniqueViolation(err)) return { error: 'Slug sudah dipakai.' }
     throw err
+  }
+  // snapshot hanya kalau spec baru diunggah dan benar-benar mengubah endpoint
+  if (spec !== null) {
+    const diff = diffEndpoints(prior?.openapiSpec ?? null, spec)
+    if (!isEmptyDiff(diff)) {
+      await snapshotSpec(id, parsed.values.version, prior?.openapiSpec ?? null, spec,
+        String(formData.get('changeNote') ?? ''), session.user.id)
+    }
   }
   await audit(session.user.id, 'product.update', 'api_product', id, { slug: parsed.values.slug })
   revalidatePath('/admin/apis')

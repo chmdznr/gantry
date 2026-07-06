@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import { checkServiceSetup, listServiceRoutes, type ServiceCheck } from '@/lib/kong'
 import ProductForm from '@/components/ProductForm'
+import SpecHistory from '@/components/SpecHistory'
 
 function Check({ ok, label }: { ok: boolean; label: string }) {
   return <span className={ok ? 'text-green-700' : 'text-red-600'}>{ok ? '✓' : '✗'} {label}</span>
@@ -65,6 +66,9 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
         tags: product.tags,
         hasSpec: !!product.openapiSpec,
       }} />
+
+      <h2 className="mt-8 mb-2 font-semibold">Riwayat versi spec</h2>
+      <SpecHistory productId={product.id} />
     </main>
   )
 }

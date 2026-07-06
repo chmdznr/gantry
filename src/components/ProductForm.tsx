@@ -70,6 +70,10 @@ export default function ProductForm({ initial }: { initial?: ProductFormValues }
           <input name="spec" type="file" accept="application/json,.json" className="w-full text-sm" />
         </label>
       </div>
+      <label className="block text-sm">
+        <span className="mb-1 block text-gray-600">Catatan perubahan (opsional, dicatat saat spec baru diunggah)</span>
+        <input name="changeNote" className="w-full rounded border px-3 py-2" placeholder="mis. Tambah endpoint /orders, hapus /legacy" />
+      </label>
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button disabled={pending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
         {pending ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat API Product'}

@@ -7,6 +7,7 @@ import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
 import Markdown from 'react-markdown'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
+import SpecHistory from '@/components/SpecHistory'
 
 function fmtLimits(rl: Record<string, number>) {
   return Object.entries(rl).map(([k, v]) => `${v}/${k}`).join(', ') || '-'
@@ -137,6 +138,9 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
           </table>
         </>
       )}
+
+      <h2 className="mt-8 mb-2 text-lg font-semibold">Riwayat versi</h2>
+      <SpecHistory productId={product.id} />
     </main>
   )
 }
