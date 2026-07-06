@@ -11,9 +11,14 @@ export async function login(
   if (!rateLimit(`login:${await clientIp()}`, 10, 60_000)) {
     return { error: 'Terlalu banyak percobaan login. Tunggu sebentar.' }
   }
-  // callbackUrl: hanya path internal, tolak URL absolut (open redirect)
+  // callbackUrl: hanya path internal — tolak //, backslash, dan apa pun yang
+  // ter-resolve keluar origin (open redirect)
   const next = String(formData.get('next') ?? '')
-  const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/'
+  let redirectTo = '/'
+  if (/^\/(?!\/)[^\\]*$/.test(next)) {
+    const base = 'http://portal.internal'
+    if (new URL(next, base).origin === base) redirectTo = next
+  }
   try {
     await signIn('credentials', {
       email: formData.get('email'),
