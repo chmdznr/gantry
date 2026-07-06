@@ -28,6 +28,12 @@ export const emailVerificationTokens = pgTable('email_verification_tokens', {
   expiresAt: timestamp('expires_at').notNull(),
 })
 
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  token: text('token').primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at').notNull(),
+})
+
 export const apiProducts = pgTable('api_products', {
   id: uuid('id').primaryKey().defaultRandom(),
   slug: text('slug').notNull().unique(),

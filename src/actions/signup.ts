@@ -11,6 +11,7 @@ import { verifyCaptchaToken } from '@/lib/captcha'
 import { generateToken, tokenExpiry } from '@/lib/tokens'
 import { sendVerificationEmail } from '@/lib/mailer'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { isUniqueViolation } from '@/lib/db-errors'
 
 const SignupSchema = z.object({
   name: z.string().min(2).max(100),
@@ -65,9 +66,7 @@ export async function signup(
       await sendVerificationEmail(email, `${process.env.PORTAL_BASE_URL}/auth/verify?token=${token}`)
     })
   } catch (err) {
-    // drizzle membungkus error postgres-js: SQLSTATE ada di err.cause.code
-    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
-    if (code === '23505') {
+    if (isUniqueViolation(err)) {
       return { error: 'Email sudah terdaftar.' }
     }
     console.error('[signup] failed:', err)

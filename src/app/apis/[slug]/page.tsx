@@ -4,6 +4,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
+import Markdown from 'react-markdown'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 
@@ -55,7 +56,9 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         <h1 className="text-2xl font-bold">{product.name}</h1>
         <span className="text-sm text-gray-500">v{product.version}</span>
       </div>
-      <p className="mt-2 whitespace-pre-line text-gray-700">{product.description}</p>
+      <div className="prose prose-sm mt-2 max-w-none text-gray-700">
+        <Markdown>{product.description}</Markdown>
+      </div>
       <p className="mt-2 text-sm text-gray-500">Base URL: <code className="rounded bg-gray-100 px-1">{product.proxyBaseUrl}</code></p>
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">Plans</h2>

@@ -9,8 +9,10 @@ import { requireAdmin } from '@/lib/require-admin'
 
 async function setStatus(id: string, status: 'active' | 'suspended', action: string) {
   const session = await requireAdmin()
-  await db.update(users).set({ status }).where(eq(users.id, id))
-  await audit(session.user.id, action, 'user', id)
+  const updated = await db.update(users).set({ status }).where(eq(users.id, id))
+    .returning({ id: users.id })
+  // audit hanya kalau update benar-benar terjadi (id salah/race -> no-op)
+  if (updated.length > 0) await audit(session.user.id, action, 'user', id, { newStatus: status })
   revalidatePath('/admin/users')
 }
 

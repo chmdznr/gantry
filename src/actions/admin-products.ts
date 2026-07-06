@@ -7,6 +7,7 @@ import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import { requireAdmin } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
+import { isUniqueViolation } from '@/lib/db-errors'
 
 export type ActionState = { error?: string }
 
@@ -55,8 +56,7 @@ export async function createProduct(_prev: ActionState, formData: FormData): Pro
     }).returning({ id: apiProducts.id })
     id = row.id
   } catch (err) {
-    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
-    if (code === '23505') return { error: 'Slug sudah dipakai.' }
+    if (isUniqueViolation(err)) return { error: 'Slug sudah dipakai.' }
     throw err
   }
   await audit(session.user.id, 'product.create', 'api_product', id, { slug: parsed.values.slug })
@@ -79,8 +79,7 @@ export async function updateProduct(_prev: ActionState, formData: FormData): Pro
       updatedAt: new Date(),
     }).where(eq(apiProducts.id, id))
   } catch (err) {
-    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
-    if (code === '23505') return { error: 'Slug sudah dipakai.' }
+    if (isUniqueViolation(err)) return { error: 'Slug sudah dipakai.' }
     throw err
   }
   await audit(session.user.id, 'product.update', 'api_product', id, { slug: parsed.values.slug })

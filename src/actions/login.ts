@@ -11,11 +11,14 @@ export async function login(
   if (!rateLimit(`login:${await clientIp()}`, 10, 60_000)) {
     return { error: 'Terlalu banyak percobaan login. Tunggu sebentar.' }
   }
+  // callbackUrl: hanya path internal, tolak URL absolut (open redirect)
+  const next = String(formData.get('next') ?? '')
+  const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/'
   try {
     await signIn('credentials', {
       email: formData.get('email'),
       password: formData.get('password'),
-      redirectTo: '/',
+      redirectTo,
     })
     return {}
   } catch (err) {

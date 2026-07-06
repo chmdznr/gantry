@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { applications, apiProducts, plans, subscriptions } from '@/db/schema'
 import { requireAdmin, requireUser } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
+import { isUniqueViolation } from '@/lib/db-errors'
 import * as kong from '@/lib/kong'
 
 export type ActionState = { error?: string; ok?: string }
@@ -43,8 +44,7 @@ export async function requestSubscription(_prev: ActionState, formData: FormData
       await db.insert(subscriptions).values({ applicationId: appId, apiProductId: productId, planId })
     }
   } catch (err) {
-    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
-    if (code === '23505') return { error: 'Application ini sudah punya subscription untuk API tersebut.' }
+    if (isUniqueViolation(err)) return { error: 'Application ini sudah punya subscription untuk API tersebut.' }
     throw err
   }
   await audit(session.user.id, 'subscription.request', 'subscription', undefined, { appId, productId, planId })

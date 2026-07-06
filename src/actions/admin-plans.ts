@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { plans, subscriptions } from '@/db/schema'
 import { requireAdmin } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
+import { isUniqueViolation } from '@/lib/db-errors'
 
 export type ActionState = { error?: string }
 
@@ -25,8 +26,7 @@ export async function createPlan(_prev: ActionState, formData: FormData): Promis
     const [row] = await db.insert(plans).values({ name, description, rateLimit: limits }).returning({ id: plans.id })
     await audit(session.user.id, 'plan.create', 'plan', row.id, { name, limits })
   } catch (err) {
-    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
-    if (code === '23505') return { error: 'Nama plan sudah dipakai.' }
+    if (isUniqueViolation(err)) return { error: 'Nama plan sudah dipakai.' }
     throw err
   }
   revalidatePath('/admin/plans')
