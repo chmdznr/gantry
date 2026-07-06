@@ -61,7 +61,9 @@ export async function signup(
       await sendVerificationEmail(email, `${process.env.PORTAL_BASE_URL}/auth/verify?token=${token}`)
     })
   } catch (err) {
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code === '23505') {
+    // drizzle membungkus error postgres-js: SQLSTATE ada di err.cause.code
+    const code = (err as { code?: string })?.code ?? ((err as Error)?.cause as { code?: string })?.code
+    if (code === '23505') {
       return { error: 'Email sudah terdaftar.' }
     }
     console.error('[signup] failed:', err)
