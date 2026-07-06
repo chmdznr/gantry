@@ -44,18 +44,29 @@ export async function signup(
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) })
   if (existing) return { error: 'Email sudah terdaftar.' }
 
-  const [user] = await db.insert(users).values({
-    name, email,
-    organization: organization || null,
-    passwordHash: await hashPassword(password),
-    type: detectType(email),
-  }).returning()
+  try {
+    await db.transaction(async (tx) => {
+      const [user] = await tx.insert(users).values({
+        name, email,
+        organization: organization || null,
+        passwordHash: await hashPassword(password),
+        type: detectType(email),
+      }).returning()
 
-  const token = generateToken()
-  await db.insert(emailVerificationTokens).values({
-    token, userId: user.id, expiresAt: tokenExpiry(24),
-  })
-  await sendVerificationEmail(email, `${process.env.PORTAL_BASE_URL}/auth/verify?token=${token}`)
+      const token = generateToken()
+      await tx.insert(emailVerificationTokens).values({
+        token, userId: user.id, expiresAt: tokenExpiry(24),
+      })
+      // kirim di dalam transaksi: gagal kirim -> rollback, email bisa dipakai daftar ulang
+      await sendVerificationEmail(email, `${process.env.PORTAL_BASE_URL}/auth/verify?token=${token}`)
+    })
+  } catch (err) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code === '23505') {
+      return { error: 'Email sudah terdaftar.' }
+    }
+    console.error('[signup] failed:', err)
+    return { error: 'Terjadi kesalahan saat mendaftar. Coba lagi nanti.' }
+  }
 
   redirect('/auth/signup/success')
 }
