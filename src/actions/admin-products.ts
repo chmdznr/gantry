@@ -89,11 +89,37 @@ export async function updateProduct(_prev: ActionState, formData: FormData): Pro
   return {}
 }
 
-export async function setProductStatus(id: string, status: 'draft' | 'published' | 'deprecated'): Promise<void> {
+export async function setProductStatus(id: string, status: 'draft' | 'published' | 'deprecated' | 'retired'): Promise<void> {
   const session = await requireAdmin()
   await db.update(apiProducts).set({ status, updatedAt: new Date() }).where(eq(apiProducts.id, id))
   await audit(session.user.id, `product.${status}`, 'api_product', id)
   revalidatePath('/admin/apis')
   revalidatePath(`/admin/apis/${id}`)
   revalidatePath('/')
+}
+
+// Import service Kong yang belum ada di katalog menjadi draft product.
+export async function importProducts(formData: FormData): Promise<void> {
+  const session = await requireAdmin()
+  const names = formData.getAll('services').map(String).filter(Boolean)
+  const proxyBase = process.env.KONG_PROXY_URL ?? 'http://localhost:8104'
+  for (const svc of names) {
+    const slug = svc.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64)
+    if (slug.length < 2) continue
+    try {
+      const [row] = await db.insert(apiProducts).values({
+        slug,
+        name: svc,
+        description: `API ${svc} (diimpor dari Kong — lengkapi deskripsi).`,
+        aclGroup: slug,
+        kongServiceNames: [svc],
+        proxyBaseUrl: proxyBase,
+      }).returning({ id: apiProducts.id })
+      await audit(session.user.id, 'product.import', 'api_product', row.id, { service: svc })
+    } catch (err) {
+      if (!isUniqueViolation(err)) throw err // slug bentrok -> lewati diam-diam
+    }
+  }
+  revalidatePath('/admin/apis')
+  redirect('/admin/apis')
 }

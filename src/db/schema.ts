@@ -5,7 +5,7 @@ import {
 export const userType = pgEnum('user_type', ['internal', 'external'])
 export const userStatus = pgEnum('user_status', ['pending', 'active', 'suspended'])
 export const userRole = pgEnum('user_role', ['developer', 'portal-admin'])
-export const productStatus = pgEnum('product_status', ['draft', 'published', 'deprecated'])
+export const productStatus = pgEnum('product_status', ['draft', 'published', 'deprecated', 'retired'])
 export const subscriptionStatus = pgEnum('subscription_status', ['requested', 'approved', 'rejected', 'revoked'])
 export const credentialType = pgEnum('credential_type', ['key-auth', 'jwt'])
 
@@ -66,6 +66,7 @@ export const applications = pgTable('applications', {
   description: text('description').notNull().default(''),
   kongConsumerUsername: text('kong_consumer_username').notNull().unique(),
   kongConsumerId: text('kong_consumer_id'),
+  blockedAt: timestamp('blocked_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 

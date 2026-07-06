@@ -43,6 +43,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
       <Link href="/apps" className="text-sm text-blue-600 underline">← Aplikasi Saya</Link>
       <div className="mt-2 mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{app.name}</h1>
+        {app.blockedAt && <span className="rounded bg-red-600 px-2 py-0.5 text-xs text-white">DIBLOKIR — hubungi admin</span>}
         <form action={deleteApp.bind(null, app.id)}>
           <button className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-600">Hapus App</button>
         </form>

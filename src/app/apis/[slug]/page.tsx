@@ -17,9 +17,10 @@ type OpenApiSpec = { paths?: Record<string, Record<string, { summary?: string }>
 export default async function ApiDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const product = await db.query.apiProducts.findFirst({
-    where: and(eq(apiProducts.slug, slug), eq(apiProducts.status, 'published')),
+    where: and(eq(apiProducts.slug, slug), inArray(apiProducts.status, ['published', 'deprecated'])),
   })
   if (!product) notFound()
+  const subscribable = product.status === 'published'
 
   const session = await auth()
   const allPlans = await db.select().from(plans).orderBy(plans.name)
@@ -55,6 +56,9 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
       <div className="mt-2 flex items-baseline gap-3">
         <h1 className="text-2xl font-bold">{product.name}</h1>
         <span className="text-sm text-gray-500">v{product.version}</span>
+        {product.status === 'deprecated' && (
+          <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">deprecated — tidak menerima subscription baru</span>
+        )}
       </div>
       <div className="prose prose-sm mt-2 max-w-none text-gray-700">
         <Markdown>{product.description}</Markdown>
@@ -89,11 +93,15 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
               ))}
             </ul>
           )}
-          <SubscribeForm
-            productId={product.id}
-            apps={subscribableApps}
-            plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
-          />
+          {subscribable ? (
+            <SubscribeForm
+              productId={product.id}
+              apps={subscribableApps}
+              plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
+            />
+          ) : (
+            <p className="text-sm text-yellow-700">API ini deprecated — subscription baru ditutup.</p>
+          )}
         </>
       )}
 

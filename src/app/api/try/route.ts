@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (!path.startsWith('/')) return Response.json({ error: 'Path harus diawali /.' }, { status: 400 })
 
   const product = await db.query.apiProducts.findFirst({
-    where: and(eq(apiProducts.id, String(payload.productId ?? '')), eq(apiProducts.status, 'published')),
+    where: and(eq(apiProducts.id, String(payload.productId ?? '')), inArray(apiProducts.status, ['published', 'deprecated'])),
   })
   if (!product) return Response.json({ error: 'API tidak ditemukan.' }, { status: 404 })
 

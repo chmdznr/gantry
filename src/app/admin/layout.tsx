@@ -12,7 +12,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/apis" className="text-sm hover:underline">APIs</Link>
         <Link href="/admin/plans" className="text-sm hover:underline">Plans</Link>
         <Link href="/admin/subscriptions" className="text-sm hover:underline">Subscriptions</Link>
+        <Link href="/admin/consumers" className="text-sm hover:underline">Consumers</Link>
         <Link href="/admin/users" className="text-sm hover:underline">Users</Link>
+        <Link href="/admin/setup" className="text-sm hover:underline">Setup</Link>
         <Link href="/" className="ml-auto text-sm hover:underline">← Portal</Link>
       </nav>
       <div className="p-6">{children}</div>

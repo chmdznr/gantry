@@ -152,3 +152,85 @@ export async function checkServiceSetup(serviceName: string, aclGroup: string): 
   check.aclAllowsGroup = !!acl?.config.allow?.includes(aclGroup)
   return check
 }
+
+// ---------- info & discovery (untuk setup check + import katalog) ----------
+
+export type KongInfo = { version: string; availablePlugins: string[] }
+
+export async function getKongInfo(): Promise<KongInfo> {
+  const root = await kong<{ version: string; plugins?: { available_on_server?: Record<string, unknown> | string[] } }>('/')
+  const avail = root.plugins?.available_on_server
+  return {
+    version: root.version,
+    availablePlugins: Array.isArray(avail) ? avail : Object.keys(avail ?? {}),
+  }
+}
+
+export async function listServices(): Promise<{ name: string; host: string }[]> {
+  const { data } = await kong<{ data: { name: string; host: string }[] }>('/services?size=1000')
+  return data
+}
+
+export async function listServiceRoutes(serviceName: string): Promise<{ name: string | null; paths: string[] }[]> {
+  const { data } = await kong<{ data: { name: string | null; paths: string[] | null }[] }>(
+    `/services/${serviceName}/routes?size=1000`,
+  )
+  return data.map((r) => ({ name: r.name, paths: r.paths ?? [] }))
+}
+
+// ---------- blacklist consumer (request-termination per consumer) ----------
+
+export async function blockConsumer(consumerId: string): Promise<{ id: string }> {
+  return kong('/plugins', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'request-termination',
+      consumer: { id: consumerId },
+      config: { status_code: 403, message: 'Consumer diblokir oleh portal.' },
+      tags: [TAG],
+    }),
+  })
+}
+
+export async function unblockConsumer(consumerId: string): Promise<void> {
+  const { data } = await kong<{ data: { id: string; name: string; tags?: string[] }[] }>(
+    `/consumers/${consumerId}/plugins?size=1000`,
+  )
+  for (const p of data.filter((p) => p.name === 'request-termination' && p.tags?.includes(TAG))) {
+    await kong(`/plugins/${p.id}`, { method: 'DELETE' })
+  }
+}
+
+// ---------- prasyarat prometheus (analytics per-consumer) ----------
+
+export type PrometheusPluginState = { exists: boolean; enabled: boolean; perConsumer: boolean; id?: string }
+
+export async function getGlobalPrometheusPlugin(): Promise<PrometheusPluginState> {
+  const { data } = await kong<{
+    data: { id: string; name: string; enabled: boolean; consumer: unknown; service: unknown; route: unknown; config: { per_consumer?: boolean } }[]
+  }>('/plugins?size=1000')
+  const p = data.find((p) => p.name === 'prometheus' && !p.consumer && !p.service && !p.route)
+  if (!p) return { exists: false, enabled: false, perConsumer: false }
+  return { exists: true, enabled: p.enabled, perConsumer: !!p.config.per_consumer, id: p.id }
+}
+
+export async function ensurePrometheusPerConsumer(): Promise<void> {
+  const cur = await getGlobalPrometheusPlugin()
+  if (!cur.exists) {
+    await kong('/plugins', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'prometheus',
+        config: { status_code_metrics: true, per_consumer: true },
+        tags: [TAG],
+      }),
+    })
+    return
+  }
+  if (!cur.perConsumer || !cur.enabled) {
+    await kong(`/plugins/${cur.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled: true, config: { per_consumer: true, status_code_metrics: true } }),
+    })
+  }
+}

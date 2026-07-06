@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
-import { checkServiceSetup, type ServiceCheck } from '@/lib/kong'
+import { checkServiceSetup, listServiceRoutes, type ServiceCheck } from '@/lib/kong'
 import ProductForm from '@/components/ProductForm'
 
 function Check({ ok, label }: { ok: boolean; label: string }) {
@@ -14,10 +14,13 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
   const product = await db.query.apiProducts.findFirst({ where: eq(apiProducts.id, id) })
   if (!product) notFound()
 
-  let checks: ServiceCheck[] = []
+  let checks: (ServiceCheck & { routes: string[] })[] = []
   let kongDown = false
   try {
-    checks = await Promise.all(product.kongServiceNames.map((s) => checkServiceSetup(s, product.aclGroup)))
+    checks = await Promise.all(product.kongServiceNames.map(async (s) => ({
+      ...(await checkServiceSetup(s, product.aclGroup)),
+      routes: (await listServiceRoutes(s).catch(() => [])).flatMap((r) => r.paths),
+    })))
   } catch {
     kongDown = true
   }
@@ -43,6 +46,7 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
                 <Check ok={c.hasAuth} label="key-auth/jwt" />
                 <Check ok={c.hasAcl} label="plugin acl" />
                 <Check ok={c.aclAllowsGroup} label={`allow ${product.aclGroup}`} />
+                <span className="font-mono text-xs text-gray-500">routes: {c.routes.join(', ') || '(tidak ada)'}</span>
               </li>
             ))}
           </ul>

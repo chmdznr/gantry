@@ -7,7 +7,8 @@ import { setProductStatus } from '@/actions/admin-products'
 const badge: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
   published: 'bg-green-100 text-green-800',
-  deprecated: 'bg-red-100 text-red-800',
+  deprecated: 'bg-yellow-100 text-yellow-800',
+  retired: 'bg-red-100 text-red-800',
 }
 
 export default async function AdminApisPage() {
@@ -16,7 +17,10 @@ export default async function AdminApisPage() {
     <main>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">API Products</h1>
-        <Link href="/admin/apis/new" className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white">+ API Baru</Link>
+        <div className="flex gap-2">
+          <Link href="/admin/apis/import" className="rounded border px-3 py-1.5 text-sm">Import dari Kong</Link>
+          <Link href="/admin/apis/new" className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white">+ API Baru</Link>
+        </div>
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
@@ -40,7 +44,12 @@ export default async function AdminApisPage() {
                 )}
                 {p.status === 'published' && (
                   <form action={setProductStatus.bind(null, p.id, 'deprecated')} className="inline">
-                    <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Deprecate</button>
+                    <button className="rounded bg-yellow-600 px-2 py-1 text-xs text-white">Deprecate</button>
+                  </form>
+                )}
+                {p.status === 'deprecated' && (
+                  <form action={setProductStatus.bind(null, p.id, 'retired')} className="inline">
+                    <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Retire</button>
                   </form>
                 )}
               </td>
