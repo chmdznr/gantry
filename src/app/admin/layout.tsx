@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/subscriptions" className="text-sm hover:underline">Subscriptions</Link>
         <Link href="/admin/consumers" className="text-sm hover:underline">Consumers</Link>
         <Link href="/admin/users" className="text-sm hover:underline">Users</Link>
+        <Link href="/admin/audit" className="text-sm hover:underline">Audit</Link>
         <Link href="/admin/setup" className="text-sm hover:underline">Setup</Link>
         <Link href="/" className="ml-auto text-sm hover:underline">← Portal</Link>
       </nav>
