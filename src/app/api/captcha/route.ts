@@ -9,6 +9,7 @@ export async function GET() {
   const jar = await cookies()
   jar.set('captcha_digest', captchaDigest(captcha.text), {
     httpOnly: true, sameSite: 'lax', path: '/', maxAge: 600,
+    secure: process.env.NODE_ENV === 'production',
   })
   return new Response(captcha.data, { headers: { 'Content-Type': 'image/svg+xml' } })
 }

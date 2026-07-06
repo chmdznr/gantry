@@ -3,7 +3,8 @@ import Credentials from 'next-auth/providers/credentials'
 import { authorizeUser } from '@/lib/authorize'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: 'jwt' },
+  // ponytail: 8 jam — suspend/demote baru efektif saat sesi habis; cek status per-aksi menyusul di Plan 2
+  session: { strategy: 'jwt', maxAge: 8 * 60 * 60 },
   pages: { signIn: '/auth/login' },
   providers: [
     Credentials({
