@@ -23,6 +23,8 @@
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
+:root { color-scheme: light; }
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);
@@ -38,7 +40,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-transparent px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50;
 }
 @utility badge {
   @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
@@ -55,6 +57,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   .btn-accent { @apply btn bg-amber text-ink hover:bg-amber-deep hover:text-paper; }
   .btn-outline { @apply btn border border-line bg-surface hover:border-ink-soft; }
   .btn-danger { @apply btn border border-stop/30 bg-surface text-stop hover:bg-stop-soft; }
+  .btn-ghost { @apply btn border-paper/25 text-paper hover:bg-paper/10; }
   .btn-sm { @apply px-2.5 py-1 text-xs; }
 
   /* form */

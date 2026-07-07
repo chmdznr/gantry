@@ -20,20 +20,20 @@ export default async function SiteHeader() {
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <BrandMark />
         <nav className="flex items-center gap-2 text-sm">
-          <Link href="/#katalog" className="btn btn-sm text-paper/80 hover:bg-paper/10 hover:text-paper">Katalog</Link>
+          <Link href="/#katalog" className="btn-ghost btn-sm border-transparent text-paper/80 hover:text-paper">Katalog</Link>
           {session?.user ? (
             <>
               <Link href="/apps" className="btn-accent btn-sm">Aplikasi Saya</Link>
               {session.user.role === 'portal-admin' && (
-                <Link href="/admin/apis" className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Admin</Link>
+                <Link href="/admin/apis" className="btn-ghost btn-sm">Admin</Link>
               )}
               <form action={logout}>
-                <button className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Keluar</button>
+                <button className="btn-ghost btn-sm">Keluar</button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/auth/login" className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Masuk</Link>
+              <Link href="/auth/login" className="btn-ghost btn-sm">Masuk</Link>
               <Link href="/auth/signup" className="btn-accent btn-sm">Daftar</Link>
             </>
           )}

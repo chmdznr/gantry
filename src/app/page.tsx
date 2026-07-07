@@ -35,7 +35,7 @@ export default async function Home() {
           {!session?.user && (
             <div className="mt-8 flex gap-3">
               <Link href="/auth/signup" className="btn-accent">Mulai sekarang</Link>
-              <Link href="#katalog" className="btn border border-paper/25 text-paper hover:bg-paper/10">Lihat katalog</Link>
+              <Link href="#katalog" className="btn-ghost">Lihat katalog</Link>
             </div>
           )}
         </div>
