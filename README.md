@@ -1,12 +1,14 @@
-# kong-kai-devportal
+# Gantry (kong-kai-devportal)
 
-Developer Portal untuk **Kong Gateway 3.9** — padanan WSO2 Developer Portal / Red Hat 3scale
-Developer Portal. Aplikasi **standalone**, terpisah total dari kong-kai-be/fe (yang berperan
-sebagai Publisher Portal).
+**Gantry** — developer portal untuk **Kong Gateway 3.9**; padanan WSO2 Developer Portal /
+Red Hat 3scale Developer Portal. Aplikasi **standalone**, terpisah total dari kong-kai-be/fe
+(yang berperan sebagai Publisher Portal). Direncanakan dirilis open-source; branding generik &
+configurable (`NEXT_PUBLIC_PORTAL_NAME` / `NEXT_PUBLIC_PORTAL_TAGLINE`), bahasa utama English
+dengan i18n (EN/ID) via next-intl.
 
 - **Spec desain**: `../docs/superpowers/specs/2026-07-06-kong-devportal-design.md`
 - **Progress ledger** (riwayat eksekusi per-fase): `.superpowers/sdd/progress.md`
-- **Stack**: Next.js 16 (App Router, TypeScript, Tailwind) · Drizzle ORM · PostgreSQL · Auth.js v5
+- **Stack**: Next.js 16 (App Router, TypeScript, Tailwind 4) · Drizzle ORM · PostgreSQL · Auth.js v5 · next-intl
 
 ---
 
@@ -74,6 +76,8 @@ memverifikasi koneksi + prasyarat dan punya tombol **auto-fix** untuk plugin pro
 | `KONG_PROXY_URL` | – | default proxyBaseUrl saat import katalog (dev `http://localhost:8104`) |
 | `SMTP_HOST/PORT/USER/PASS/FROM` | – | email; kalau kosong → console fallback (dev). Auth opsional (relay internal tanpa auth didukung) |
 | `ADMIN_EMAIL/ADMIN_PASSWORD` | – | dipakai `npm run seed:admin` |
+| `REDIS_URL` | – | rate-limit & captcha nonce multi-replica (dev: Dragonfly `redis://:redispassword123@localhost:6479`); kosong = in-memory |
+| `NEXT_PUBLIC_PORTAL_NAME/TAGLINE` | – | branding (default "Gantry" / "Developer portal for Kong Gateway") |
 
 ---
 
@@ -99,13 +103,17 @@ Docker: `Dockerfile` (multi-stage, standalone, jalankan `scripts/migrate.mjs` sa
 forgot/reset password; resend verifikasi; role `developer`/`portal-admin`; rate-limit endpoint
 auth; suspend user efektif seketika (cek status DB per-aksi, bukan hanya JWT).
 
-**Katalog (admin)** — CRUD API product; upload/ganti OpenAPI spec; **import dari Kong**
+**Katalog (admin)** — CRUD API product; upload/ganti spec **OpenAPI JSON atau Postman
+Collection v2** (Postman dikonversi otomatis ke OpenAPI — folder→tag, path var, contoh body &
+responses); **import dari Kong**
 (`/admin/apis/import`, service yang belum di katalog → draft); siklus status
 **draft → published → deprecated → retired** (deprecated tampil + tutup subscription baru,
 retired hilang dari katalog); route ditampilkan read-only per service.
 
-**Katalog (developer)** — landing page + katalog kartu (`/`); detail API `/apis/[slug]`
-(dokumentasi markdown, daftar endpoint dari spec, plans, subscribe, **Try-It console**, riwayat versi).
+**Katalog (developer)** — landing page + katalog kartu (`/`); detail API `/apis/[slug]`:
+dokumentasi markdown, **API Reference ala Swagger UI** (accordion per endpoint dengan parameter,
+contoh request/response dari schema — `$ref` di-resolve, grup per tag), plans, subscribe,
+**Try-It console** (endpoint picker custom), riwayat versi.
 
 **Application & credential** — buat app (= consumer), generate API Key/JWT (tampil sekali),
 revoke; halaman `/apps` & `/apps/[id]`.
@@ -125,7 +133,20 @@ bukan open relay); developer menempel API key-nya sendiri.
 **Setup/sanity** — `/admin/setup`: cek Kong reachable+versi, plugin tersedia, prometheus
 per_consumer (auto-fix), status Prometheus/SMTP/proxy.
 
-**Audit log** — `/admin/audit`: semua aksi teraudit, filter + paginasi.
+**Audit log** — `/admin/audit`: semua aksi teraudit; filter proper (aksi/entity/aktor dari
+nilai distinct, rentang tanggal, cari payload), paginasi, URL shareable.
+
+**Filter list admin** — semua halaman daftar admin (APIs/Plans/Subscriptions/Consumers/Users)
+punya `FilterBar` seragam berbasis query-param.
+
+**UI/desain** — design system "switchyard" (token + komponen di `globals.css`: `btn-*`, `card`,
+`table-base`, `badge-*`, `input`, `section-title`), shell `SiteHeader`/`SiteFooter` di semua
+halaman, `NavLink` dengan indikator halaman aktif, tabel gaya kartu.
+
+**i18n** — next-intl **mode cookie** (URL tidak berubah), default **English**, terjemahan
+Indonesia penuh untuk permukaan publik/developer + pesan action + email; `LocaleSwitcher`
+EN/ID di header. Tambah bahasa: buat `messages/<kode>.json` + daftarkan di `LOCALES`
+(`src/i18n/request.ts`). UI admin saat ini English (lihat roadmap).
 
 **Spec versioning** — tiap upload spec baru → snapshot berversi + **diff endpoint otomatis**
 (added/removed/changed) + deteksi **breaking** (endpoint dihapus); riwayat di halaman API & admin.
@@ -136,11 +157,14 @@ per_consumer (auto-fix), status Prometheus/SMTP/proxy.
 src/lib/kong.ts          semua panggilan Kong Admin API (satu-satunya)
 src/lib/metrics.ts       PromQL analytics
 src/lib/openapi-diff.ts  diff endpoint antar spec (unit-tested)
+src/lib/postman.ts       konversi Postman Collection v2 -> OpenAPI (unit-tested)
+src/lib/redis.ts         klien Redis opsional (rate-limit/nonce)
+src/i18n/request.ts      konfigurasi next-intl (cookie locale); messages/{en,id}.json
 src/lib/require-admin.ts requireUser/requireAdmin (cek status+role dari DB)
 src/lib/{captcha,rate-limit,tokens,password,mailer,audit,db-errors}.ts
 src/actions/*.ts         server actions (admin-products/plans/consumers/setup/users, apps, subscriptions, signup, login, password-reset)
 src/app/                 halaman (admin/*, apis/*, apps/*, auth/*, api/try, api/captcha)
-src/db/schema.ts         9 tabel; migrasi di drizzle/0000..0003
+src/db/schema.ts         10 tabel; migrasi di drizzle/0000..0003
 ```
 
 ---
@@ -177,9 +201,14 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
 - **Email-enumeration** di signup (pesan "Email sudah terdaftar"): user **terima risiko** untuk
   portal tertutup ber-approval. Netralkan pesan bila portal jadi lebih terbuka.
 
+### Backlog tambahan
+- **i18n halaman admin**: UI admin masih English hardcode; infrastruktur next-intl sudah ada —
+  tinggal ekstraksi string ke `messages/*.json` (ikuti pola halaman publik).
+- **Open-source housekeeping**: rename repo → `gantry`, LICENSE (MIT/Apache-2.0), README bahasa
+  Inggris, CONTRIBUTING, screenshot.
+
 ### Ide fitur lanjutan (belum di-scope)
 - Notifikasi email saat subscription di-approve/reject.
-- Render OpenAPI penuh (Scalar/Swagger UI) menggantikan tabel endpoint sederhana.
 - Multi-gateway dalam satu portal (kini 1 deployment = 1 Kong via `KONG_ADMIN_URL`).
 - Portal membuat/menghapus **route** Kong (perubahan boundary — saat ini route read-only).
 
@@ -189,6 +218,12 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
 
 - **Next.js 16**: konvensi middleware = `src/proxy.ts` (bukan `middleware.ts`); `svg-captcha`
   didaftarkan di `serverExternalPackages`. Baca `AGENTS.md` — versi ini beda dari training data.
+- **Cache Turbopack basi**: kalau edit `globals.css`/`next.config.ts` tidak terlihat efeknya
+  bahkan setelah restart dev server → `rm -rf .next` lalu start ulang.
+- **Popup `<select>` native** dirender OS (posisi/tema di luar kendali halaman) — untuk dropdown
+  yang butuh styling, pakai pola `EndpointPicker` (custom listbox) di `TryIt.tsx`.
+- **String UI**: jangan hardcode — pakai next-intl (`useTranslations`/`getTranslations`) dan
+  tambahkan key ke `messages/en.json` + `messages/id.json`.
 - **Error drizzle**: deteksi unique-violation via `isUniqueViolation()` (SQLSTATE bisa di
   `err.code` atau `err.cause.code`), jangan cek `err.code` langsung.
 - **Boundary Kong**: jangan tambah kode yang membuat/ubah service/route di `lib/kong.ts` tanpa
