@@ -57,11 +57,11 @@ export default async function AdminConsumersPage() {
               </div>
               {appCreds.length > 0 && (
                 <table className="table-base mt-3">
-                  <thead><tr className="border-b text-left text-xs text-muted"><th className="py-1">Credential</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
+                  <thead><tr className="border-b text-left text-xs text-muted"><th>Credential</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
                   <tbody>
                     {appCreds.map((c) => (
-                      <tr key={c.id} className="border-b">
-                        <td className="py-1">{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
+                      <tr key={c.id}>
+                        <td>{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
                         <td className="font-mono">…{c.hint}</td>
                         <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                         <td className="text-right">

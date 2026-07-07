@@ -32,20 +32,20 @@ export default async function AdminSubscriptionsPage() {
       <h1 className="mb-4 text-xl font-bold">Subscriptions</h1>
       <table className="table-base">
         <thead>
-          <tr className="border-b text-left">
-            <th className="py-2">Application</th><th>Pemilik</th><th>API</th><th>Plan</th><th>Diajukan</th><th>Status</th><th>Aksi</th>
+          <tr>
+            <th>Application</th><th>Pemilik</th><th>API</th><th>Plan</th><th>Diajukan</th><th>Status</th><th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((s) => (
-            <tr key={s.id} className="border-b">
-              <td className="py-2">{s.appName}</td>
+            <tr key={s.id}>
+              <td>{s.appName}</td>
               <td>{s.ownerEmail}</td>
               <td>{s.productName}</td>
               <td>{s.planName}</td>
               <td>{s.requestedAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
               <td><span className={`${badge[s.status]}`}>{s.status}</span></td>
-              <td className="space-x-2 py-1">
+              <td className="space-x-2">
                 {s.status === 'requested' && (
                   <>
                     <form action={approveSubscription.bind(null, s.id)} className="inline">

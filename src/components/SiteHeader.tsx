@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { auth } from '@/auth'
 import { logout } from '@/actions/login'
 import { BRAND } from '@/lib/brand'
+import NavLink from '@/components/NavLink'
 
 export function BrandMark() {
   return (
@@ -23,9 +24,9 @@ export default async function SiteHeader() {
           <Link href="/#katalog" className="btn-ghost btn-sm border-transparent text-paper/80 hover:text-paper">Katalog</Link>
           {session?.user ? (
             <>
-              <Link href="/apps" className="btn-accent btn-sm">Aplikasi Saya</Link>
+              <NavLink href="/apps" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-ink">Aplikasi Saya</NavLink>
               {session.user.role === 'portal-admin' && (
-                <Link href="/admin/apis" className="btn-ghost btn-sm">Admin</Link>
+                <NavLink href="/admin" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-ink">Admin</NavLink>
               )}
               <form action={logout}>
                 <button className="btn-ghost btn-sm">Keluar</button>

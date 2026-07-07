@@ -25,19 +25,19 @@ export default async function AdminApisPage() {
       </div>
       <table className="table-base">
         <thead>
-          <tr className="border-b text-left">
-            <th className="py-2">Nama</th><th>Slug</th><th>Kong services</th><th>Spec</th><th>Status</th><th>Aksi</th>
+          <tr>
+            <th>Nama</th><th>Slug</th><th>Kong services</th><th>Spec</th><th>Status</th><th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((p) => (
-            <tr key={p.id} className="border-b">
-              <td className="py-2"><Link href={`/admin/apis/${p.id}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{p.name}</Link></td>
+            <tr key={p.id}>
+              <td><Link href={`/admin/apis/${p.id}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{p.name}</Link></td>
               <td className="font-mono text-xs">{p.slug}</td>
               <td className="font-mono text-xs">{p.kongServiceNames.join(', ')}</td>
               <td>{p.openapiSpec ? '✓' : '—'}</td>
               <td><span className={`${badge[p.status]}`}>{p.status}</span></td>
-              <td className="space-x-2 py-1">
+              <td className="space-x-2">
                 {p.status !== 'published' && (
                   <form action={setProductStatus.bind(null, p.id, 'published')} className="inline">
                     <PendingButton className="btn-primary btn-sm">Publish</PendingButton>

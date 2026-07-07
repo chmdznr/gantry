@@ -48,14 +48,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       </form>
       <table className="table-base">
         <thead>
-          <tr className="border-b text-left">
-            <th className="py-2">Waktu</th><th>Aktor</th><th>Aksi</th><th>Entity</th><th>Detail</th>
+          <tr>
+            <th>Waktu</th><th>Aktor</th><th>Aksi</th><th>Entity</th><th>Detail</th>
           </tr>
         </thead>
         <tbody>
           {items.map((r) => (
-            <tr key={r.id} className="border-b align-top">
-              <td className="py-2 whitespace-nowrap font-mono text-xs">{r.createdAt.toISOString().slice(0, 19).replace('T', ' ')}</td>
+            <tr key={r.id} className="align-top">
+              <td className="whitespace-nowrap font-mono text-xs">{r.createdAt.toISOString().slice(0, 19).replace('T', ' ')}</td>
               <td className="whitespace-nowrap">{r.actorName ?? <span className="text-muted">sistem</span>}</td>
               <td className={`font-mono text-xs font-semibold ${actionColor(r.action)}`}>{r.action}</td>
               <td className="font-mono text-xs text-muted">{r.entityType}{r.entityId ? `:${r.entityId.slice(0, 8)}` : ''}</td>

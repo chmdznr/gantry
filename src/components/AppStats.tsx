@@ -17,10 +17,10 @@ export default async function AppStats({ consumerUsername }: { consumerUsername:
     <div>
       <p className="mb-2 text-sm text-muted">Total {total} request (24 jam terakhir)</p>
       <table className="w-full max-w-xl border-collapse text-sm">
-        <thead><tr className="border-b text-left"><th className="py-1">Kong service</th><th>Status</th><th className="w-1/2">Jumlah</th></tr></thead>
+        <thead><tr><th>Kong service</th><th>Status</th><th className="w-1/2">Jumlah</th></tr></thead>
         <tbody>
           {stats.map((s) => (
-            <tr key={s.service + s.code} className="border-b">
+            <tr key={s.service + s.code}>
               <td className="py-1 font-mono text-xs">{s.service}</td>
               <td className="font-mono text-xs">{s.code}</td>
               <td>

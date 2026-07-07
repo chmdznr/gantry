@@ -66,9 +66,13 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 
   /* kartu & tabel */
   .card-hover { @apply card transition hover:-translate-y-0.5 hover:border-amber hover:shadow-[0_6px_20px_-8px_rgb(16_49_43_/_0.25)]; }
-  .table-base { @apply w-full border-collapse text-sm; }
-  .table-base thead th { @apply border-b border-line py-2 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-muted; }
-  .table-base tbody td { @apply border-b border-line py-2.5 pr-3 align-top; }
+  .table-base { @apply w-full text-sm bg-surface rounded-xl border border-line shadow-[0_1px_2px_rgb(16_49_43_/_0.05),0_2px_8px_-2px_rgb(16_49_43_/_0.07)]; border-collapse: separate; border-spacing: 0; }
+  .table-base thead th { @apply border-b border-line bg-ink/[0.04] px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted; }
+  .table-base thead th:first-child { border-top-left-radius: 0.75rem; }
+  .table-base thead th:last-child { border-top-right-radius: 0.75rem; }
+  .table-base tbody td { @apply border-b border-line px-4 py-3 align-middle; }
+  .table-base tbody tr:last-child td { border-bottom: 0; }
+  .table-base tbody tr:hover td { background: rgb(16 49 43 / 0.02); }
 
   /* badge status */
   .badge-go { @apply badge bg-go-soft text-go; }

@@ -55,11 +55,11 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
       <CredentialCreator appId={app.id} />
       {creds.length > 0 && (
         <table className="table-base mt-3">
-          <thead><tr className="border-b text-left"><th className="py-1">Tipe</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
+          <thead><tr><th>Tipe</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
           <tbody>
             {creds.map((c) => (
-              <tr key={c.id} className="border-b">
-                <td className="py-1">{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
+              <tr key={c.id}>
+                <td>{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
                 <td className="font-mono">…{c.hint}</td>
                 <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                 <td className="text-right">
@@ -81,11 +81,11 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         <p className="text-sm text-muted">Belum ada. Subscribe lewat halaman <Link href="/" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">katalog</Link>.</p>
       ) : (
         <table className="table-base">
-          <thead><tr className="border-b text-left"><th className="py-1">API</th><th>Plan</th><th>Status</th></tr></thead>
+          <thead><tr><th>API</th><th>Plan</th><th>Status</th></tr></thead>
           <tbody>
             {subs.map((s) => (
-              <tr key={s.id} className="border-b">
-                <td className="py-1"><Link href={`/apis/${s.productSlug}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{s.productName}</Link></td>
+              <tr key={s.id}>
+                <td><Link href={`/apis/${s.productSlug}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{s.productName}</Link></td>
                 <td>{s.planName}</td>
                 <td><span className={`${statusBadge[s.status] ?? 'bg-gray-100'}`}>{s.status}</span></td>
               </tr>

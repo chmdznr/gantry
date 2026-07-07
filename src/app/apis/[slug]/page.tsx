@@ -76,11 +76,11 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
       <h2 className="section-title">Plans</h2>
       <table className="table-base max-w-lg">
-        <thead><tr className="border-b text-left"><th className="py-1">Plan</th><th>Rate limit</th><th>Deskripsi</th></tr></thead>
+        <thead><tr><th>Plan</th><th>Rate limit</th><th>Deskripsi</th></tr></thead>
         <tbody>
           {allPlans.map((p) => (
-            <tr key={p.id} className="border-b">
-              <td className="py-1 font-medium">{p.name}</td>
+            <tr key={p.id}>
+              <td className="font-medium">{p.name}</td>
               <td>{fmtLimits(p.rateLimit as Record<string, number>)}</td>
               <td className="text-muted">{p.description}</td>
             </tr>

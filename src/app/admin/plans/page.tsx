@@ -11,11 +11,11 @@ export default async function AdminPlansPage() {
       <h1 className="mb-4 text-xl font-bold">Plans (Rate-Limit Tiers)</h1>
       <div className="mb-6"><PlanForm /></div>
       <table className="table-base max-w-2xl">
-        <thead><tr className="border-b text-left"><th className="py-2">Nama</th><th>Limit</th><th>Deskripsi</th><th></th></tr></thead>
+        <thead><tr><th>Nama</th><th>Limit</th><th>Deskripsi</th><th></th></tr></thead>
         <tbody>
           {rows.map((p) => (
-            <tr key={p.id} className="border-b">
-              <td className="py-2 font-medium">{p.name}</td>
+            <tr key={p.id}>
+              <td className="font-medium">{p.name}</td>
               <td>{Object.entries(p.rateLimit as Record<string, number>).map(([k, v]) => `${v}/${k}`).join(', ')}</td>
               <td className="text-muted">{p.description}</td>
               <td className="text-right">

@@ -35,11 +35,11 @@ export default async function ImportApisPage() {
       ) : (
         <form action={importProducts}>
           <table className="table-base max-w-3xl">
-            <thead><tr className="border-b text-left"><th className="w-8 py-2"></th><th>Service</th><th>Upstream</th><th>Routes</th></tr></thead>
+            <thead><tr><th className="w-8"></th><th>Service</th><th>Upstream</th><th>Routes</th></tr></thead>
             <tbody>
               {services.map((s) => (
-                <tr key={s.name} className="border-b">
-                  <td className="py-2"><input type="checkbox" name="services" value={s.name} defaultChecked /></td>
+                <tr key={s.name}>
+                  <td><input type="checkbox" name="services" value={s.name} defaultChecked /></td>
                   <td className="font-mono text-xs">{s.name}</td>
                   <td className="font-mono text-xs text-muted">{s.host}</td>
                   <td className="font-mono text-xs">{s.routes.join(', ') || '—'}</td>
