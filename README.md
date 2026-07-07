@@ -163,16 +163,19 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
   - *Major version = product v2 tertaut* (ala 3scale): alur clone product jadi v2 (slug/ACL/
     service sendiri) + kolom penaut antar-versi, supaya subscriber v1 tetap jalan.
 
-### Backlog teknis (temuan review yang belum ditutup)
-- **Rate-limit & captcha nonce in-memory** (`src/lib/rate-limit.ts`, `src/lib/captcha.ts`):
-  per-instance. Kalau portal jalan **multi-replica**, pindahkan ke Redis (Dragonfly sudah ada
-  di stack kai). Ditandai `ponytail:` di kode.
+### Backlog teknis (status per Jul 2026)
+- ~~Rate-limit & captcha nonce in-memory~~ **SELESAI**: kini Redis-backed bila `REDIS_URL`
+  diset (aman multi-replica; dev pakai Dragonfly `redis://:redispassword123@localhost:6479`),
+  fallback in-memory otomatis bila kosong/down (`src/lib/redis.ts`, verified: key `rl:*` dan
+  `captcha:nonce:*` benar tertulis di Dragonfly, replay & limit ditolak).
+- ~~Latency agregat per produk~~ **SELESAI**: `serviceLatencyP95()` di `src/lib/metrics.ts`
+  (histogram `kong_request_latency_ms_bucket`, butuh `latency_metrics=true` — auto-fix Setup
+  sudah mencakupnya); tampil di halaman detail API. Catatan: seri histogram baru butuh ≥2
+  scrape Prometheus sebelum `rate()` menghasilkan nilai (bukan bug).
+- ~~Pending-state tombol admin~~ **SELESAI**: `PendingButton` (useFormStatus) dipakai di semua
+  form aksi admin.
 - **Email-enumeration** di signup (pesan "Email sudah terdaftar"): user **terima risiko** untuk
   portal tertutup ber-approval. Netralkan pesan bila portal jadi lebih terbuka.
-- **Analytics**: latency Kong tidak berlabel consumer → hanya request-count per app yang
-  akurat. Latency agregat per produk perlu query terpisah bila diinginkan.
-- **Pending-state tombol admin**: belum ada `useFormStatus`; aman dari double-submit karena
-  action idempotent + `.returning()` guard, tapi bisa dipoles.
 
 ### Ide fitur lanjutan (belum di-scope)
 - Notifikasi email saat subscription di-approve/reject.
