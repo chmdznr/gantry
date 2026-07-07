@@ -65,7 +65,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormValues }
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-muted">
-            OpenAPI spec (JSON){initial?.hasSpec ? ' — sudah ada; upload untuk mengganti' : ''}
+            Spec: OpenAPI / Postman Collection (JSON){initial?.hasSpec ? ' — sudah ada; upload untuk mengganti' : ''}
           </span>
           <input name="spec" type="file" accept="application/json,.json" className="w-full text-sm" />
         </label>

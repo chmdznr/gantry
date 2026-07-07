@@ -9,6 +9,7 @@ import { requireAdmin } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
 import { isUniqueViolation } from '@/lib/db-errors'
 import { diffEndpoints, isEmptyDiff } from '@/lib/openapi-diff'
+import { isPostmanCollection, postmanToOpenApi } from '@/lib/postman'
 
 export type ActionState = { error?: string }
 
@@ -47,9 +48,12 @@ async function parseSpec(formData: FormData): Promise<{ error?: string; spec?: u
   if (!file || file.size === 0) return { spec: null }
   if (file.size > 5 * 1024 * 1024) return { error: 'Spec terlalu besar (maks 5MB).' }
   try {
-    return { spec: JSON.parse(await file.text()) }
+    const parsed = JSON.parse(await file.text())
+    // Postman Collection v2.x dikonversi otomatis ke OpenAPI
+    if (isPostmanCollection(parsed)) return { spec: postmanToOpenApi(parsed) }
+    return { spec: parsed }
   } catch {
-    return { error: 'File spec bukan JSON valid. (Gunakan OpenAPI JSON.)' }
+    return { error: 'File bukan JSON valid. (Terima: OpenAPI JSON atau Postman Collection v2.)' }
   }
 }
 
