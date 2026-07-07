@@ -67,7 +67,7 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
         hasSpec: !!product.openapiSpec,
       }} />
 
-      <h2 className="mt-8 mb-2 font-semibold">Riwayat versi spec</h2>
+      <h2 className="section-title">Riwayat versi spec</h2>
       <SpecHistory productId={product.id} />
     </main>
   )

@@ -26,7 +26,7 @@ export default async function SpecHistory({ productId }: { productId: string }) 
         const d = (v.changelog as EndpointDiff | null) ?? { added: [], removed: [], changed: [] }
         const isCurrent = i === 0
         return (
-          <div key={v.id} className="card p-3">
+          <div key={v.id} className="card p-4">
             <div className="flex items-center gap-2 text-sm">
               <b>v{v.version}</b>
               {isCurrent && <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">terkini</span>}

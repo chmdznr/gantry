@@ -51,7 +51,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
       <p className="text-sm text-muted">{app.description || '—'}</p>
       <p className="mt-1 font-mono text-xs text-muted">consumer: {app.kongConsumerUsername}</p>
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Credentials</h2>
+      <h2 className="section-title">Credentials</h2>
       <CredentialCreator appId={app.id} />
       {creds.length > 0 && (
         <table className="table-base mt-3">
@@ -73,10 +73,10 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         </table>
       )}
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Pemakaian API</h2>
+      <h2 className="section-title">Pemakaian API</h2>
       <AppStats consumerUsername={app.kongConsumerUsername} />
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Subscriptions</h2>
+      <h2 className="section-title">Subscriptions</h2>
       {subs.length === 0 ? (
         <p className="text-sm text-muted">Belum ada. Subscribe lewat halaman <Link href="/" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">katalog</Link>.</p>
       ) : (

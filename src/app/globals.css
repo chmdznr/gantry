@@ -3,11 +3,11 @@
 
 @theme {
   /* switchyard palette */
-  --color-paper: #faf9f5;
+  --color-paper: #f2efe6;
   --color-surface: #ffffff;
   --color-ink: #10312b;        /* spruce gelap — header, teks kuat */
   --color-ink-soft: #33534d;
-  --color-line: #e4e1d8;       /* border hangat */
+  --color-line: #ccc7b6;       /* border hangat */
   --color-muted: #6b7671;
   --color-amber: #f5b700;      /* signal amber — aksen, fokus, signature */
   --color-amber-deep: #b98a00;
@@ -44,7 +44,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }
 @utility card {
-  @apply rounded-xl border border-line bg-surface p-5;
+  @apply rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(16_49_43_/_0.05),0_2px_8px_-2px_rgb(16_49_43_/_0.07)];
 }
 
 @layer components {
@@ -74,7 +74,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   .badge-muted { @apply badge bg-line/60 text-ink-soft; }
 
   .code-chip { @apply rounded bg-ink/5 px-1.5 py-0.5 font-mono text-xs; }
-  .section-title { @apply mt-10 mb-3 text-lg font-bold; }
+  .section-title { @apply mt-12 mb-4 border-t-2 border-line pt-8 text-xl font-bold; }
 
   /* signature: route-line dengan stasiun */
   .route-line { @apply relative flex flex-col gap-8 sm:flex-row sm:gap-0; }

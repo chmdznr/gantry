@@ -74,7 +74,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         </p>
       )}
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Plans</h2>
+      <h2 className="section-title">Plans</h2>
       <table className="table-base max-w-lg">
         <thead><tr className="border-b text-left"><th className="py-1">Plan</th><th>Rate limit</th><th>Deskripsi</th></tr></thead>
         <tbody>
@@ -88,7 +88,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         </tbody>
       </table>
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Subscribe</h2>
+      <h2 className="section-title">Subscribe</h2>
       {!session?.user ? (
         <p className="text-sm text-muted"><Link href="/auth/login" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">Masuk</Link> untuk subscribe ke API ini.</p>
       ) : (
@@ -117,7 +117,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
       {session?.user && (
         <>
-          <h2 className="mt-8 mb-2 text-lg font-semibold">Try it</h2>
+          <h2 className="section-title">Try it</h2>
           <TryIt
             productId={product.id}
             baseUrl={product.proxyBaseUrl}
@@ -131,12 +131,12 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
       {spec?.paths && (
         <>
-          <h2 className="mt-8 mb-2 text-lg font-semibold">Referensi API</h2>
+          <h2 className="section-title">Referensi API</h2>
           <ApiReference spec={spec} />
         </>
       )}
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Riwayat versi</h2>
+      <h2 className="section-title">Riwayat versi</h2>
       <SpecHistory productId={product.id} />
     </main>
   )

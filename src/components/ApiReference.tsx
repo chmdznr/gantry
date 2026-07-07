@@ -115,7 +115,7 @@ export default function ApiReference({ spec }: { spec: Spec }) {
               const bodySchema = op.requestBody?.content
                 ? Object.values(op.requestBody.content)[0]?.schema : undefined
               return (
-                <details key={method + path} className="group rounded-xl border border-line bg-surface">
+                <details key={method + path} className="group rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(16_49_43_/_0.05),0_2px_8px_-2px_rgb(16_49_43_/_0.07)]">
                   <summary className="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                     <span className={`w-16 rounded-md py-1 text-center font-mono text-xs font-bold ${methodBadge[method]}`}>{method}</span>
                     <code className="font-mono text-sm">{path}</code>
