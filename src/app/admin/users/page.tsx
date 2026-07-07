@@ -2,6 +2,7 @@ import { desc } from 'drizzle-orm'
 import { db } from '@/db'
 import { users } from '@/db/schema'
 import { approveUser, suspendUser, activateUser } from '@/actions/admin-users'
+import PendingButton from '@/components/PendingButton'
 
 const badge: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -33,17 +34,17 @@ export default async function AdminUsersPage() {
               <td className="space-x-2 py-1">
                 {u.status === 'pending' && u.emailVerifiedAt && (
                   <form action={approveUser.bind(null, u.id)} className="inline">
-                    <button className="rounded bg-green-600 px-2 py-1 text-xs text-white">Approve</button>
+                    <PendingButton className="rounded bg-green-600 px-2 py-1 text-xs text-white">Approve</PendingButton>
                   </form>
                 )}
                 {u.status === 'active' && (
                   <form action={suspendUser.bind(null, u.id)} className="inline">
-                    <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Suspend</button>
+                    <PendingButton className="rounded bg-red-600 px-2 py-1 text-xs text-white">Suspend</PendingButton>
                   </form>
                 )}
                 {u.status === 'suspended' && (
                   <form action={activateUser.bind(null, u.id)} className="inline">
-                    <button className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Aktifkan</button>
+                    <PendingButton className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Aktifkan</PendingButton>
                   </form>
                 )}
               </td>

@@ -203,15 +203,15 @@ export async function unblockConsumer(consumerId: string): Promise<void> {
 
 // ---------- prasyarat prometheus (analytics per-consumer) ----------
 
-export type PrometheusPluginState = { exists: boolean; enabled: boolean; perConsumer: boolean; id?: string }
+export type PrometheusPluginState = { exists: boolean; enabled: boolean; perConsumer: boolean; latency: boolean; id?: string }
 
 export async function getGlobalPrometheusPlugin(): Promise<PrometheusPluginState> {
   const { data } = await kong<{
-    data: { id: string; name: string; enabled: boolean; consumer: unknown; service: unknown; route: unknown; config: { per_consumer?: boolean } }[]
+    data: { id: string; name: string; enabled: boolean; consumer: unknown; service: unknown; route: unknown; config: { per_consumer?: boolean; latency_metrics?: boolean } }[]
   }>('/plugins?size=1000')
   const p = data.find((p) => p.name === 'prometheus' && !p.consumer && !p.service && !p.route)
-  if (!p) return { exists: false, enabled: false, perConsumer: false }
-  return { exists: true, enabled: p.enabled, perConsumer: !!p.config.per_consumer, id: p.id }
+  if (!p) return { exists: false, enabled: false, perConsumer: false, latency: false }
+  return { exists: true, enabled: p.enabled, perConsumer: !!p.config.per_consumer, latency: !!p.config.latency_metrics, id: p.id }
 }
 
 export async function ensurePrometheusPerConsumer(): Promise<void> {
@@ -221,16 +221,16 @@ export async function ensurePrometheusPerConsumer(): Promise<void> {
       method: 'POST',
       body: JSON.stringify({
         name: 'prometheus',
-        config: { status_code_metrics: true, per_consumer: true },
+        config: { status_code_metrics: true, per_consumer: true, latency_metrics: true },
         tags: [TAG],
       }),
     })
     return
   }
-  if (!cur.perConsumer || !cur.enabled) {
+  if (!cur.perConsumer || !cur.enabled || !cur.latency) {
     await kong(`/plugins/${cur.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ enabled: true, config: { per_consumer: true, status_code_metrics: true } }),
+      body: JSON.stringify({ enabled: true, config: { per_consumer: true, status_code_metrics: true, latency_metrics: true } }),
     })
   }
 }

@@ -32,7 +32,7 @@ export async function signup(
   _prev: { error?: string },
   formData: FormData,
 ): Promise<{ error?: string }> {
-  if (!rateLimit(`signup:${await clientIp()}`, 5, 10 * 60_000)) {
+  if (!(await rateLimit(`signup:${await clientIp()}`, 5, 10 * 60_000))) {
     return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
   }
   const parsed = SignupSchema.safeParse(Object.fromEntries(formData))
@@ -41,7 +41,7 @@ export async function signup(
 
   const jar = await cookies()
   const token = jar.get('captcha_digest')?.value
-  if (!token || !verifyCaptchaToken(captcha, token)) {
+  if (!token || !(await verifyCaptchaToken(captcha, token))) {
     return { error: 'Captcha salah. Coba lagi.' }
   }
   jar.delete('captcha_digest')
@@ -81,7 +81,7 @@ export async function resendVerification(
   _prev: { error?: string; ok?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
-  if (!rateLimit(`resend:${await clientIp()}`, 3, 10 * 60_000)) {
+  if (!(await rateLimit(`resend:${await clientIp()}`, 3, 10 * 60_000))) {
     return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
   }
   const email = String(formData.get('email') ?? '').trim().toLowerCase()

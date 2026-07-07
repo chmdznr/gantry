@@ -2,6 +2,7 @@ import { db } from '@/db'
 import { plans } from '@/db/schema'
 import { deletePlan } from '@/actions/admin-plans'
 import PlanForm from '@/components/PlanForm'
+import PendingButton from '@/components/PendingButton'
 
 export default async function AdminPlansPage() {
   const rows = await db.select().from(plans).orderBy(plans.name)
@@ -19,7 +20,7 @@ export default async function AdminPlansPage() {
               <td className="text-gray-600">{p.description}</td>
               <td className="text-right">
                 <form action={deletePlan.bind(null, p.id)}>
-                  <button className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Hapus</button>
+                  <PendingButton className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Hapus</PendingButton>
                 </form>
               </td>
             </tr>

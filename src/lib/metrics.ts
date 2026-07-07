@@ -33,3 +33,27 @@ export async function consumerRequestStats(
     return null
   }
 }
+
+export type ServiceLatency = { service: string; p95Ms: number }
+
+// p95 latency per Kong service (agregat, bukan per consumer — Kong tidak melabeli latency dengan consumer).
+export async function serviceLatencyP95(serviceNames: string[], range = '24h'): Promise<ServiceLatency[] | null> {
+  const base = process.env.PROMETHEUS_URL
+  if (!base) return null
+  const safe = serviceNames.filter((s) => /^[A-Za-z0-9._-]+$/.test(s))
+  if (safe.length === 0 || !/^[0-9]+[smhd]$/.test(range)) return null
+  const q = `histogram_quantile(0.95, sum by (le, service) (rate(kong_request_latency_ms_bucket{service=~"${safe.join('|')}"}[${range}])))`
+  try {
+    const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) return null
+    const json = (await res.json()) as PromVector
+    return (json.data?.result ?? [])
+      .map((r) => ({ service: r.metric.service ?? '?', p95Ms: Math.round(Number(r.value[1])) }))
+      .filter((s) => Number.isFinite(s.p95Ms))
+  } catch {
+    return null
+  }
+}

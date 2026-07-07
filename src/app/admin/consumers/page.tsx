@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { appCredentials, applications, subscriptions, users } from '@/db/schema'
 import { adminDeleteApp, adminRevokeCredential, blockApp, unblockApp } from '@/actions/admin-consumers'
+import PendingButton from '@/components/PendingButton'
 
 export default async function AdminConsumersPage() {
   const apps = await db.select({
@@ -42,15 +43,15 @@ export default async function AdminConsumersPage() {
                 <span className="ml-auto flex gap-2">
                   {a.blockedAt ? (
                     <form action={unblockApp.bind(null, a.id)}>
-                      <button className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Buka Blokir</button>
+                      <PendingButton className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Buka Blokir</PendingButton>
                     </form>
                   ) : (
                     <form action={blockApp.bind(null, a.id)}>
-                      <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Blokir</button>
+                      <PendingButton className="rounded bg-red-600 px-2 py-1 text-xs text-white">Blokir</PendingButton>
                     </form>
                   )}
                   <form action={adminDeleteApp.bind(null, a.id)}>
-                    <button className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Hapus</button>
+                    <PendingButton className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Hapus</PendingButton>
                   </form>
                 </span>
               </div>
@@ -65,7 +66,7 @@ export default async function AdminConsumersPage() {
                         <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                         <td className="text-right">
                           <form action={adminRevokeCredential.bind(null, a.id, c.id)}>
-                            <button className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Revoke</button>
+                            <PendingButton className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Revoke</PendingButton>
                           </form>
                         </td>
                       </tr>

@@ -59,12 +59,13 @@ export default async function SetupPage() {
               : `Tidak tersedia: ${missingPlugins.join(', ')} — fitur terkait tidak akan jalan`} />
         )}
         {info && (
-          <Row ok={!!prom?.exists && prom.enabled && prom.perConsumer}
-            label="Plugin prometheus global aktif dengan per_consumer=true"
+          <Row ok={!!prom?.exists && prom.enabled && prom.perConsumer && prom.latency}
+            label="Plugin prometheus global aktif (per_consumer + latency_metrics)"
             detail={!prom?.exists ? 'Belum terpasang — analytics per-app tidak akan ada datanya'
               : !prom.perConsumer ? 'Terpasang tapi per_consumer=false — metrik tidak berlabel consumer'
-              : 'OK — metrik berlabel consumer tersedia'}>
-            {(!prom?.exists || !prom.perConsumer || !prom.enabled) && (
+              : !prom.latency ? 'Terpasang tapi latency_metrics=false — p95 latency tidak tersedia'
+              : 'OK — metrik consumer + latency tersedia'}>
+            {(!prom?.exists || !prom.perConsumer || !prom.enabled || !prom.latency) && (
               <form action={fixPrometheusPlugin}>
                 <button className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white">Perbaiki otomatis</button>
               </form>

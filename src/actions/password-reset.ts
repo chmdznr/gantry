@@ -14,7 +14,7 @@ export type ResetState = { error?: string; ok?: string }
 
 // Tidak membocorkan apakah email terdaftar.
 export async function requestPasswordReset(_prev: ResetState, formData: FormData): Promise<ResetState> {
-  if (!rateLimit(`pwreset:${await clientIp()}`, 3, 10 * 60_000)) {
+  if (!(await rateLimit(`pwreset:${await clientIp()}`, 3, 10 * 60_000))) {
     return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
   }
   const email = String(formData.get('email') ?? '').trim().toLowerCase()

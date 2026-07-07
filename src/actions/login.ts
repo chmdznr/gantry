@@ -8,7 +8,7 @@ export async function login(
   _prev: { error?: string },
   formData: FormData,
 ): Promise<{ error?: string }> {
-  if (!rateLimit(`login:${await clientIp()}`, 10, 60_000)) {
+  if (!(await rateLimit(`login:${await clientIp()}`, 10, 60_000))) {
     return { error: 'Terlalu banyak percobaan login. Tunggu sebentar.' }
   }
   // callbackUrl: hanya path internal — tolak //, backslash, dan apa pun yang

@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts, applications, plans, subscriptions, users } from '@/db/schema'
 import { approveSubscription, rejectSubscription, revokeSubscription } from '@/actions/subscriptions'
+import PendingButton from '@/components/PendingButton'
 
 const badge: Record<string, string> = {
   requested: 'bg-yellow-100 text-yellow-800',
@@ -48,16 +49,16 @@ export default async function AdminSubscriptionsPage() {
                 {s.status === 'requested' && (
                   <>
                     <form action={approveSubscription.bind(null, s.id)} className="inline">
-                      <button className="rounded bg-green-600 px-2 py-1 text-xs text-white">Approve</button>
+                      <PendingButton className="rounded bg-green-600 px-2 py-1 text-xs text-white">Approve</PendingButton>
                     </form>
                     <form action={rejectSubscription.bind(null, s.id)} className="inline">
-                      <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Reject</button>
+                      <PendingButton className="rounded bg-red-600 px-2 py-1 text-xs text-white">Reject</PendingButton>
                     </form>
                   </>
                 )}
                 {s.status === 'approved' && (
                   <form action={revokeSubscription.bind(null, s.id)} className="inline">
-                    <button className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Revoke</button>
+                    <PendingButton className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Revoke</PendingButton>
                   </form>
                 )}
               </td>

@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { getRedis } from '@/lib/redis'
 
 const TTL_MS = 10 * 60_000
 
@@ -13,20 +14,31 @@ export function issueCaptchaToken(answer: string, now = Date.now()): string {
   return `${exp}.${nonce}.${mac(`${answer.toLowerCase()}|${exp}|${nonce}`)}`
 }
 
-// ponytail: single-use nonce in-memory; per-instance, pindah ke Redis kalau multi-replica
+// Single-use nonce: Redis SET NX kalau tersedia (multi-replica), fallback in-memory.
 const usedNonces = new Set<string>()
 
-export function verifyCaptchaToken(answer: string, token: string, now = Date.now()): boolean {
+async function markNonceUsed(nonce: string): Promise<boolean> {
+  const redis = getRedis()
+  if (redis) {
+    try {
+      const res = await redis.set(`captcha:nonce:${nonce}`, '1', 'PX', TTL_MS, 'NX')
+      return res === 'OK' // null = sudah pernah dipakai
+    } catch {
+      // Redis down -> fallback memory
+    }
+  }
+  if (usedNonces.has(nonce)) return false
+  usedNonces.add(nonce)
+  if (usedNonces.size > 50_000) usedNonces.clear()
+  return true
+}
+
+export async function verifyCaptchaToken(answer: string, token: string, now = Date.now()): Promise<boolean> {
   const [expStr, nonce, sig] = token.split('.')
   const exp = Number(expStr)
   if (!exp || !nonce || !sig || exp < now) return false
-  if (usedNonces.has(nonce)) return false
   const expected = Buffer.from(mac(`${answer.toLowerCase()}|${exp}|${nonce}`))
   const got = Buffer.from(sig)
-  const ok = expected.length === got.length && timingSafeEqual(expected, got)
-  if (ok) {
-    usedNonces.add(nonce)
-    if (usedNonces.size > 50_000) usedNonces.clear()
-  }
-  return ok
+  if (expected.length !== got.length || !timingSafeEqual(expected, got)) return false
+  return markNonceUsed(nonce)
 }

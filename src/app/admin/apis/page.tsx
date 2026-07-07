@@ -3,6 +3,7 @@ import { desc } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import { setProductStatus } from '@/actions/admin-products'
+import PendingButton from '@/components/PendingButton'
 
 const badge: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -39,17 +40,17 @@ export default async function AdminApisPage() {
               <td className="space-x-2 py-1">
                 {p.status !== 'published' && (
                   <form action={setProductStatus.bind(null, p.id, 'published')} className="inline">
-                    <button className="rounded bg-green-600 px-2 py-1 text-xs text-white">Publish</button>
+                    <PendingButton className="rounded bg-green-600 px-2 py-1 text-xs text-white">Publish</PendingButton>
                   </form>
                 )}
                 {p.status === 'published' && (
                   <form action={setProductStatus.bind(null, p.id, 'deprecated')} className="inline">
-                    <button className="rounded bg-yellow-600 px-2 py-1 text-xs text-white">Deprecate</button>
+                    <PendingButton className="rounded bg-yellow-600 px-2 py-1 text-xs text-white">Deprecate</PendingButton>
                   </form>
                 )}
                 {p.status === 'deprecated' && (
                   <form action={setProductStatus.bind(null, p.id, 'retired')} className="inline">
-                    <button className="rounded bg-red-600 px-2 py-1 text-xs text-white">Retire</button>
+                    <PendingButton className="rounded bg-red-600 px-2 py-1 text-xs text-white">Retire</PendingButton>
                   </form>
                 )}
               </td>

@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
 import Markdown from 'react-markdown'
+import { serviceLatencyP95 } from '@/lib/metrics'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -50,6 +51,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
   const subscribableApps = myApps.filter((a) =>
     !mySubs.some((s) => s.applicationId === a.id && (s.status === 'requested' || s.status === 'approved')))
   const spec = product.openapiSpec as OpenApiSpec | null
+  const latency = await serviceLatencyP95(product.kongServiceNames)
 
   return (
     <main className="mx-auto max-w-4xl p-8">
@@ -65,6 +67,11 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         <Markdown>{product.description}</Markdown>
       </div>
       <p className="mt-2 text-sm text-gray-500">Base URL: <code className="rounded bg-gray-100 px-1">{product.proxyBaseUrl}</code></p>
+      {latency && latency.length > 0 && (
+        <p className="mt-1 text-sm text-gray-500">
+          Latency p95 (24 jam): {latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ')}
+        </p>
+      )}
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">Plans</h2>
       <table className="w-full max-w-lg border-collapse text-sm">
