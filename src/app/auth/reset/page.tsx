@@ -8,7 +8,7 @@ function ResetForm() {
   const [state, action, pending] = useActionState<ResetState, FormData>(resetPassword, {})
   const token = useSearchParams().get('token') ?? ''
   return (
-    <main className="page max-w-md">
+    <main>
       <h1 className="mb-6 text-2xl font-bold">Atur Ulang Password</h1>
       <form action={action} className="space-y-4">
         <input type="hidden" name="token" value={token} />

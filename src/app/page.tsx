@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { desc, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
-import { logout } from '@/actions/login'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import { BRAND } from '@/lib/brand'
+import SiteHeader, { SiteFooter } from '@/components/SiteHeader'
 
 const steps = [
   { t: 'Daftar & verifikasi', d: 'Buat akun dengan email organisasi; admin menyetujui akses Anda.' },
@@ -12,15 +12,6 @@ const steps = [
   { t: 'Subscribe API', d: 'Pilih API dan plan rate-limit, lalu tunggu persetujuan.' },
   { t: 'Panggil dengan API key', d: 'Generate credential dan uji langsung dari Try It.' },
 ]
-
-function BrandMark() {
-  return (
-    <span className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-      <span className="inline-block h-3.5 w-3.5 rounded-full border-4 border-paper/90 bg-amber" aria-hidden />
-      {BRAND.name}
-    </span>
-  )
-}
 
 export default async function Home() {
   const session = await auth()
@@ -30,28 +21,8 @@ export default async function Home() {
 
   return (
     <main>
-      <header className="bg-ink text-paper">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <BrandMark />
-          {session?.user ? (
-            <nav className="flex items-center gap-2 text-sm">
-              <span className="mr-2 hidden text-paper/60 sm:inline">{session.user.name}</span>
-              <Link href="/apps" className="btn-accent btn-sm">Aplikasi Saya</Link>
-              {session.user.role === 'portal-admin' && (
-                <Link href="/admin/apis" className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Admin</Link>
-              )}
-              <form action={logout}>
-                <button className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Keluar</button>
-              </form>
-            </nav>
-          ) : (
-            <nav className="flex gap-2 text-sm">
-              <Link href="/auth/login" className="btn btn-sm border border-paper/25 text-paper hover:bg-paper/10">Masuk</Link>
-              <Link href="/auth/signup" className="btn-accent btn-sm">Daftar</Link>
-            </nav>
-          )}
-        </div>
-
+      <SiteHeader />
+      <section className="bg-ink text-paper">
         <div className="mx-auto max-w-5xl px-6 pt-14 pb-16">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-amber">{BRAND.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
@@ -68,7 +39,7 @@ export default async function Home() {
             </div>
           )}
         </div>
-      </header>
+      </section>
 
       <section className="mx-auto max-w-5xl px-6 py-14">
         <div className="route-line">
@@ -109,12 +80,7 @@ export default async function Home() {
         )}
       </section>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 text-sm text-muted">
-          <span>{BRAND.name} — {BRAND.tagline}</span>
-          <span className="font-mono text-xs">open source</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

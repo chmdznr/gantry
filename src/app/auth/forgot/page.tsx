@@ -7,7 +7,7 @@ import { requestPasswordReset, type ResetState } from '@/actions/password-reset'
 export default function ForgotPage() {
   const [state, action, pending] = useActionState<ResetState, FormData>(requestPasswordReset, {})
   return (
-    <main className="page max-w-md">
+    <main>
       <h1 className="mb-6 text-2xl font-bold">Lupa Password</h1>
       <form action={action} className="space-y-4">
         <input name="email" type="email" required placeholder="Email" className="input" />

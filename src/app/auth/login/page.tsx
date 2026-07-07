@@ -30,7 +30,7 @@ function LoginForm() {
   const verify = params.get('verify')
   const next = params.get('next') ?? ''
   return (
-    <main className="page max-w-md">
+    <main>
       <h1 className="mb-6 text-2xl font-bold">Masuk — {BRAND.name}</h1>
       {verify === 'ok' && <p className="mb-4 rounded bg-green-100 p-3 text-sm text-green-800">Email terverifikasi. Akun Anda menunggu persetujuan admin.</p>}
       {verify === 'invalid' && <p className="mb-4 rounded bg-red-100 p-3 text-sm text-red-800">Link verifikasi tidak valid atau kedaluwarsa.</p>}

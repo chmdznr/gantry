@@ -8,7 +8,7 @@ import { BRAND } from '@/lib/brand'
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signup, {})
   return (
-    <main className="page max-w-md">
+    <main>
       <h1 className="mb-6 text-2xl font-bold">Daftar — {BRAND.name}</h1>
       <form action={action} className="space-y-4">
         <input name="name" required placeholder="Nama lengkap" className="input" />

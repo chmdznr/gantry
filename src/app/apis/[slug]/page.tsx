@@ -104,6 +104,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
           {subscribable ? (
             <SubscribeForm
               productId={product.id}
+              hasApps={myApps.length > 0}
               apps={subscribableApps}
               plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
             />

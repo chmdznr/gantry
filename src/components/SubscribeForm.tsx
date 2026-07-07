@@ -6,14 +6,17 @@ import { requestSubscription, type ActionState } from '@/actions/subscriptions'
 
 type Option = { id: string; name: string }
 
-export default function SubscribeForm({ productId, apps, plans }: {
+export default function SubscribeForm({ productId, apps, plans, hasApps }: {
   productId: string
   apps: Option[]
   plans: (Option & { limits: string })[]
+  hasApps: boolean
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(requestSubscription, {})
   if (apps.length === 0) {
-    return <p className="text-sm text-muted">Buat <Link href="/apps" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">application</Link> dulu untuk subscribe.</p>
+    return hasApps
+      ? <p className="text-sm text-muted">Semua application Anda sudah memiliki subscription untuk API ini.</p>
+      : <p className="text-sm text-muted">Buat <Link href="/apps" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">application</Link> dulu untuk subscribe.</p>
   }
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
