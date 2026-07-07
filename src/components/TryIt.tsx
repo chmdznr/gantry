@@ -43,15 +43,24 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   return (
     <div className="card">
       {endpoints.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {endpoints.map((e) => (
-            <button key={e.method + e.path} type="button"
-              onClick={() => { setMethod(e.method.toUpperCase()); setPath(e.path) }}
-              className="rounded border px-2 py-1 font-mono text-xs hover:border-amber">
-              <b className="uppercase">{e.method}</b> {e.path}
-            </button>
-          ))}
-        </div>
+        <label className="mb-3 block text-sm">
+          <span className="label">Pilih endpoint</span>
+          <select className="input w-auto max-w-full font-mono text-xs"
+            value={`${method} ${path}`}
+            onChange={(e) => {
+              const [m, ...rest] = e.target.value.split(' ')
+              setMethod(m); setPath(rest.join(' '))
+            }}>
+            {!endpoints.some((x) => `${x.method.toUpperCase()} ${x.path}` === `${method} ${path}`) && (
+              <option value={`${method} ${path}`}>{method} {path} (manual)</option>
+            )}
+            {endpoints.map((x) => (
+              <option key={x.method + x.path} value={`${x.method.toUpperCase()} ${x.path}`}>
+                {x.method.toUpperCase()} {x.path}{x.summary ? ` — ${x.summary}` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
       <div className="flex flex-wrap items-end gap-2">
         <select value={method} onChange={(e) => setMethod(e.target.value)} className="input w-auto">

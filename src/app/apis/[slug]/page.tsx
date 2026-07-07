@@ -9,6 +9,7 @@ import { serviceLatencyP95 } from '@/lib/metrics'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 import SpecHistory from '@/components/SpecHistory'
+import ApiReference from '@/components/ApiReference'
 
 function fmtLimits(rl: Record<string, number>) {
   return Object.entries(rl).map(([k, v]) => `${v}/${k}`).join(', ') || '-'
@@ -130,20 +131,8 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
       {spec?.paths && (
         <>
-          <h2 className="mt-8 mb-2 text-lg font-semibold">Endpoints</h2>
-          <table className="table-base">
-            <tbody>
-              {Object.entries(spec.paths).flatMap(([path, methods]) =>
-                Object.entries(methods).map(([method, op]) => (
-                  <tr key={method + path} className="border-b">
-                    <td className="py-1 pr-3 font-mono text-xs font-bold uppercase text-blue-700">{method}</td>
-                    <td className="pr-3 font-mono text-xs">{path}</td>
-                    <td className="text-muted">{op?.summary ?? ''}</td>
-                  </tr>
-                )),
-              )}
-            </tbody>
-          </table>
+          <h2 className="mt-8 mb-2 text-lg font-semibold">Referensi API</h2>
+          <ApiReference spec={spec} />
         </>
       )}
 
