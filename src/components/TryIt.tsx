@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 type Endpoint = { method: string; path: string; summary?: string }
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string }
@@ -20,6 +21,7 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
   path: string
   onPick: (method: string, path: string) => void
 }) {
+  const t = useTranslations('tryit')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -38,7 +40,7 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
 
   return (
     <div ref={ref} className="relative mb-3 max-w-xl">
-      <span className="label">Pilih endpoint</span>
+      <span className="label">{t('pickEndpoint')}</span>
       <button type="button" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}
         className="input flex w-full items-center gap-2 text-left">
         <span className={`w-14 rounded py-0.5 text-center font-mono text-xs font-bold ${methodChip[method] ?? 'bg-line/60'}`}>{method}</span>
@@ -73,6 +75,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   baseUrl: string
   endpoints: Endpoint[]
 }) {
+  const t = useTranslations('tryit')
   const [method, setMethod] = useState(endpoints[0]?.method?.toUpperCase() ?? 'GET')
   const [path, setPath] = useState(endpoints[0]?.path ?? '/')
   const [apiKey, setApiKey] = useState('')
@@ -94,7 +97,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
       })
       setResult(await res.json())
     } catch {
-      setResult({ error: 'Request gagal.' })
+      setResult({ error: t('requestFailed') })
     } finally {
       setBusy(false)
     }
@@ -116,16 +119,16 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
         <span className="pb-2 font-mono text-xs text-muted">{baseUrl}</span>
         <input value={path} onChange={(e) => setPath(e.target.value)}
           className="input min-w-40 flex-1 font-mono" />
-        <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="apikey (dari app kamu)"
+        <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder={t('apikeyPlaceholder')}
           type="password" className="input w-56 font-mono" />
         <button onClick={send} disabled={busy}
           className="btn-primary">
-          {busy ? 'Mengirim…' : 'Kirim'}
+          {busy ? t('sending') : t('send')}
         </button>
       </div>
       {method !== 'GET' && (
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4}
-          placeholder='Request body (JSON)' className="input mt-2 font-mono" />
+          placeholder={t('bodyPlaceholder')} className="input mt-2 font-mono" />
       )}
       {result && (
         <div className="mt-3 rounded bg-paper p-3 text-sm">
@@ -138,7 +141,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
                 <span className="ml-3 text-muted">{result.durationMs} ms</span>
                 {result.headers?.['ratelimit-remaining'] !== undefined && (
                   <span className="ml-3 text-muted">
-                    rate limit sisa: {result.headers['ratelimit-remaining']}/{result.headers['ratelimit-limit']}
+                    {t('rateRemaining', { left: result.headers['ratelimit-remaining'], limit: result.headers['ratelimit-limit'] })}
                   </span>
                 )}
               </p>

@@ -56,32 +56,32 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Subscriptions</h1>
-        <span className="text-sm text-muted">{rows.length} subscription{active > 0 ? ` · ${active} filter aktif` : ''}</span>
+        <span className="text-sm text-muted">{rows.length} subscriptions{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
 
       <FilterBar resetHref="/admin/subscriptions" activeCount={active}>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="application / pemilik" className="input w-56" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="application / owner" className="input w-56" />
         </label>
         <label className="text-sm">
           <span className="label">Status</span>
           <select name="status" defaultValue={sp.status ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {['requested', 'approved', 'rejected', 'revoked'].map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
         <label className="text-sm">
           <span className="label">API</span>
           <select name="product" defaultValue={sp.product ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {productOpts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
         <label className="text-sm">
           <span className="label">Plan</span>
           <select name="plan" defaultValue={sp.plan ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {planOpts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
@@ -90,7 +90,7 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
       <table className="table-base">
         <thead>
           <tr>
-            <th>Application</th><th>Pemilik</th><th>API</th><th>Plan</th><th>Diajukan</th><th>Status</th><th>Aksi</th>
+            <th>Application</th><th>Owner</th><th>API</th><th>Plan</th><th>Requested</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -121,7 +121,7 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
               </td>
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">Tidak ada subscription yang cocok dengan filter.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">No subscriptions match the filters.</td></tr>}
         </tbody>
       </table>
     </main>

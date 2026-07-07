@@ -3,17 +3,13 @@ import { desc, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
+import { getTranslations } from 'next-intl/server'
 import { BRAND } from '@/lib/brand'
 import SiteHeader, { SiteFooter } from '@/components/SiteHeader'
 
-const steps = [
-  { t: 'Daftar & verifikasi', d: 'Buat akun dengan email organisasi; admin menyetujui akses Anda.' },
-  { t: 'Buat application', d: 'Satu application menjadi satu identitas consumer di gateway.' },
-  { t: 'Subscribe API', d: 'Pilih API dan plan rate-limit, lalu tunggu persetujuan.' },
-  { t: 'Panggil dengan API key', d: 'Generate credential dan uji langsung dari Try It.' },
-]
-
 export default async function Home() {
+  const t = await getTranslations('landing')
+  const steps = t.raw('steps') as { t: string; d: string }[]
   const session = await auth()
   const products = await db.select().from(apiProducts)
     .where(inArray(apiProducts.status, ['published', 'deprecated']))
@@ -26,16 +22,15 @@ export default async function Home() {
         <div className="mx-auto max-w-5xl px-6 pt-14 pb-16">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-amber">{BRAND.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            Satu jalur dari katalog API sampai panggilan pertama.
+            {t('heroTitle')}
           </h1>
           <p className="mt-5 max-w-xl text-paper/70">
-            Temukan API yang ter-kurasi di gateway, dapatkan credential secara mandiri,
-            dan pantau pemakaian aplikasi Anda — tanpa tiket, tanpa menunggu berhari-hari.
+            {t('heroText')}
           </p>
           {!session?.user && (
             <div className="mt-8 flex gap-3">
-              <Link href="/auth/signup" className="btn-accent">Mulai sekarang</Link>
-              <Link href="#katalog" className="btn-ghost">Lihat katalog</Link>
+              <Link href="/auth/signup" className="btn-accent">{t('ctaStart')}</Link>
+              <Link href="#katalog" className="btn-ghost">{t('ctaCatalog')}</Link>
             </div>
           )}
         </div>
@@ -54,11 +49,11 @@ export default async function Home() {
 
       <section id="katalog" className="mx-auto max-w-5xl px-6 pb-20">
         <div className="mb-5 flex items-baseline justify-between">
-          <h2 className="text-2xl font-bold">Katalog API</h2>
-          <span className="text-sm text-muted">{products.length} API tersedia</span>
+          <h2 className="text-2xl font-bold">{t('catalogTitle')}</h2>
+          <span className="text-sm text-muted">{t('available', { count: products.length })}</span>
         </div>
         {products.length === 0 ? (
-          <div className="card text-muted">Belum ada API yang dipublikasikan. Admin dapat menambahkannya dari halaman Admin → APIs.</div>
+          <div className="card text-muted">{t('empty')}</div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => (

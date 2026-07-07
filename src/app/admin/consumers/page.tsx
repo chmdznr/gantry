@@ -45,23 +45,23 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Consumers (Applications)</h1>
-        <span className="text-sm text-muted">{apps.length} application{active > 0 ? ` · ${active} filter aktif` : ''}</span>
+        <span className="text-sm text-muted">{apps.length} applications{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
       <FilterBar resetHref="/admin/consumers" activeCount={active}>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="app / consumer / pemilik" className="input w-64" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="app / consumer / owner" className="input w-64" />
         </label>
         <label className="text-sm">
-          <span className="label">Blokir</span>
+          <span className="label">Blocked</span>
           <select name="blocked" defaultValue={sp.blocked ?? ''} className="input w-auto">
-            <option value="">Semua</option>
-            <option value="yes">Diblokir</option>
-            <option value="no">Tidak diblokir</option>
+            <option value="">All</option>
+            <option value="yes">Blocked</option>
+            <option value="no">Not blocked</option>
           </select>
         </label>
       </FilterBar>
-      {apps.length === 0 && <p className="text-sm text-muted">Tidak ada application yang cocok dengan filter.</p>}
+      {apps.length === 0 && <p className="text-sm text-muted">No applications match the filters.</p>}
       <div className="space-y-4">
         {apps.map((a) => {
           const appCreds = creds.filter((c) => c.applicationId === a.id)
@@ -73,27 +73,27 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
                 <span className="font-mono text-xs text-muted">{a.consumerUsername}</span>
                 <span className="text-sm text-muted">{a.ownerName} ({a.ownerEmail})</span>
                 <span className="text-xs text-muted">
-                  {appSubs.filter((s) => s.status === 'approved').length} subscription aktif · {appCreds.length} credential
+                  {appSubs.filter((s) => s.status === 'approved').length} active subscriptions · {appCreds.length} credentials
                 </span>
-                {a.blockedAt && <span className="badge-stop">DIBLOKIR</span>}
+                {a.blockedAt && <span className="badge-stop">BLOCKED</span>}
                 <span className="ml-auto flex gap-2">
                   {a.blockedAt ? (
                     <form action={unblockApp.bind(null, a.id)}>
-                      <PendingButton className="btn-outline btn-sm">Buka Blokir</PendingButton>
+                      <PendingButton className="btn-outline btn-sm">Unblock</PendingButton>
                     </form>
                   ) : (
                     <form action={blockApp.bind(null, a.id)}>
-                      <PendingButton className="btn-danger btn-sm">Blokir</PendingButton>
+                      <PendingButton className="btn-danger btn-sm">Block</PendingButton>
                     </form>
                   )}
                   <form action={adminDeleteApp.bind(null, a.id)}>
-                    <PendingButton className="btn-danger btn-sm">Hapus</PendingButton>
+                    <PendingButton className="btn-danger btn-sm">Delete</PendingButton>
                   </form>
                 </span>
               </div>
               {appCreds.length > 0 && (
                 <table className="table-base mt-3">
-                  <thead><tr className="border-b text-left text-xs text-muted"><th>Credential</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
+                  <thead><tr className="border-b text-left text-xs text-muted"><th>Credential</th><th>Hint</th><th>Created</th><th></th></tr></thead>
                   <tbody>
                     {appCreds.map((c) => (
                       <tr key={c.id}>

@@ -19,12 +19,12 @@ export default async function AdminPlansPage({ searchParams }: { searchParams: P
       <div className="mb-6"><PlanForm /></div>
       <FilterBar resetHref="/admin/plans" activeCount={active}>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="nama / deskripsi" className="input w-64" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="name / description" className="input w-64" />
         </label>
       </FilterBar>
       <table className="table-base max-w-2xl">
-        <thead><tr><th>Nama</th><th>Limit</th><th>Deskripsi</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Limit</th><th>Description</th><th></th></tr></thead>
         <tbody>
           {rows.map((p) => (
             <tr key={p.id}>
@@ -33,7 +33,7 @@ export default async function AdminPlansPage({ searchParams }: { searchParams: P
               <td className="text-muted">{p.description}</td>
               <td className="text-right">
                 <form action={deletePlan.bind(null, p.id)}>
-                  <PendingButton className="btn-danger btn-sm">Hapus</PendingButton>
+                  <PendingButton className="btn-danger btn-sm">Delete</PendingButton>
                 </form>
               </td>
             </tr>

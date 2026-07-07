@@ -8,11 +8,11 @@ export default function PlanForm() {
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <label className="text-sm">
-        <span className="mb-1 block text-muted">Nama</span>
+        <span className="mb-1 block text-muted">Name</span>
         <input name="name" required className="input w-32" placeholder="Gold" />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-muted">Deskripsi</span>
+        <span className="mb-1 block text-muted">Description</span>
         <input name="description" className="input w-56" />
       </label>
       {(['second', 'minute', 'hour', 'day'] as const).map((k) => (

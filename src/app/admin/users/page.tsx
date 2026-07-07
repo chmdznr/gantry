@@ -37,18 +37,18 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Users</h1>
-        <span className="text-sm text-muted">{rows.length} user{active > 0 ? ` · ${active} filter aktif` : ''}</span>
+        <span className="text-sm text-muted">{rows.length} users{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
 
       <FilterBar resetHref="/admin/users" activeCount={active}>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="nama / email / organisasi" className="input w-64" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="name / email / organization" className="input w-64" />
         </label>
         <label className="text-sm">
           <span className="label">Status</span>
           <select name="status" defaultValue={sp.status ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             <option value="pending">pending</option>
             <option value="active">active</option>
             <option value="suspended">suspended</option>
@@ -57,15 +57,15 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         <label className="text-sm">
           <span className="label">Role</span>
           <select name="role" defaultValue={sp.role ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             <option value="developer">developer</option>
             <option value="portal-admin">portal-admin</option>
           </select>
         </label>
         <label className="text-sm">
-          <span className="label">Tipe</span>
+          <span className="label">Type</span>
           <select name="type" defaultValue={sp.type ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             <option value="internal">internal</option>
             <option value="external">external</option>
           </select>
@@ -75,8 +75,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
       <table className="table-base">
         <thead>
           <tr>
-            <th>Nama</th><th>Email</th><th>Organisasi</th>
-            <th>Tipe</th><th>Verified</th><th>Status</th><th>Aksi</th>
+            <th>Name</th><th>Email</th><th>Organization</th>
+            <th>Type</th><th>Verified</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -101,13 +101,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 )}
                 {u.status === 'suspended' && (
                   <form action={activateUser.bind(null, u.id)} className="inline">
-                    <PendingButton className="btn-outline btn-sm">Aktifkan</PendingButton>
+                    <PendingButton className="btn-outline btn-sm">Activate</PendingButton>
                   </form>
                 )}
               </td>
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">Tidak ada user yang cocok dengan filter.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">No users match the filters.</td></tr>}
         </tbody>
       </table>
     </main>

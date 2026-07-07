@@ -8,10 +8,12 @@ import { requireAdmin, requireUser } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
 import { isUniqueViolation } from '@/lib/db-errors'
 import * as kong from '@/lib/kong'
+import { getTranslations } from 'next-intl/server'
 
 export type ActionState = { error?: string; ok?: string }
 
 export async function requestSubscription(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const t = await getTranslations('actions')
   const session = await requireUser()
   const appId = String(formData.get('appId') ?? '')
   const productId = String(formData.get('productId') ?? '')
@@ -20,20 +22,20 @@ export async function requestSubscription(_prev: ActionState, formData: FormData
   const app = await db.query.applications.findFirst({
     where: and(eq(applications.id, appId), eq(applications.ownerUserId, session.user.id)),
   })
-  if (!app) return { error: 'Application tidak valid.' }
+  if (!app) return { error: t('appInvalid') }
   const product = await db.query.apiProducts.findFirst({
     where: and(eq(apiProducts.id, productId), eq(apiProducts.status, 'published')),
   })
-  if (!product) return { error: 'API tidak tersedia.' }
+  if (!product) return { error: t('apiUnavailable') }
   const plan = await db.query.plans.findFirst({ where: eq(plans.id, planId) })
-  if (!plan) return { error: 'Plan tidak valid.' }
+  if (!plan) return { error: t('planInvalid') }
 
   // re-subscribe: baris rejected/revoked dipakai ulang, bukan insert baru (unique app+product)
   const prior = await db.query.subscriptions.findFirst({
     where: and(eq(subscriptions.applicationId, appId), eq(subscriptions.apiProductId, productId)),
   })
   if (prior && (prior.status === 'requested' || prior.status === 'approved')) {
-    return { error: 'Application ini sudah punya subscription aktif/menunggu untuk API tersebut.' }
+    return { error: t('alreadySubscribed') }
   }
   try {
     if (prior) {
@@ -44,12 +46,12 @@ export async function requestSubscription(_prev: ActionState, formData: FormData
       await db.insert(subscriptions).values({ applicationId: appId, apiProductId: productId, planId })
     }
   } catch (err) {
-    if (isUniqueViolation(err)) return { error: 'Application ini sudah punya subscription untuk API tersebut.' }
+    if (isUniqueViolation(err)) return { error: t('duplicateSubscription') }
     throw err
   }
   await audit(session.user.id, 'subscription.request', 'subscription', undefined, { appId, productId, planId })
   revalidatePath(`/apis/${product.slug}`)
-  return { ok: 'Subscription diajukan — menunggu persetujuan admin.' }
+  return { ok: t('subscribeOk') }
 }
 
 async function loadFull(subscriptionId: string) {
@@ -83,7 +85,7 @@ export async function approveSubscription(subscriptionId: string): Promise<void>
     for (const id of createdPlugins) await kong.deletePlugin(id).catch(() => {})
     if (aclAdded) await kong.removeAclGroup(app.kongConsumerId, product.aclGroup).catch(() => {})
     console.error('[subscriptions] approve failed:', err)
-    throw new Error('Gagal menerapkan ke Kong — subscription tetap requested.')
+    throw new Error('Failed to apply changes on Kong — the subscription stays requested.')
   }
 
   await db.update(subscriptions)

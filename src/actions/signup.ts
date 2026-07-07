@@ -12,6 +12,7 @@ import { generateToken, tokenExpiry } from '@/lib/tokens'
 import { sendVerificationEmail } from '@/lib/mailer'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { isUniqueViolation } from '@/lib/db-errors'
+import { getTranslations } from 'next-intl/server'
 
 const SignupSchema = z.object({
   name: z.string().min(2).max(100),
@@ -32,22 +33,23 @@ export async function signup(
   _prev: { error?: string },
   formData: FormData,
 ): Promise<{ error?: string }> {
+  const t = await getTranslations('actions')
   if (!(await rateLimit(`signup:${await clientIp()}`, 5, 10 * 60_000))) {
-    return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
+    return { error: t('rateLimited') }
   }
   const parsed = SignupSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: 'Input tidak valid. Periksa kembali isian Anda.' }
+  if (!parsed.success) return { error: t('invalidInput') }
   const { name, email, organization, password, captcha } = parsed.data
 
   const jar = await cookies()
   const token = jar.get('captcha_digest')?.value
   if (!token || !(await verifyCaptchaToken(captcha, token))) {
-    return { error: 'Captcha salah. Coba lagi.' }
+    return { error: t('captchaWrong') }
   }
   jar.delete('captcha_digest')
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) })
-  if (existing) return { error: 'Email sudah terdaftar.' }
+  if (existing) return { error: t('emailTaken') }
 
   try {
     await db.transaction(async (tx) => {
@@ -67,10 +69,10 @@ export async function signup(
     })
   } catch (err) {
     if (isUniqueViolation(err)) {
-      return { error: 'Email sudah terdaftar.' }
+      return { error: t('emailTaken') }
     }
     console.error('[signup] failed:', err)
-    return { error: 'Terjadi kesalahan saat mendaftar. Coba lagi nanti.' }
+    return { error: t('signupFailed') }
   }
 
   redirect('/auth/signup/success')
@@ -81,11 +83,12 @@ export async function resendVerification(
   _prev: { error?: string; ok?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
+  const t = await getTranslations('actions')
   if (!(await rateLimit(`resend:${await clientIp()}`, 3, 10 * 60_000))) {
-    return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
+    return { error: t('rateLimited') }
   }
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
-  if (!email.includes('@')) return { error: 'Email tidak valid.' }
+  if (!email.includes('@')) return { error: t('invalidEmail') }
 
   const user = await db.query.users.findFirst({ where: eq(users.email, email) })
   if (user && !user.emailVerifiedAt) {
@@ -95,5 +98,5 @@ export async function resendVerification(
     await sendVerificationEmail(email, `${process.env.PORTAL_BASE_URL}/auth/verify?token=${token}`).catch((e) =>
       console.error('[resend] mailer failed:', e))
   }
-  return { ok: 'Jika email terdaftar dan belum terverifikasi, link baru sudah dikirim.' }
+  return { ok: t('resendOk') }
 }

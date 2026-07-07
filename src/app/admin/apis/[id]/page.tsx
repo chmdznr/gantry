@@ -32,22 +32,22 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
       <p className="mb-4 text-sm text-muted">status: {product.status}</p>
 
       <div className="card mb-6">
-        <h2 className="mb-2 font-semibold">Setup checklist (read-only dari Kong)</h2>
+        <h2 className="mb-2 font-semibold">Setup checklist (read-only from Kong)</h2>
         <p className="mb-2 text-xs text-muted">
-          Proteksi route/service (plugin key-auth/jwt + acl allow <code>{product.aclGroup}</code>) adalah tanggung jawab sisi publisher — portal hanya memverifikasi.
+          Route/service protection (key-auth/jwt + acl allow <code>{product.aclGroup}</code>) is owned by the publisher side — the portal only verifies it.
         </p>
         {kongDown ? (
-          <p className="text-sm text-stop">Kong Admin API tidak terjangkau.</p>
+          <p className="text-sm text-stop">Kong Admin API is unreachable.</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {checks.map((c) => (
               <li key={c.service} className="flex flex-wrap gap-4">
                 <code className="code-chip">{c.service}</code>
-                <Check ok={c.exists} label="service ada" />
+                <Check ok={c.exists} label="service exists" />
                 <Check ok={c.hasAuth} label="key-auth/jwt" />
                 <Check ok={c.hasAcl} label="plugin acl" />
                 <Check ok={c.aclAllowsGroup} label={`allow ${product.aclGroup}`} />
-                <span className="font-mono text-xs text-muted">routes: {c.routes.join(', ') || '(tidak ada)'}</span>
+                <span className="font-mono text-xs text-muted">routes: {c.routes.join(', ') || '(none)'}</span>
               </li>
             ))}
           </ul>
@@ -67,7 +67,7 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
         hasSpec: !!product.openapiSpec,
       }} />
 
-      <h2 className="section-title">Riwayat versi spec</h2>
+      <h2 className="section-title">Spec version history</h2>
       <SpecHistory productId={product.id} />
     </main>
   )

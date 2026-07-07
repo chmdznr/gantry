@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
 import Markdown from 'react-markdown'
+import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
@@ -19,6 +20,7 @@ type OpenApiSpec = { paths?: Record<string, Record<string, { summary?: string }>
 
 export default async function ApiDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const t = await getTranslations()
   const product = await db.query.apiProducts.findFirst({
     where: and(eq(apiProducts.slug, slug), inArray(apiProducts.status, ['published', 'deprecated'])),
   })
@@ -56,27 +58,27 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
   return (
     <main className="page">
-      <Link href="/" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← Katalog</Link>
+      <Link href="/" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{t('catalog.backToCatalog')}</Link>
       <div className="mt-2 flex items-baseline gap-3">
         <h1 className="text-2xl font-bold">{product.name}</h1>
         <span className="text-sm text-muted">v{product.version}</span>
         {product.status === 'deprecated' && (
-          <span className="badge-warn">deprecated — tidak menerima subscription baru</span>
+          <span className="badge-warn">{t('catalog.deprecatedBadge')}</span>
         )}
       </div>
       <div className="prose prose-sm mt-2 max-w-none text-ink-soft">
         <Markdown>{product.description}</Markdown>
       </div>
-      <p className="mt-2 text-sm text-muted">Base URL: <code className="code-chip">{product.proxyBaseUrl}</code></p>
+      <p className="mt-2 text-sm text-muted">{t('catalog.baseUrl')} <code className="code-chip">{product.proxyBaseUrl}</code></p>
       {latency && latency.length > 0 && (
         <p className="mt-1 text-sm text-muted">
-          Latency p95 (24 jam): {latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ')}
+          {t('catalog.latency', { list: latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ') })}
         </p>
       )}
 
-      <h2 className="section-title">Plans</h2>
+      <h2 className="section-title">{t('catalog.plansTitle')}</h2>
       <table className="table-base max-w-lg">
-        <thead><tr><th>Plan</th><th>Rate limit</th><th>Deskripsi</th></tr></thead>
+        <thead><tr><th>{t('catalog.plan')}</th><th>{t('catalog.rateLimit')}</th><th>{t('catalog.description')}</th></tr></thead>
         <tbody>
           {allPlans.map((p) => (
             <tr key={p.id}>
@@ -88,16 +90,16 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         </tbody>
       </table>
 
-      <h2 className="section-title">Subscribe</h2>
+      <h2 className="section-title">{t('catalog.subscribeTitle')}</h2>
       {!session?.user ? (
-        <p className="text-sm text-muted"><Link href="/auth/login" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">Masuk</Link> untuk subscribe ke API ini.</p>
+        <p className="text-sm text-muted">{t.rich('catalog.signInToSubscribe', { link: (c) => <Link href="/auth/login" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{c}</Link> })}</p>
       ) : (
         <>
           {mySubs.length > 0 && (
             <ul className="mb-3 space-y-1 text-sm">
               {mySubs.map((s) => (
                 <li key={s.applicationId}>
-                  <b>{s.appName}</b> — plan {s.planName} — <span className="badge-muted">{s.status}</span>
+                  <b>{s.appName}</b> — {t('catalog.planWord')} {s.planName} — <span className="badge-muted">{s.status}</span>
                 </li>
               ))}
             </ul>
@@ -110,14 +112,14 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
               plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
             />
           ) : (
-            <p className="text-sm text-warn">API ini deprecated — subscription baru ditutup.</p>
+            <p className="text-sm text-warn">{t('catalog.subscribeClosed')}</p>
           )}
         </>
       )}
 
       {session?.user && (
         <>
-          <h2 className="section-title">Try it</h2>
+          <h2 className="section-title">{t('catalog.tryItTitle')}</h2>
           <TryIt
             productId={product.id}
             baseUrl={product.proxyBaseUrl}
@@ -131,12 +133,12 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
 
       {spec?.paths && (
         <>
-          <h2 className="section-title">Referensi API</h2>
+          <h2 className="section-title">{t('catalog.referenceTitle')}</h2>
           <ApiReference spec={spec} />
         </>
       )}
 
-      <h2 className="section-title">Riwayat versi</h2>
+      <h2 className="section-title">{t('catalog.versionsTitle')}</h2>
       <SpecHistory productId={product.id} />
     </main>
   )

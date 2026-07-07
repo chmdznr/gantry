@@ -24,14 +24,14 @@ export default async function ImportApisPage() {
 
   return (
     <main>
-      <h1 className="mb-1 text-xl font-bold">Import dari Kong</h1>
+      <h1 className="mb-1 text-xl font-bold">Import from Kong</h1>
       <p className="mb-4 text-sm text-muted">
-        Service Kong yang belum ada di katalog. Import membuat <b>draft</b> product — lengkapi deskripsi/spec lalu publish.
+        Kong services not yet in the catalog. Importing creates a <b>draft</b> product — fill in the description/spec, then publish.
       </p>
       {kongDown ? (
-        <p className="text-sm text-stop">Kong Admin API tidak terjangkau. Cek <Link href="/admin/setup" className="underline">Setup</Link>.</p>
+        <p className="text-sm text-stop">Kong Admin API is unreachable. Cek <Link href="/admin/setup" className="underline">Setup</Link>.</p>
       ) : services.length === 0 ? (
-        <p className="text-sm text-muted">Semua service Kong sudah ada di katalog.</p>
+        <p className="text-sm text-muted">All Kong services are already in the catalog.</p>
       ) : (
         <form action={importProducts}>
           <table className="table-base max-w-3xl">
@@ -47,7 +47,7 @@ export default async function ImportApisPage() {
               ))}
             </tbody>
           </table>
-          <button className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Import terpilih</button>
+          <button className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Import selected</button>
         </form>
       )}
     </main>

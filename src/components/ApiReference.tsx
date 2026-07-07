@@ -1,4 +1,5 @@
 import Markdown from 'react-markdown'
+import { getTranslations } from 'next-intl/server'
 
 // Referensi API ala Swagger UI, dirender server-side dari OpenAPI JSON.
 // Accordion per operation: deskripsi, parameter, request body, responses.
@@ -88,7 +89,8 @@ function SchemaBlock({ title, schema, defs }: { title: string; schema?: Schema; 
   )
 }
 
-export default function ApiReference({ spec }: { spec: Spec }) {
+export default async function ApiReference({ spec }: { spec: Spec }) {
+  const t = await getTranslations('reference')
   const defs = spec.components?.schemas ?? {}
   const groups = new Map<string, { method: string; path: string; op: Operation; shared: Parameter[] }[]>()
 
@@ -102,7 +104,7 @@ export default function ApiReference({ spec }: { spec: Spec }) {
       groups.get(tag)!.push({ method: m.toUpperCase(), path, op, shared })
     }
   }
-  if (groups.size === 0) return <p className="text-sm text-muted">Spec tidak memuat endpoint.</p>
+  if (groups.size === 0) return <p className="text-sm text-muted">{t('noEndpoints')}</p>
 
   return (
     <div className="space-y-6">
@@ -129,16 +131,16 @@ export default function ApiReference({ spec }: { spec: Spec }) {
                     )}
                     {params.length > 0 && (
                       <>
-                        <p className="label">Parameter</p>
+                        <p className="label">{t('parameters')}</p>
                         <table className="table-base mb-1">
-                          <thead><tr><th>Nama</th><th>Letak</th><th>Tipe</th><th>Wajib</th><th>Deskripsi</th></tr></thead>
+                          <thead><tr><th>{t('name')}</th><th>{t('location')}</th><th>{t('type')}</th><th>{t('required')}</th><th>{t('description')}</th></tr></thead>
                           <tbody>
                             {params.map((p) => (
                               <tr key={p.in + p.name}>
                                 <td className="font-mono text-xs">{p.name}</td>
                                 <td className="text-xs text-muted">{p.in}</td>
                                 <td className="font-mono text-xs">{typeLabel(p.schema, defs)}</td>
-                                <td>{p.required ? <span className="text-stop">ya</span> : 'tidak'}</td>
+                                <td>{p.required ? <span className="text-stop">{t('yes')}</span> : t('no')}</td>
                                 <td className="text-muted">{p.description ?? ''}</td>
                               </tr>
                             ))}
@@ -146,10 +148,10 @@ export default function ApiReference({ spec }: { spec: Spec }) {
                         </table>
                       </>
                     )}
-                    <SchemaBlock title="Request body (contoh)" schema={bodySchema} defs={defs} />
+                    <SchemaBlock title={t('requestBody')} schema={bodySchema} defs={defs} />
                     {op.responses && (
                       <div className="mt-3">
-                        <p className="label">Responses</p>
+                        <p className="label">{t('responses')}</p>
                         <div className="space-y-2">
                           {Object.entries(op.responses).map(([code, r]) => {
                             const rSchema = r.content ? Object.values(r.content)[0]?.schema : undefined
@@ -159,7 +161,7 @@ export default function ApiReference({ spec }: { spec: Spec }) {
                                 <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm [&::-webkit-details-marker]:hidden">
                                   <span className={color}>{code}</span>
                                   <span className="text-muted">{r.description}</span>
-                                  {rSchema && <span className="ml-auto font-mono text-xs text-muted">skema ›</span>}
+                                  {rSchema && <span className="ml-auto font-mono text-xs text-muted">{t('schema')}</span>}
                                 </summary>
                                 {rSchema && (
                                   <pre className="overflow-auto border-t border-line/70 bg-ink/5 p-3 font-mono text-xs leading-relaxed">

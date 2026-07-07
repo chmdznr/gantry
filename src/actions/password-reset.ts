@@ -9,16 +9,18 @@ import { generateToken, tokenExpiry } from '@/lib/tokens'
 import { sendPasswordResetEmail } from '@/lib/mailer'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { audit } from '@/lib/audit'
+import { getTranslations } from 'next-intl/server'
 
 export type ResetState = { error?: string; ok?: string }
 
 // Tidak membocorkan apakah email terdaftar.
 export async function requestPasswordReset(_prev: ResetState, formData: FormData): Promise<ResetState> {
+  const t = await getTranslations('actions')
   if (!(await rateLimit(`pwreset:${await clientIp()}`, 3, 10 * 60_000))) {
-    return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
+    return { error: t('rateLimited') }
   }
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
-  if (!email.includes('@')) return { error: 'Email tidak valid.' }
+  if (!email.includes('@')) return { error: t('invalidEmail') }
 
   const user = await db.query.users.findFirst({ where: eq(users.email, email) })
   if (user && user.status === 'active') {
@@ -28,16 +30,17 @@ export async function requestPasswordReset(_prev: ResetState, formData: FormData
     await sendPasswordResetEmail(email, `${process.env.PORTAL_BASE_URL}/auth/reset?token=${token}`).catch((e) =>
       console.error('[pwreset] mailer failed:', e))
   }
-  return { ok: 'Jika email terdaftar dan aktif, link reset sudah dikirim.' }
+  return { ok: t('resetRequestOk') }
 }
 
 export async function resetPassword(_prev: ResetState, formData: FormData): Promise<ResetState> {
+  const t = await getTranslations('actions')
   const token = String(formData.get('token') ?? '')
   const password = String(formData.get('password') ?? '')
-  if (password.length < 8 || password.length > 128) return { error: 'Password minimal 8 karakter.' }
+  if (password.length < 8 || password.length > 128) return { error: t('passwordMin') }
 
   const row = await db.query.passwordResetTokens.findFirst({ where: eq(passwordResetTokens.token, token) })
-  if (!row || row.expiresAt < new Date()) return { error: 'Link reset tidak valid atau kedaluwarsa.' }
+  if (!row || row.expiresAt < new Date()) return { error: t('resetInvalid') }
 
   await db.update(users).set({ passwordHash: await hashPassword(password) }).where(eq(users.id, row.userId))
   await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, row.userId))

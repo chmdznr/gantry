@@ -7,6 +7,7 @@ import { apiProducts, appCredentials, applications, plans, subscriptions } from 
 import { deleteApp, revokeCredential } from '@/actions/apps'
 import AppStats from '@/components/AppStats'
 import CredentialCreator from '@/components/CredentialCreator'
+import { getTranslations } from 'next-intl/server'
 
 const statusBadge: Record<string, string> = {
   requested: 'badge-warn',
@@ -17,6 +18,7 @@ const statusBadge: Record<string, string> = {
 
 export default async function AppDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const t = await getTranslations()
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
 
@@ -40,31 +42,31 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <main className="page">
-      <Link href="/apps" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← Aplikasi Saya</Link>
+      <Link href="/apps" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← {t('apps.title')}</Link>
       <div className="mt-2 mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{app.name}</h1>
-        {app.blockedAt && <span className="badge-stop">DIBLOKIR — hubungi admin</span>}
+        {app.blockedAt && <span className="badge-stop">{t('apps.blocked')}</span>}
         <form action={deleteApp.bind(null, app.id)}>
-          <button className="btn-danger btn-sm">Hapus App</button>
+          <button className="btn-danger btn-sm">{t('apps.deleteApp')}</button>
         </form>
       </div>
       <p className="text-sm text-muted">{app.description || '—'}</p>
       <p className="mt-1 font-mono text-xs text-muted">consumer: {app.kongConsumerUsername}</p>
 
-      <h2 className="section-title">Credentials</h2>
+      <h2 className="section-title">{t('apps.credentialsTitle')}</h2>
       <CredentialCreator appId={app.id} />
       {creds.length > 0 && (
         <table className="table-base mt-3">
-          <thead><tr><th>Tipe</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
+          <thead><tr><th>{t('apps.type')}</th><th>{t('apps.hint')}</th><th>{t('apps.createdAt')}</th><th></th></tr></thead>
           <tbody>
             {creds.map((c) => (
               <tr key={c.id}>
-                <td>{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
+                <td>{c.type === 'key-auth' ? t('apps.apiKey') : 'JWT'}</td>
                 <td className="font-mono">…{c.hint}</td>
                 <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                 <td className="text-right">
                   <form action={revokeCredential.bind(null, app.id, c.id)}>
-                    <button className="btn-danger btn-sm">Revoke</button>
+                    <button className="btn-danger btn-sm">{t('apps.revoke')}</button>
                   </form>
                 </td>
               </tr>
@@ -73,15 +75,15 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         </table>
       )}
 
-      <h2 className="section-title">Pemakaian API</h2>
+      <h2 className="section-title">{t('apps.usageTitle')}</h2>
       <AppStats consumerUsername={app.kongConsumerUsername} />
 
-      <h2 className="section-title">Subscriptions</h2>
+      <h2 className="section-title">{t('apps.subscriptionsTitle')}</h2>
       {subs.length === 0 ? (
-        <p className="text-sm text-muted">Belum ada. Subscribe lewat halaman <Link href="/" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">katalog</Link>.</p>
+        <p className="text-sm text-muted">{t.rich('apps.subscriptionsEmpty', { link: (c) => <Link href="/" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{c}</Link> })}</p>
       ) : (
         <table className="table-base">
-          <thead><tr><th>API</th><th>Plan</th><th>Status</th></tr></thead>
+          <thead><tr><th>{t('apps.api')}</th><th>{t('catalog.plan')}</th><th>{t('apps.status')}</th></tr></thead>
           <tbody>
             {subs.map((s) => (
               <tr key={s.id}>

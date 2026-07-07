@@ -36,21 +36,21 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
   return (
     <main>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">API Products <span className="ml-1 align-middle text-sm font-normal text-muted">{rows.length}{active > 0 ? ` · ${active} filter aktif` : ''}</span></h1>
+        <h1 className="text-xl font-bold">API Products <span className="ml-1 align-middle text-sm font-normal text-muted">{rows.length}{active > 0 ? ` · ${active} active filters` : ''}</span></h1>
         <div className="flex gap-2">
-          <Link href="/admin/apis/import" className="btn-outline btn-sm">Import dari Kong</Link>
-          <Link href="/admin/apis/new" className="btn-primary btn-sm">+ API Baru</Link>
+          <Link href="/admin/apis/import" className="btn-outline btn-sm">Import from Kong</Link>
+          <Link href="/admin/apis/new" className="btn-primary btn-sm">+ New API</Link>
         </div>
       </div>
       <FilterBar resetHref="/admin/apis" activeCount={active}>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="nama / slug / deskripsi" className="input w-64" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="name / slug / description" className="input w-64" />
         </label>
         <label className="text-sm">
           <span className="label">Status</span>
           <select name="status" defaultValue={sp.status ?? ''} className="input w-auto">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {['draft', 'published', 'deprecated', 'retired'].map((st) => <option key={st} value={st}>{st}</option>)}
           </select>
         </label>
@@ -59,7 +59,7 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
       <table className="table-base">
         <thead>
           <tr>
-            <th>Nama</th><th>Slug</th><th>Kong services</th><th>Spec</th><th>Status</th><th>Aksi</th>
+            <th>Name</th><th>Slug</th><th>Kong services</th><th>Spec</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>

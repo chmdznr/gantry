@@ -8,6 +8,7 @@ import { applications, appCredentials } from '@/db/schema'
 import { requireUser } from '@/lib/require-admin'
 import { audit } from '@/lib/audit'
 import * as kong from '@/lib/kong'
+import { getTranslations } from 'next-intl/server'
 
 export type ActionState = { error?: string }
 export type SecretState = { error?: string; secret?: { type: 'key-auth' | 'jwt'; key: string; jwtSecret?: string } }
@@ -21,10 +22,11 @@ async function ownedApp(appId: string, userId: string) {
 }
 
 export async function createApp(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const t = await getTranslations('actions')
   const session = await requireUser()
   const name = String(formData.get('name') ?? '').trim()
   const description = String(formData.get('description') ?? '').trim()
-  if (name.length < 3) return { error: 'Nama application minimal 3 karakter.' }
+  if (name.length < 3) return { error: t('appNameMin') }
 
   const id = randomUUID()
   const username = `app-${id}`
@@ -33,7 +35,7 @@ export async function createApp(_prev: ActionState, formData: FormData): Promise
     consumer = await kong.createConsumer(username)
   } catch (err) {
     console.error('[apps] createConsumer failed:', err)
-    return { error: 'Gagal membuat consumer di Kong. Coba lagi nanti.' }
+    return { error: t('kongConsumerFailed') }
   }
   try {
     await db.insert(applications).values({
@@ -45,7 +47,7 @@ export async function createApp(_prev: ActionState, formData: FormData): Promise
   } catch (err) {
     await kong.deleteConsumer(consumer.id).catch(() => {})
     console.error('[apps] insert failed:', err)
-    return { error: 'Gagal menyimpan application.' }
+    return { error: t('appSaveFailed') }
   }
   await audit(session.user.id, 'app.create', 'application', id, { name })
   revalidatePath('/apps')
@@ -62,12 +64,13 @@ export async function deleteApp(appId: string): Promise<void> {
 }
 
 export async function createCredential(_prev: SecretState, formData: FormData): Promise<SecretState> {
+  const t = await getTranslations('actions')
   const session = await requireUser()
   const appId = String(formData.get('appId') ?? '')
   const type = String(formData.get('type') ?? '')
-  if (type !== 'key-auth' && type !== 'jwt') return { error: 'Tipe credential tidak valid.' }
+  if (type !== 'key-auth' && type !== 'jwt') return { error: t('credTypeInvalid') }
   const app = await ownedApp(appId, session.user.id)
-  if (!app.kongConsumerId) return { error: 'Consumer Kong belum ada untuk app ini.' }
+  if (!app.kongConsumerId) return { error: t('consumerMissing') }
 
   try {
     if (type === 'key-auth') {
@@ -88,7 +91,7 @@ export async function createCredential(_prev: SecretState, formData: FormData): 
     return { secret: { type, key: cred.key, jwtSecret: cred.secret } }
   } catch (err) {
     console.error('[apps] createCredential failed:', err)
-    return { error: 'Gagal membuat credential di Kong.' }
+    return { error: t('credCreateFailed') }
   }
 }
 

@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 export default function CaptchaField() {
+  const t = useTranslations('auth')
   const [nonce, setNonce] = useState(0)
   return (
     <div className="space-y-2">
@@ -10,10 +12,10 @@ export default function CaptchaField() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/api/captcha?n=${nonce}`} alt="captcha" className="h-12 rounded border bg-surface" />
         <button type="button" onClick={() => setNonce(nonce + 1)} className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">
-          ganti gambar
+          {t('captchaRefresh')}
         </button>
       </div>
-      <input name="captcha" required placeholder="Ketik teks pada gambar"
+      <input name="captcha" required placeholder={t('captchaPlaceholder')}
         className="input" />
     </div>
   )

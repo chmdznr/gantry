@@ -5,8 +5,10 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { applications } from '@/db/schema'
 import NewAppForm from '@/components/NewAppForm'
+import { getTranslations } from 'next-intl/server'
 
 export default async function AppsPage() {
+  const t = await getTranslations()
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
   const apps = await db.select().from(applications)
@@ -15,11 +17,11 @@ export default async function AppsPage() {
 
   return (
     <main className="page">
-      <Link href="/" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← Katalog</Link>
-      <h1 className="mt-2 mb-6 text-2xl font-bold">Aplikasi Saya</h1>
+      <Link href="/" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{t('catalog.backToCatalog')}</Link>
+      <h1 className="mt-2 mb-6 text-2xl font-bold">{t('apps.title')}</h1>
       <div className="mb-8"><NewAppForm /></div>
       {apps.length === 0 ? (
-        <p className="text-muted">Belum ada application. Buat satu untuk mendapatkan credential API.</p>
+        <p className="text-muted">{t('apps.empty')}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {apps.map((a) => (

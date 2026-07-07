@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import { BRAND } from '@/lib/brand'
+import { getTranslations } from 'next-intl/server'
 
 async function send(to: string, subject: string, text: string, logLabel: string): Promise<void> {
   if (!process.env.SMTP_HOST) {
@@ -16,11 +17,11 @@ async function send(to: string, subject: string, text: string, logLabel: string)
 }
 
 export async function sendVerificationEmail(to: string, url: string): Promise<void> {
-  await send(to, `Verifikasi email — ${BRAND.name}`,
-    `Klik untuk verifikasi email Anda: ${url}\nLink berlaku 24 jam.`, 'verification link')
+  const t = await getTranslations('mailer')
+  await send(to, t('verifySubject', { brand: BRAND.name }), t('verifyBody', { url }), 'verification link')
 }
 
 export async function sendPasswordResetEmail(to: string, url: string): Promise<void> {
-  await send(to, `Reset password — ${BRAND.name}`,
-    `Klik untuk mengatur ulang password Anda: ${url}\nLink berlaku 1 jam. Abaikan email ini jika Anda tidak meminta reset.`, 'password reset link')
+  const t = await getTranslations('mailer')
+  await send(to, t('resetSubject', { brand: BRAND.name }), t('resetBody', { url }), 'password reset link')
 }

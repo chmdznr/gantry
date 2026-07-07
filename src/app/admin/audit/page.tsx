@@ -72,42 +72,42 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Audit Log</h1>
-        <span className="text-sm text-muted">{total} entri{activeFilters > 0 ? ` · ${activeFilters} filter aktif` : ''}</span>
+        <span className="text-sm text-muted">{total} entries{activeFilters > 0 ? ` · ${activeFilters} active filters` : ''}</span>
       </div>
 
       <form className="card mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <label className="text-sm">
-          <span className="label">Aksi</span>
+          <span className="label">Action</span>
           <select name="action" defaultValue={sp.action ?? ''} className="input">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {actions.map((a) => <option key={a.v} value={a.v}>{a.v}</option>)}
           </select>
         </label>
         <label className="text-sm">
           <span className="label">Entity</span>
           <select name="entity" defaultValue={sp.entity ?? ''} className="input">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {entities.map((e) => <option key={e.v} value={e.v}>{e.v}</option>)}
           </select>
         </label>
         <label className="text-sm">
-          <span className="label">Aktor</span>
+          <span className="label">Actor</span>
           <select name="actor" defaultValue={sp.actor ?? ''} className="input">
-            <option value="">Semua</option>
+            <option value="">All</option>
             {actors.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </label>
         <label className="text-sm">
-          <span className="label">Dari</span>
+          <span className="label">From</span>
           <input name="from" type="date" defaultValue={sp.from ?? ''} className="input" />
         </label>
         <label className="text-sm">
-          <span className="label">Sampai</span>
+          <span className="label">To</span>
           <input name="to" type="date" defaultValue={sp.to ?? ''} className="input" />
         </label>
         <label className="text-sm">
-          <span className="label">Cari</span>
-          <input name="q" defaultValue={sp.q ?? ''} placeholder="aksi / entity id / payload" className="input" />
+          <span className="label">Search</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="action / entity id / payload" className="input" />
         </label>
         <div className="col-span-full flex gap-2">
           <button className="btn-primary">Terapkan</button>
@@ -118,14 +118,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <table className="table-base">
         <thead>
           <tr>
-            <th>Waktu</th><th>Aktor</th><th>Aksi</th><th>Entity</th><th>Detail</th>
+            <th>Time</th><th>Actor</th><th>Actions</th><th>Entity</th><th>Details</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className="align-top">
               <td className="whitespace-nowrap font-mono text-xs">{r.createdAt.toISOString().slice(0, 19).replace('T', ' ')}</td>
-              <td className="whitespace-nowrap">{r.actorName ?? <span className="text-muted">sistem</span>}</td>
+              <td className="whitespace-nowrap">{r.actorName ?? <span className="text-muted">system</span>}</td>
               <td className={`font-mono text-xs font-semibold ${actionColor(r.action)}`}>{r.action}</td>
               <td className="font-mono text-xs text-muted">{r.entityType}{r.entityId ? `:${r.entityId.slice(0, 8)}` : ''}</td>
               <td className="max-w-md break-all font-mono text-xs text-muted">{r.payload ? JSON.stringify(r.payload) : ''}</td>
@@ -133,16 +133,16 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           ))}
           {rows.length === 0 && (
             <tr><td colSpan={5} className="py-6 text-center text-muted">
-              Tidak ada entri yang cocok dengan filter. <Link href="/admin/audit" className="underline">Reset filter</Link>
+              No entries match the filters. <Link href="/admin/audit" className="underline">Reset filters</Link>
             </td></tr>
           )}
         </tbody>
       </table>
 
       <div className="mt-4 flex items-center gap-3 text-sm">
-        {page > 0 && <Link href={qs(page - 1)} className="btn-outline btn-sm">← Sebelumnya</Link>}
-        {page + 1 < pages && <Link href={qs(page + 1)} className="btn-outline btn-sm">Berikutnya →</Link>}
-        <span className="text-muted">Halaman {page + 1} dari {pages}</span>
+        {page > 0 && <Link href={qs(page - 1)} className="btn-outline btn-sm">← Previous</Link>}
+        {page + 1 < pages && <Link href={qs(page + 1)} className="btn-outline btn-sm">Next →</Link>}
+        <span className="text-muted">Page {page + 1} of {pages}</span>
       </div>
     </main>
   )
