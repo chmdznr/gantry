@@ -110,8 +110,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <input name="q" defaultValue={sp.q ?? ''} placeholder="aksi / entity id / payload" className="input" />
         </label>
         <div className="col-span-full flex gap-2">
-          <button className="btn-primary btn-sm">Terapkan</button>
-          {activeFilters > 0 && <Link href="/admin/audit" className="btn-outline btn-sm">Reset</Link>}
+          <button className="btn-primary">Terapkan</button>
+          {activeFilters > 0 && <Link href="/admin/audit" className="btn-outline">Reset</Link>}
         </div>
       </form>
 

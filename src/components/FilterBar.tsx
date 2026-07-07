@@ -11,8 +11,8 @@ export default function FilterBar({ resetHref, activeCount, children }: {
     <form className="card mb-5 flex flex-wrap items-end gap-3">
       {children}
       <div className="flex gap-2">
-        <button className="btn-primary btn-sm">Terapkan</button>
-        {activeCount > 0 && <Link href={resetHref} className="btn-outline btn-sm">Reset</Link>}
+        <button className="btn-primary">Terapkan</button>
+        {activeCount > 0 && <Link href={resetHref} className="btn-outline">Reset</Link>}
       </div>
     </form>
   )
