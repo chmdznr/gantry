@@ -1,9 +1,72 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type Endpoint = { method: string; path: string; summary?: string }
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string }
+
+const methodChip: Record<string, string> = {
+  GET: 'bg-go-soft text-go',
+  POST: 'bg-ink text-paper',
+  PUT: 'bg-warn-soft text-warn',
+  PATCH: 'bg-warn-soft text-warn',
+  DELETE: 'bg-stop-soft text-stop',
+}
+
+// Dropdown custom — popup select native dirender OS (posisi/tema di luar kendali halaman).
+function EndpointPicker({ endpoints, method, path, onPick }: {
+  endpoints: Endpoint[]
+  method: string
+  path: string
+  onPick: (method: string, path: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc) }
+  }, [open])
+
+  const current = endpoints.find((x) => x.method.toUpperCase() === method && x.path === path)
+
+  return (
+    <div ref={ref} className="relative mb-3 max-w-xl">
+      <span className="label">Pilih endpoint</span>
+      <button type="button" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}
+        className="input flex w-full items-center gap-2 text-left">
+        <span className={`w-14 rounded py-0.5 text-center font-mono text-xs font-bold ${methodChip[method] ?? 'bg-line/60'}`}>{method}</span>
+        <span className="truncate font-mono text-xs">{path}</span>
+        {current?.summary && <span className="truncate text-xs text-muted">— {current.summary}</span>}
+        <span className={`ml-auto text-muted transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden>▾</span>
+      </button>
+      {open && (
+        <ul role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-line bg-surface py-1 shadow-[0_8px_24px_-6px_rgb(16_49_43_/_0.25)]">
+          {endpoints.map((x) => {
+            const m = x.method.toUpperCase()
+            const active = m === method && x.path === path
+            return (
+              <li key={m + x.path} role="option" aria-selected={active}>
+                <button type="button" onClick={() => { onPick(m, x.path); setOpen(false) }}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-paper ${active ? 'bg-paper' : ''}`}>
+                  <span className={`w-14 rounded py-0.5 text-center font-mono text-xs font-bold ${methodChip[m] ?? 'bg-line/60'}`}>{m}</span>
+                  <span className="font-mono text-xs">{x.path}</span>
+                  {x.summary && <span className="truncate text-xs text-muted">— {x.summary}</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export default function TryIt({ productId, baseUrl, endpoints }: {
   productId: string
@@ -43,24 +106,8 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   return (
     <div className="card">
       {endpoints.length > 0 && (
-        <label className="mb-3 block text-sm">
-          <span className="label">Pilih endpoint</span>
-          <select className="input w-auto max-w-full font-mono text-xs"
-            value={`${method} ${path}`}
-            onChange={(e) => {
-              const [m, ...rest] = e.target.value.split(' ')
-              setMethod(m); setPath(rest.join(' '))
-            }}>
-            {!endpoints.some((x) => `${x.method.toUpperCase()} ${x.path}` === `${method} ${path}`) && (
-              <option value={`${method} ${path}`}>{method} {path} (manual)</option>
-            )}
-            {endpoints.map((x) => (
-              <option key={x.method + x.path} value={`${x.method.toUpperCase()} ${x.path}`}>
-                {x.method.toUpperCase()} {x.path}{x.summary ? ` — ${x.summary}` : ''}
-              </option>
-            ))}
-          </select>
-        </label>
+        <EndpointPicker endpoints={endpoints} method={method} path={path}
+          onPick={(m, p) => { setMethod(m); setPath(p) }} />
       )}
       <div className="flex flex-wrap items-end gap-2">
         <select value={method} onChange={(e) => setMethod(e.target.value)} className="input w-auto">
