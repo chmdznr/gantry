@@ -7,7 +7,7 @@ import ProductForm from '@/components/ProductForm'
 import SpecHistory from '@/components/SpecHistory'
 
 function Check({ ok, label }: { ok: boolean; label: string }) {
-  return <span className={ok ? 'text-green-700' : 'text-red-600'}>{ok ? '✓' : '✗'} {label}</span>
+  return <span className={ok ? 'text-go' : 'text-stop'}>{ok ? '✓' : '✗'} {label}</span>
 }
 
 export default async function EditApiPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,25 +29,25 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
   return (
     <main>
       <h1 className="mb-1 text-xl font-bold">{product.name}</h1>
-      <p className="mb-4 text-sm text-gray-500">status: {product.status}</p>
+      <p className="mb-4 text-sm text-muted">status: {product.status}</p>
 
-      <div className="mb-6 rounded border p-4">
+      <div className="card mb-6">
         <h2 className="mb-2 font-semibold">Setup checklist (read-only dari Kong)</h2>
-        <p className="mb-2 text-xs text-gray-500">
+        <p className="mb-2 text-xs text-muted">
           Proteksi route/service (plugin key-auth/jwt + acl allow <code>{product.aclGroup}</code>) adalah tanggung jawab sisi publisher — portal hanya memverifikasi.
         </p>
         {kongDown ? (
-          <p className="text-sm text-red-600">Kong Admin API tidak terjangkau.</p>
+          <p className="text-sm text-stop">Kong Admin API tidak terjangkau.</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {checks.map((c) => (
               <li key={c.service} className="flex flex-wrap gap-4">
-                <code className="rounded bg-gray-100 px-1">{c.service}</code>
+                <code className="code-chip">{c.service}</code>
                 <Check ok={c.exists} label="service ada" />
                 <Check ok={c.hasAuth} label="key-auth/jwt" />
                 <Check ok={c.hasAcl} label="plugin acl" />
                 <Check ok={c.aclAllowsGroup} label={`allow ${product.aclGroup}`} />
-                <span className="font-mono text-xs text-gray-500">routes: {c.routes.join(', ') || '(tidak ada)'}</span>
+                <span className="font-mono text-xs text-muted">routes: {c.routes.join(', ') || '(tidak ada)'}</span>
               </li>
             ))}
           </ul>

@@ -14,19 +14,19 @@ export default async function AppsPage() {
     .orderBy(desc(applications.createdAt))
 
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <Link href="/" className="text-sm text-blue-600 underline">← Katalog</Link>
+    <main className="page">
+      <Link href="/" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← Katalog</Link>
       <h1 className="mt-2 mb-6 text-2xl font-bold">Aplikasi Saya</h1>
       <div className="mb-8"><NewAppForm /></div>
       {apps.length === 0 ? (
-        <p className="text-gray-500">Belum ada application. Buat satu untuk mendapatkan credential API.</p>
+        <p className="text-muted">Belum ada application. Buat satu untuk mendapatkan credential API.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {apps.map((a) => (
-            <Link key={a.id} href={`/apps/${a.id}`} className="rounded-lg border p-4 transition hover:border-blue-500 hover:shadow">
+            <Link key={a.id} href={`/apps/${a.id}`} className="card-hover">
               <h3 className="font-semibold">{a.name}</h3>
-              <p className="mt-1 text-sm text-gray-600">{a.description || '—'}</p>
-              <p className="mt-2 font-mono text-xs text-gray-400">{a.kongConsumerUsername}</p>
+              <p className="mt-1 text-sm text-muted">{a.description || '—'}</p>
+              <p className="mt-2 font-mono text-xs text-muted">{a.kongConsumerUsername}</p>
             </Link>
           ))}
         </div>

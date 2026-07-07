@@ -9,10 +9,10 @@ import AppStats from '@/components/AppStats'
 import CredentialCreator from '@/components/CredentialCreator'
 
 const statusBadge: Record<string, string> = {
-  requested: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  revoked: 'bg-gray-200 text-gray-700',
+  requested: 'badge-warn',
+  approved: 'badge-go',
+  rejected: 'badge-stop',
+  revoked: 'badge-muted',
 }
 
 export default async function AppDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,22 +39,22 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
     .where(eq(subscriptions.applicationId, id))
 
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <Link href="/apps" className="text-sm text-blue-600 underline">← Aplikasi Saya</Link>
+    <main className="page">
+      <Link href="/apps" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← Aplikasi Saya</Link>
       <div className="mt-2 mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{app.name}</h1>
-        {app.blockedAt && <span className="rounded bg-red-600 px-2 py-0.5 text-xs text-white">DIBLOKIR — hubungi admin</span>}
+        {app.blockedAt && <span className="badge-stop">DIBLOKIR — hubungi admin</span>}
         <form action={deleteApp.bind(null, app.id)}>
-          <button className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-600">Hapus App</button>
+          <button className="btn-danger btn-sm">Hapus App</button>
         </form>
       </div>
-      <p className="text-sm text-gray-600">{app.description || '—'}</p>
-      <p className="mt-1 font-mono text-xs text-gray-400">consumer: {app.kongConsumerUsername}</p>
+      <p className="text-sm text-muted">{app.description || '—'}</p>
+      <p className="mt-1 font-mono text-xs text-muted">consumer: {app.kongConsumerUsername}</p>
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">Credentials</h2>
       <CredentialCreator appId={app.id} />
       {creds.length > 0 && (
-        <table className="mt-3 w-full border-collapse text-sm">
+        <table className="table-base mt-3">
           <thead><tr className="border-b text-left"><th className="py-1">Tipe</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
           <tbody>
             {creds.map((c) => (
@@ -64,7 +64,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
                 <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                 <td className="text-right">
                   <form action={revokeCredential.bind(null, app.id, c.id)}>
-                    <button className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Revoke</button>
+                    <button className="btn-danger btn-sm">Revoke</button>
                   </form>
                 </td>
               </tr>
@@ -78,16 +78,16 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">Subscriptions</h2>
       {subs.length === 0 ? (
-        <p className="text-sm text-gray-500">Belum ada. Subscribe lewat halaman <Link href="/" className="text-blue-600 underline">katalog</Link>.</p>
+        <p className="text-sm text-muted">Belum ada. Subscribe lewat halaman <Link href="/" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">katalog</Link>.</p>
       ) : (
-        <table className="w-full border-collapse text-sm">
+        <table className="table-base">
           <thead><tr className="border-b text-left"><th className="py-1">API</th><th>Plan</th><th>Status</th></tr></thead>
           <tbody>
             {subs.map((s) => (
               <tr key={s.id} className="border-b">
-                <td className="py-1"><Link href={`/apis/${s.productSlug}`} className="text-blue-600 underline">{s.productName}</Link></td>
+                <td className="py-1"><Link href={`/apis/${s.productSlug}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{s.productName}</Link></td>
                 <td>{s.planName}</td>
-                <td><span className={`rounded px-2 py-0.5 text-xs ${statusBadge[s.status] ?? 'bg-gray-100'}`}>{s.status}</span></td>
+                <td><span className={`${statusBadge[s.status] ?? 'bg-gray-100'}`}>{s.status}</span></td>
               </tr>
             ))}
           </tbody>

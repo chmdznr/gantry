@@ -7,13 +7,13 @@ function Row({ ok, warn, label, detail, children }: {
   ok: boolean; warn?: boolean; label: string; detail?: string; children?: React.ReactNode
 }) {
   const icon = ok ? '✓' : warn ? '⚠' : '✗'
-  const color = ok ? 'text-green-700' : warn ? 'text-yellow-700' : 'text-red-600'
+  const color = ok ? 'text-go' : warn ? 'text-warn' : 'text-stop'
   return (
     <li className="flex items-start gap-3 border-b py-3">
       <span className={`w-4 font-bold ${color}`}>{icon}</span>
       <div className="flex-1">
         <p className="text-sm font-medium">{label}</p>
-        {detail && <p className="text-xs text-gray-500">{detail}</p>}
+        {detail && <p className="text-xs text-muted">{detail}</p>}
       </div>
       {children}
     </li>
@@ -46,7 +46,7 @@ export default async function SetupPage() {
   return (
     <main className="max-w-3xl">
       <h1 className="mb-1 text-xl font-bold">Setup & Sanity Check</h1>
-      <p className="mb-4 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-muted">
         Verifikasi koneksi dan prasyarat supaya seluruh fitur portal berfungsi. Jalankan ulang halaman ini setelah mengubah konfigurasi.
       </p>
       <ul>
@@ -67,7 +67,7 @@ export default async function SetupPage() {
               : 'OK — metrik consumer + latency tersedia'}>
             {(!prom?.exists || !prom.perConsumer || !prom.enabled || !prom.latency) && (
               <form action={fixPrometheusPlugin}>
-                <button className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white">Perbaiki otomatis</button>
+                <button className="btn-primary btn-sm">Perbaiki otomatis</button>
               </form>
             )}
           </Row>
@@ -82,7 +82,7 @@ export default async function SetupPage() {
           label="Kong proxy URL (default import katalog)"
           detail={process.env.KONG_PROXY_URL ?? 'KONG_PROXY_URL belum diset — import memakai http://localhost:8104'} />
       </ul>
-      <p className="mt-4 text-xs text-gray-500">
+      <p className="mt-4 text-xs text-muted">
         Catatan boundary: proteksi per-service (key-auth/jwt + acl) dikonfigurasi dari sisi publisher; portal hanya memverifikasi lewat checklist di halaman tiap API.
       </p>
     </main>

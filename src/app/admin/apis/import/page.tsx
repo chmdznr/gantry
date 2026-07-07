@@ -25,23 +25,23 @@ export default async function ImportApisPage() {
   return (
     <main>
       <h1 className="mb-1 text-xl font-bold">Import dari Kong</h1>
-      <p className="mb-4 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-muted">
         Service Kong yang belum ada di katalog. Import membuat <b>draft</b> product — lengkapi deskripsi/spec lalu publish.
       </p>
       {kongDown ? (
-        <p className="text-sm text-red-600">Kong Admin API tidak terjangkau. Cek <Link href="/admin/setup" className="underline">Setup</Link>.</p>
+        <p className="text-sm text-stop">Kong Admin API tidak terjangkau. Cek <Link href="/admin/setup" className="underline">Setup</Link>.</p>
       ) : services.length === 0 ? (
-        <p className="text-sm text-gray-500">Semua service Kong sudah ada di katalog.</p>
+        <p className="text-sm text-muted">Semua service Kong sudah ada di katalog.</p>
       ) : (
         <form action={importProducts}>
-          <table className="w-full max-w-3xl border-collapse text-sm">
+          <table className="table-base max-w-3xl">
             <thead><tr className="border-b text-left"><th className="w-8 py-2"></th><th>Service</th><th>Upstream</th><th>Routes</th></tr></thead>
             <tbody>
               {services.map((s) => (
                 <tr key={s.name} className="border-b">
                   <td className="py-2"><input type="checkbox" name="services" value={s.name} defaultChecked /></td>
                   <td className="font-mono text-xs">{s.name}</td>
-                  <td className="font-mono text-xs text-gray-500">{s.host}</td>
+                  <td className="font-mono text-xs text-muted">{s.host}</td>
                   <td className="font-mono text-xs">{s.routes.join(', ') || '—'}</td>
                 </tr>
               ))}

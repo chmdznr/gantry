@@ -13,28 +13,28 @@ export default function SubscribeForm({ productId, apps, plans }: {
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(requestSubscription, {})
   if (apps.length === 0) {
-    return <p className="text-sm text-gray-600">Buat <Link href="/apps" className="text-blue-600 underline">application</Link> dulu untuk subscribe.</p>
+    return <p className="text-sm text-muted">Buat <Link href="/apps" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">application</Link> dulu untuk subscribe.</p>
   }
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="productId" value={productId} />
       <label className="text-sm">
-        <span className="mb-1 block text-gray-600">Application</span>
-        <select name="appId" required className="rounded border px-3 py-2">
+        <span className="mb-1 block text-muted">Application</span>
+        <select name="appId" required className="input w-auto">
           {apps.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-gray-600">Plan</span>
-        <select name="planId" required className="rounded border px-3 py-2">
+        <span className="mb-1 block text-muted">Plan</span>
+        <select name="planId" required className="input w-auto">
           {plans.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.limits})</option>)}
         </select>
       </label>
-      <button disabled={pending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+      <button disabled={pending} className="btn-primary">
         {pending ? 'Memproses…' : 'Subscribe'}
       </button>
-      {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
-      {state.ok && <p className="w-full text-sm text-green-700">{state.ok}</p>}
+      {state.error && <p className="w-full text-sm text-stop">{state.error}</p>}
+      {state.ok && <p className="w-full text-sm text-go">{state.ok}</p>}
     </form>
   )
 }

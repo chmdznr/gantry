@@ -1,27 +1,96 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* switchyard palette */
+  --color-paper: #faf9f5;
+  --color-surface: #ffffff;
+  --color-ink: #10312b;        /* spruce gelap — header, teks kuat */
+  --color-ink-soft: #33534d;
+  --color-line: #e4e1d8;       /* border hangat */
+  --color-muted: #6b7671;
+  --color-amber: #f5b700;      /* signal amber — aksen, fokus, signature */
+  --color-amber-deep: #b98a00;
+  --color-go: #1a7f4e;         /* status hijau */
+  --color-go-soft: #e2f3ea;
+  --color-warn: #a16207;
+  --color-warn-soft: #fdf3d7;
+  --color-stop: #b3372c;       /* status merah */
+  --color-stop-soft: #fbe9e6;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+:focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50;
+}
+@utility badge {
+  @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}
+@utility card {
+  @apply rounded-xl border border-line bg-surface p-5;
+}
+
+@layer components {
+  .page { @apply mx-auto max-w-5xl px-6 py-10; }
+
+  /* tombol (basis didaftarkan sebagai @utility supaya bisa di-@apply) */
+  .btn-primary { @apply btn bg-ink text-paper hover:bg-ink-soft; }
+  .btn-accent { @apply btn bg-amber text-ink hover:bg-amber-deep hover:text-paper; }
+  .btn-outline { @apply btn border border-line bg-surface hover:border-ink-soft; }
+  .btn-danger { @apply btn border border-stop/30 bg-surface text-stop hover:bg-stop-soft; }
+  .btn-sm { @apply px-2.5 py-1 text-xs; }
+
+  /* form */
+  .input { @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm shadow-none placeholder:text-muted focus:border-ink-soft; }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-muted; }
+
+  /* kartu & tabel */
+  .card-hover { @apply card transition hover:-translate-y-0.5 hover:border-amber hover:shadow-[0_6px_20px_-8px_rgb(16_49_43_/_0.25)]; }
+  .table-base { @apply w-full border-collapse text-sm; }
+  .table-base thead th { @apply border-b border-line py-2 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-muted; }
+  .table-base tbody td { @apply border-b border-line py-2.5 pr-3 align-top; }
+
+  /* badge status */
+  .badge-go { @apply badge bg-go-soft text-go; }
+  .badge-warn { @apply badge bg-warn-soft text-warn; }
+  .badge-stop { @apply badge bg-stop-soft text-stop; }
+  .badge-muted { @apply badge bg-line/60 text-ink-soft; }
+
+  .code-chip { @apply rounded bg-ink/5 px-1.5 py-0.5 font-mono text-xs; }
+  .section-title { @apply mt-10 mb-3 text-lg font-bold; }
+
+  /* signature: route-line dengan stasiun */
+  .route-line { @apply relative flex flex-col gap-8 sm:flex-row sm:gap-0; }
+  .route-line::before {
+    content: '';
+    @apply absolute bg-ink/15;
+    left: 15px; top: 8px; bottom: 8px; width: 2px;
+  }
+  @media (min-width: 640px) {
+    .route-line::before { left: 8px; right: 8px; top: 15px; bottom: auto; width: auto; height: 2px; }
+  }
+  .station { @apply relative pl-11 sm:flex-1 sm:pl-0 sm:pr-6 sm:pt-10; }
+  .station::before {
+    content: '';
+    @apply absolute rounded-full border-4 border-ink bg-amber;
+    width: 16px; height: 16px; left: 8px; top: 2px;
+  }
+  @media (min-width: 640px) { .station::before { left: 0; top: 8px; } }
 }

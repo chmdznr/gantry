@@ -8,14 +8,14 @@ function ResetForm() {
   const [state, action, pending] = useActionState<ResetState, FormData>(resetPassword, {})
   const token = useSearchParams().get('token') ?? ''
   return (
-    <main className="mx-auto max-w-md p-8">
+    <main className="page max-w-md">
       <h1 className="mb-6 text-2xl font-bold">Atur Ulang Password</h1>
       <form action={action} className="space-y-4">
         <input type="hidden" name="token" value={token} />
         <input name="password" type="password" required minLength={8} placeholder="Password baru (min 8 karakter)"
-          className="w-full rounded border px-3 py-2" />
-        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-        <button disabled={pending} className="w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-50">
+          className="input" />
+        {state.error && <p className="text-sm text-stop">{state.error}</p>}
+        <button disabled={pending} className="btn-primary w-full">
           {pending ? 'Menyimpan…' : 'Simpan password baru'}
         </button>
       </form>

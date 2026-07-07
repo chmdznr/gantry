@@ -6,16 +6,16 @@ const codeColor = (code: string) =>
 export default async function AppStats({ consumerUsername }: { consumerUsername: string }) {
   const stats = await consumerRequestStats(consumerUsername)
   if (stats === null) {
-    return <p className="text-sm text-gray-500">Analytics tidak tersedia (Prometheus tidak terkonfigurasi/terjangkau).</p>
+    return <p className="text-sm text-muted">Analytics tidak tersedia (Prometheus tidak terkonfigurasi/terjangkau).</p>
   }
   if (stats.length === 0) {
-    return <p className="text-sm text-gray-500">Belum ada traffic 24 jam terakhir.</p>
+    return <p className="text-sm text-muted">Belum ada traffic 24 jam terakhir.</p>
   }
   const total = stats.reduce((n, s) => n + s.count, 0)
   const max = Math.max(...stats.map((s) => s.count))
   return (
     <div>
-      <p className="mb-2 text-sm text-gray-600">Total {total} request (24 jam terakhir)</p>
+      <p className="mb-2 text-sm text-muted">Total {total} request (24 jam terakhir)</p>
       <table className="w-full max-w-xl border-collapse text-sm">
         <thead><tr className="border-b text-left"><th className="py-1">Kong service</th><th>Status</th><th className="w-1/2">Jumlah</th></tr></thead>
         <tbody>

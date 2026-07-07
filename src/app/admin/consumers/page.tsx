@@ -25,39 +25,39 @@ export default async function AdminConsumersPage() {
   return (
     <main>
       <h1 className="mb-4 text-xl font-bold">Consumers (Applications)</h1>
-      {apps.length === 0 && <p className="text-sm text-gray-500">Belum ada application.</p>}
+      {apps.length === 0 && <p className="text-sm text-muted">Belum ada application.</p>}
       <div className="space-y-4">
         {apps.map((a) => {
           const appCreds = creds.filter((c) => c.applicationId === a.id)
           const appSubs = subs.filter((s) => s.applicationId === a.id)
           return (
-            <div key={a.id} className={`rounded border p-4 ${a.blockedAt ? 'border-red-300 bg-red-50' : ''}`}>
+            <div key={a.id} className={`rounded border p-4 ${a.blockedAt ? 'border-stop/40 bg-stop-soft/50' : ''}`}>
               <div className="flex flex-wrap items-center gap-3">
                 <b>{a.name}</b>
-                <span className="font-mono text-xs text-gray-500">{a.consumerUsername}</span>
-                <span className="text-sm text-gray-600">{a.ownerName} ({a.ownerEmail})</span>
-                <span className="text-xs text-gray-500">
+                <span className="font-mono text-xs text-muted">{a.consumerUsername}</span>
+                <span className="text-sm text-muted">{a.ownerName} ({a.ownerEmail})</span>
+                <span className="text-xs text-muted">
                   {appSubs.filter((s) => s.status === 'approved').length} subscription aktif · {appCreds.length} credential
                 </span>
-                {a.blockedAt && <span className="rounded bg-red-600 px-2 py-0.5 text-xs text-white">DIBLOKIR</span>}
+                {a.blockedAt && <span className="badge-stop">DIBLOKIR</span>}
                 <span className="ml-auto flex gap-2">
                   {a.blockedAt ? (
                     <form action={unblockApp.bind(null, a.id)}>
-                      <PendingButton className="rounded bg-gray-700 px-2 py-1 text-xs text-white">Buka Blokir</PendingButton>
+                      <PendingButton className="btn-outline btn-sm">Buka Blokir</PendingButton>
                     </form>
                   ) : (
                     <form action={blockApp.bind(null, a.id)}>
-                      <PendingButton className="rounded bg-red-600 px-2 py-1 text-xs text-white">Blokir</PendingButton>
+                      <PendingButton className="btn-danger btn-sm">Blokir</PendingButton>
                     </form>
                   )}
                   <form action={adminDeleteApp.bind(null, a.id)}>
-                    <PendingButton className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Hapus</PendingButton>
+                    <PendingButton className="btn-danger btn-sm">Hapus</PendingButton>
                   </form>
                 </span>
               </div>
               {appCreds.length > 0 && (
-                <table className="mt-3 w-full border-collapse text-sm">
-                  <thead><tr className="border-b text-left text-xs text-gray-500"><th className="py-1">Credential</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
+                <table className="table-base mt-3">
+                  <thead><tr className="border-b text-left text-xs text-muted"><th className="py-1">Credential</th><th>Hint</th><th>Dibuat</th><th></th></tr></thead>
                   <tbody>
                     {appCreds.map((c) => (
                       <tr key={c.id} className="border-b">
@@ -66,7 +66,7 @@ export default async function AdminConsumersPage() {
                         <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                         <td className="text-right">
                           <form action={adminRevokeCredential.bind(null, a.id, c.id)}>
-                            <PendingButton className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600">Revoke</PendingButton>
+                            <PendingButton className="btn-danger btn-sm">Revoke</PendingButton>
                           </form>
                         </td>
                       </tr>

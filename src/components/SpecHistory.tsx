@@ -8,7 +8,7 @@ function DiffList({ label, items, color }: { label: string; items: string[]; col
   return (
     <div className="flex flex-wrap gap-x-2 gap-y-0.5">
       <span className={`text-xs font-semibold ${color}`}>{label}</span>
-      {items.map((e) => <code key={e} className="font-mono text-xs text-gray-600">{e}</code>)}
+      {items.map((e) => <code key={e} className="font-mono text-xs text-muted">{e}</code>)}
     </div>
   )
 }
@@ -26,18 +26,18 @@ export default async function SpecHistory({ productId }: { productId: string }) 
         const d = (v.changelog as EndpointDiff | null) ?? { added: [], removed: [], changed: [] }
         const isCurrent = i === 0
         return (
-          <div key={v.id} className="rounded border p-3">
+          <div key={v.id} className="card p-3">
             <div className="flex items-center gap-2 text-sm">
               <b>v{v.version}</b>
               {isCurrent && <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">terkini</span>}
-              {d.removed.length > 0 && <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">breaking</span>}
-              <span className="ml-auto text-xs text-gray-500">{v.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</span>
+              {d.removed.length > 0 && <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-stop">breaking</span>}
+              <span className="ml-auto text-xs text-muted">{v.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</span>
             </div>
-            {v.note && <p className="mt-1 text-sm text-gray-700">{v.note}</p>}
+            {v.note && <p className="mt-1 text-sm text-ink-soft">{v.note}</p>}
             <div className="mt-2 space-y-1">
-              <DiffList label="＋ ditambah" items={d.added} color="text-green-700" />
-              <DiffList label="－ dihapus" items={d.removed} color="text-red-700" />
-              <DiffList label="~ diubah" items={d.changed} color="text-yellow-700" />
+              <DiffList label="＋ ditambah" items={d.added} color="text-go" />
+              <DiffList label="－ dihapus" items={d.removed} color="text-stop" />
+              <DiffList label="~ diubah" items={d.changed} color="text-warn" />
             </div>
           </div>
         )

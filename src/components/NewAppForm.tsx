@@ -8,17 +8,17 @@ export default function NewAppForm() {
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <label className="text-sm">
-        <span className="mb-1 block text-gray-600">Nama application</span>
-        <input name="name" required minLength={3} className="rounded border px-3 py-2" placeholder="mis. Mobile App Tim X" />
+        <span className="mb-1 block text-muted">Nama application</span>
+        <input name="name" required minLength={3} className="input w-auto" placeholder="mis. Mobile App Tim X" />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-gray-600">Deskripsi (opsional)</span>
-        <input name="description" className="w-72 rounded border px-3 py-2" />
+        <span className="mb-1 block text-muted">Deskripsi (opsional)</span>
+        <input name="description" className="input w-72" />
       </label>
-      <button disabled={pending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+      <button disabled={pending} className="btn-primary">
         {pending ? 'Membuat…' : 'Buat Application'}
       </button>
-      {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="w-full text-sm text-stop">{state.error}</p>}
     </form>
   )
 }
