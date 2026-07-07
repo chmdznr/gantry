@@ -1,10 +1,28 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { appCredentials, applications, subscriptions, users } from '@/db/schema'
+import FilterBar, { countActive } from '@/components/FilterBar'
 import { adminDeleteApp, adminRevokeCredential, blockApp, unblockApp } from '@/actions/admin-consumers'
 import PendingButton from '@/components/PendingButton'
 
-export default async function AdminConsumersPage() {
+type Filters = { q?: string; blocked?: string }
+
+export default async function AdminConsumersPage({ searchParams }: { searchParams: Promise<Filters> }) {
+  const sp = await searchParams
+  const conds: SQL[] = []
+  if (sp.q?.trim()) {
+    const like = `%${sp.q.trim()}%`
+    conds.push(or(
+      sql`${applications.name} ILIKE ${like}`,
+      sql`${applications.kongConsumerUsername} ILIKE ${like}`,
+      sql`${users.name} ILIKE ${like}`,
+      sql`${users.email} ILIKE ${like}`,
+    )!)
+  }
+  if (sp.blocked === 'yes') conds.push(isNotNull(applications.blockedAt))
+  if (sp.blocked === 'no') conds.push(isNull(applications.blockedAt))
+  const active = countActive(sp, ['q', 'blocked'])
+
   const apps = await db.select({
     id: applications.id,
     name: applications.name,
@@ -15,6 +33,7 @@ export default async function AdminConsumersPage() {
     ownerEmail: users.email,
   }).from(applications)
     .innerJoin(users, eq(applications.ownerUserId, users.id))
+    .where(conds.length ? and(...conds) : undefined)
     .orderBy(desc(applications.createdAt))
 
   const [creds, subs] = await Promise.all([
@@ -24,8 +43,25 @@ export default async function AdminConsumersPage() {
 
   return (
     <main>
-      <h1 className="mb-4 text-xl font-bold">Consumers (Applications)</h1>
-      {apps.length === 0 && <p className="text-sm text-muted">Belum ada application.</p>}
+      <div className="mb-4 flex items-baseline justify-between">
+        <h1 className="text-xl font-bold">Consumers (Applications)</h1>
+        <span className="text-sm text-muted">{apps.length} application{active > 0 ? ` · ${active} filter aktif` : ''}</span>
+      </div>
+      <FilterBar resetHref="/admin/consumers" activeCount={active}>
+        <label className="text-sm">
+          <span className="label">Cari</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="app / consumer / pemilik" className="input w-64" />
+        </label>
+        <label className="text-sm">
+          <span className="label">Blokir</span>
+          <select name="blocked" defaultValue={sp.blocked ?? ''} className="input w-auto">
+            <option value="">Semua</option>
+            <option value="yes">Diblokir</option>
+            <option value="no">Tidak diblokir</option>
+          </select>
+        </label>
+      </FilterBar>
+      {apps.length === 0 && <p className="text-sm text-muted">Tidak ada application yang cocok dengan filter.</p>}
       <div className="space-y-4">
         {apps.map((a) => {
           const appCreds = creds.filter((c) => c.applicationId === a.id)

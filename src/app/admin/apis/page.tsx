@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { desc } from 'drizzle-orm'
+import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
+import FilterBar, { countActive } from '@/components/FilterBar'
 import { setProductStatus } from '@/actions/admin-products'
 import PendingButton from '@/components/PendingButton'
 
@@ -12,17 +13,49 @@ const badge: Record<string, string> = {
   retired: 'badge-stop',
 }
 
-export default async function AdminApisPage() {
-  const rows = await db.select().from(apiProducts).orderBy(desc(apiProducts.updatedAt))
+type Filters = { q?: string; status?: string }
+
+export default async function AdminApisPage({ searchParams }: { searchParams: Promise<Filters> }) {
+  const sp = await searchParams
+  const conds: SQL[] = []
+  if (sp.q?.trim()) {
+    const like = `%${sp.q.trim()}%`
+    conds.push(or(
+      sql`${apiProducts.name} ILIKE ${like}`,
+      sql`${apiProducts.slug} ILIKE ${like}`,
+      sql`${apiProducts.description} ILIKE ${like}`,
+    )!)
+  }
+  if (sp.status && ['draft', 'published', 'deprecated', 'retired'].includes(sp.status)) {
+    conds.push(eq(apiProducts.status, sp.status as 'draft'))
+  }
+  const rows = await db.select().from(apiProducts)
+    .where(conds.length ? and(...conds) : undefined)
+    .orderBy(desc(apiProducts.updatedAt))
+  const active = countActive(sp, ['q', 'status'])
   return (
     <main>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">API Products</h1>
+        <h1 className="text-xl font-bold">API Products <span className="ml-1 align-middle text-sm font-normal text-muted">{rows.length}{active > 0 ? ` · ${active} filter aktif` : ''}</span></h1>
         <div className="flex gap-2">
           <Link href="/admin/apis/import" className="btn-outline btn-sm">Import dari Kong</Link>
           <Link href="/admin/apis/new" className="btn-primary btn-sm">+ API Baru</Link>
         </div>
       </div>
+      <FilterBar resetHref="/admin/apis" activeCount={active}>
+        <label className="text-sm">
+          <span className="label">Cari</span>
+          <input name="q" defaultValue={sp.q ?? ''} placeholder="nama / slug / deskripsi" className="input w-64" />
+        </label>
+        <label className="text-sm">
+          <span className="label">Status</span>
+          <select name="status" defaultValue={sp.status ?? ''} className="input w-auto">
+            <option value="">Semua</option>
+            {['draft', 'published', 'deprecated', 'retired'].map((st) => <option key={st} value={st}>{st}</option>)}
+          </select>
+        </label>
+      </FilterBar>
+
       <table className="table-base">
         <thead>
           <tr>
