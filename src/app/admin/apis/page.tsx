@@ -83,7 +83,7 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
                 )}
                 {p.status === 'deprecated' && (
                   <form action={setProductStatus.bind(null, p.id, 'retired')} className="inline">
-                    <PendingButton className="btn-danger btn-sm">Retire</PendingButton>
+                    <PendingButton confirm={`Retire "${p.name}"? It will disappear from the catalog.`} className="btn-danger btn-sm">Retire</PendingButton>
                   </form>
                 )}
               </td>

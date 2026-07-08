@@ -109,13 +109,13 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
                       <PendingButton className="btn-primary btn-sm">Approve</PendingButton>
                     </form>
                     <form action={rejectSubscription.bind(null, s.id)} className="inline">
-                      <PendingButton className="btn-danger btn-sm">Reject</PendingButton>
+                      <PendingButton confirm="Reject this subscription request?" className="btn-danger btn-sm">Reject</PendingButton>
                     </form>
                   </>
                 )}
                 {s.status === 'approved' && (
                   <form action={revokeSubscription.bind(null, s.id)} className="inline">
-                    <PendingButton className="btn-outline btn-sm">Revoke</PendingButton>
+                    <PendingButton confirm="Revoke this subscription? The app loses access to the API." className="btn-outline btn-sm">Revoke</PendingButton>
                   </form>
                 )}
               </td>

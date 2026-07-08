@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { apiProducts, appCredentials, applications, plans, subscriptions } from '@/db/schema'
 import { deleteApp, revokeCredential } from '@/actions/apps'
 import AppStats from '@/components/AppStats'
+import PendingButton from '@/components/PendingButton'
 import CredentialCreator from '@/components/CredentialCreator'
 import { getTranslations } from 'next-intl/server'
 
@@ -47,7 +48,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         <h1 className="text-2xl font-bold">{app.name}</h1>
         {app.blockedAt && <span className="badge-stop">{t('apps.blocked')}</span>}
         <form action={deleteApp.bind(null, app.id)}>
-          <button className="btn-danger btn-sm">{t('apps.deleteApp')}</button>
+          <PendingButton confirm={t('apps.confirmDeleteApp')} className="btn-danger btn-sm">{t('apps.deleteApp')}</PendingButton>
         </form>
       </div>
       <p className="text-sm text-muted">{app.description || '—'}</p>
@@ -66,7 +67,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
                 <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                 <td className="text-right">
                   <form action={revokeCredential.bind(null, app.id, c.id)}>
-                    <button className="btn-danger btn-sm">{t('apps.revoke')}</button>
+                    <PendingButton confirm={t('apps.confirmRevoke')} className="btn-danger btn-sm">{t('apps.revoke')}</PendingButton>
                   </form>
                 </td>
               </tr>

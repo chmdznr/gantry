@@ -83,11 +83,11 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
                     </form>
                   ) : (
                     <form action={blockApp.bind(null, a.id)}>
-                      <PendingButton className="btn-danger btn-sm">Block</PendingButton>
+                      <PendingButton confirm={`Block "${a.name}"? All its API calls will be rejected.`} className="btn-danger btn-sm">Block</PendingButton>
                     </form>
                   )}
                   <form action={adminDeleteApp.bind(null, a.id)}>
-                    <PendingButton className="btn-danger btn-sm">Delete</PendingButton>
+                    <PendingButton confirm={`Delete application "${a.name}" and its Kong consumer? This cannot be undone.`} className="btn-danger btn-sm">Delete</PendingButton>
                   </form>
                 </span>
               </div>
@@ -102,7 +102,7 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
                         <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                         <td className="text-right">
                           <form action={adminRevokeCredential.bind(null, a.id, c.id)}>
-                            <PendingButton className="btn-danger btn-sm">Revoke</PendingButton>
+                            <PendingButton confirm="Revoke this credential? Apps using it will stop working immediately." className="btn-danger btn-sm">Revoke</PendingButton>
                           </form>
                         </td>
                       </tr>

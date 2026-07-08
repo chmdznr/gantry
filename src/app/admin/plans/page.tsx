@@ -1,6 +1,6 @@
 import { or, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import { plans } from '@/db/schema'
+import { plans, subscriptions } from '@/db/schema'
 import FilterBar, { countActive } from '@/components/FilterBar'
 import { deletePlan } from '@/actions/admin-plans'
 import PlanForm from '@/components/PlanForm'
@@ -13,6 +13,10 @@ export default async function AdminPlansPage({ searchParams }: { searchParams: P
     .where(like ? or(sql`${plans.name} ILIKE ${like}`, sql`${plans.description} ILIKE ${like}`) : undefined)
     .orderBy(plans.name)
   const active = countActive(sp, ['q'])
+  // plan yang masih dipakai subscription tidak bisa dihapus — disable tombolnya
+  const used = new Set(
+    (await db.selectDistinct({ planId: subscriptions.planId }).from(subscriptions)).map((u) => u.planId),
+  )
   return (
     <main>
       <h1 className="mb-4 text-xl font-bold">Plans (Rate-Limit Tiers)</h1>
@@ -32,9 +36,15 @@ export default async function AdminPlansPage({ searchParams }: { searchParams: P
               <td>{Object.entries(p.rateLimit as Record<string, number>).map(([k, v]) => `${v}/${k}`).join(', ')}</td>
               <td className="text-muted">{p.description}</td>
               <td className="text-right">
-                <form action={deletePlan.bind(null, p.id)}>
-                  <PendingButton className="btn-danger btn-sm">Delete</PendingButton>
-                </form>
+                {used.has(p.id) ? (
+                  <button disabled title="In use by subscriptions — cannot be deleted" className="btn-danger btn-sm opacity-50">
+                    Delete
+                  </button>
+                ) : (
+                  <form action={deletePlan.bind(null, p.id)}>
+                    <PendingButton confirm={`Delete plan "${p.name}"?`} className="btn-danger btn-sm">Delete</PendingButton>
+                  </form>
+                )}
               </td>
             </tr>
           ))}

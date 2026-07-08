@@ -96,7 +96,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 )}
                 {u.status === 'active' && (
                   <form action={suspendUser.bind(null, u.id)} className="inline">
-                    <PendingButton className="btn-danger btn-sm">Suspend</PendingButton>
+                    <PendingButton confirm={`Suspend ${u.email}? They lose access immediately.`} className="btn-danger btn-sm">Suspend</PendingButton>
                   </form>
                 )}
                 {u.status === 'suspended' && (
