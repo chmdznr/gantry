@@ -28,6 +28,20 @@
 
 /* ── Site-wide themes (data-theme di <html>, dipilih admin) ──
    Hanya override variable; komponen tidak berubah. Daftar theme: src/lib/themes.ts */
+[data-theme="mainline"] {
+  --color-paper: #f4f6f1;
+  --color-ink: #101613;
+  --color-ink-soft: #3a4438;
+  --color-line: #d3d8cf;
+  --color-muted: #656d64;
+  --color-amber: #ccff00;
+  --color-amber-deep: #001408; /* hover btn-accent flip ke near-black */
+  --color-accent-ink: #101613;
+  --font-display: var(--font-space), ui-sans-serif, system-ui;
+}
+/* lime terlalu terang untuk focus ring di atas paper terang */
+[data-theme="mainline"] :focus-visible { outline-color: #6a8500; }
+
 [data-theme="heritage"] {
   --color-paper: #f7f4ec;
   --color-ink: #1c2c54;
