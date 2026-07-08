@@ -86,7 +86,7 @@ memverifikasi koneksi + prasyarat dan punya tombol **auto-fix** untuk plugin pro
 ```bash
 npm run dev            # dev server (Turbopack)
 npm run build          # production build (output: standalone)
-npm test               # vitest (26 test)
+npm test               # vitest (34 test)
 npm run db:generate    # buat migrasi dari perubahan src/db/schema.ts
 npm run db:migrate     # terapkan migrasi
 npm run seed:admin     # buat/update user admin
@@ -141,7 +141,15 @@ punya `FilterBar` seragam berbasis query-param.
 
 **UI/desain** — design system "switchyard" (token + komponen di `globals.css`: `btn-*`, `card`,
 `table-base`, `badge-*`, `input`, `section-title`), shell `SiteHeader`/`SiteFooter` di semua
-halaman, `NavLink` dengan indikator halaman aktif, tabel gaya kartu.
+halaman, `NavLink` dengan indikator halaman aktif, tabel gaya kartu. Semua aksi destruktif
+(delete/retire/revoke/block/suspend) minta konfirmasi (prop `confirm` di `PendingButton`);
+delete plan yang masih dipakai subscription di-disable.
+
+**Theme selector** — theme site-wide dipilih admin di `/admin/appearance`, berlaku seketika
+untuk semua pengunjung. 6 theme bawaan (istilah perkeretaapian, bukan nama brand): `switchyard`
+(default), `mainline`, `heritage`, `horizon`, `twilight`, `semaphore`. Tersimpan di tabel
+`portal_settings`; root layout membaca lalu memasang `data-theme` di `<html>` (tanpa client JS,
+tanpa flash). Cara bikin theme custom: lihat §4a.
 
 **i18n** — next-intl **mode cookie** (URL tidak berubah), default **English**, terjemahan
 Indonesia penuh untuk permukaan publik/developer + pesan action + email; `LocaleSwitcher`
@@ -151,6 +159,36 @@ EN/ID di header. Tambah bahasa: buat `messages/<kode>.json` + daftarkan di `LOCA
 **Spec versioning** — tiap upload spec baru → snapshot berversi + **diff endpoint otomatis**
 (added/removed/changed) + deteksi **breaking** (endpoint dihapus); riwayat di halaman API & admin.
 
+### 4a. Membuat theme custom
+
+Theme = satu set override CSS variable; komponen tidak perlu disentuh. Tiga langkah:
+
+1. **Daftarkan** di `src/lib/themes.ts` — tambah entri `THEMES`:
+   `{ key, name, description, fontVar, swatch: [paper, ink, accent] }`.
+2. **Definisikan warnanya** di `src/app/globals.css` — blok `[data-theme="<key>"]` yang
+   meng-override variable dari `@theme`:
+
+   ```css
+   [data-theme="contoh"] {
+     --color-paper: #f4f6fa;   /* background halaman */
+     --color-ink: #1a2340;     /* teks utama + surface gelap (header/hero) */
+     --color-ink-soft: #3c4668;
+     --color-line: #d5d9e4;    /* border */
+     --color-muted: #667089;   /* teks sekunder */
+     --color-amber: #e8590c;   /* accent: fokus, tombol accent, sinyal */
+     --color-amber-deep: #b74407;  /* hover tombol accent */
+     --color-accent-ink: #ffffff;  /* teks di atas accent — putih bila accent gelap */
+     --font-display: var(--font-archivo), ui-sans-serif, system-ui;
+   }
+   ```
+
+3. **Font display** (opsional) — kalau butuh font baru, load via `next/font` di
+   `src/app/layout.tsx` dengan `variable: "--font-<nama>"`, ikut pola yang ada.
+
+Catatan: warna status (`go`/`warn`/`stop`) sengaja sama di semua theme; jaga kontras AA
+(≥4.5:1) antara `accent-ink`↔`amber` dan `ink`↔`paper`. Kalau accent terlalu terang untuk
+focus ring (kasus `mainline`), override: `[data-theme="<key>"] :focus-visible { outline-color: … }`.
+
 ### Peta kode
 
 ```
@@ -159,12 +197,13 @@ src/lib/metrics.ts       PromQL analytics
 src/lib/openapi-diff.ts  diff endpoint antar spec (unit-tested)
 src/lib/postman.ts       konversi Postman Collection v2 -> OpenAPI (unit-tested)
 src/lib/redis.ts         klien Redis opsional (rate-limit/nonce)
+src/lib/themes.ts        registry theme + getTheme() (baca portal_settings)
 src/i18n/request.ts      konfigurasi next-intl (cookie locale); messages/{en,id}.json
 src/lib/require-admin.ts requireUser/requireAdmin (cek status+role dari DB)
 src/lib/{captcha,rate-limit,tokens,password,mailer,audit,db-errors}.ts
 src/actions/*.ts         server actions (admin-products/plans/consumers/setup/users, apps, subscriptions, signup, login, password-reset)
 src/app/                 halaman (admin/*, apis/*, apps/*, auth/*, api/try, api/captcha)
-src/db/schema.ts         10 tabel; migrasi di drizzle/0000..0003
+src/db/schema.ts         11 tabel; migrasi di drizzle/0000..0004
 ```
 
 ---
@@ -204,8 +243,9 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
 ### Backlog tambahan
 - **i18n halaman admin**: UI admin masih English hardcode; infrastruktur next-intl sudah ada —
   tinggal ekstraksi string ke `messages/*.json` (ikuti pola halaman publik).
-- **Open-source housekeeping**: rename repo → `gantry`, LICENSE (MIT/Apache-2.0), README bahasa
-  Inggris, CONTRIBUTING, screenshot.
+- **Open-source housekeeping**: rename repo → `gantry` **sudah**
+  (https://github.com/chmdznr/gantry, masih private). Sisanya belum: LICENSE (MIT/Apache-2.0),
+  README bahasa Inggris, CONTRIBUTING, screenshot — kerjakan sebelum flip ke public.
 
 ### Ide fitur lanjutan (belum di-scope)
 - Notifikasi email saat subscription di-approve/reject.
