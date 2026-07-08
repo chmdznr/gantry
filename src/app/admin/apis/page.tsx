@@ -78,7 +78,7 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
                 )}
                 {p.status === 'published' && (
                   <form action={setProductStatus.bind(null, p.id, 'deprecated')} className="inline">
-                    <PendingButton className="btn-outline btn-sm text-warn">Deprecate</PendingButton>
+                    <PendingButton confirm={`Deprecate "${p.name}"? It stays in the catalog with a deprecated badge.`} className="btn-outline btn-sm text-warn">Deprecate</PendingButton>
                   </form>
                 )}
                 {p.status === 'deprecated' && (
