@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <NavLink href="/admin/users" className="border-b-2 border-transparent pb-0.5 text-sm text-paper/75 hover:text-paper" activeClassName="!border-amber font-semibold !text-paper">Users</NavLink>
         <NavLink href="/admin/audit" className="border-b-2 border-transparent pb-0.5 text-sm text-paper/75 hover:text-paper" activeClassName="!border-amber font-semibold !text-paper">Audit</NavLink>
         <NavLink href="/admin/setup" className="border-b-2 border-transparent pb-0.5 text-sm text-paper/75 hover:text-paper" activeClassName="!border-amber font-semibold !text-paper">Setup</NavLink>
+        <NavLink href="/admin/appearance" className="border-b-2 border-transparent pb-0.5 text-sm text-paper/75 hover:text-paper" activeClassName="!border-amber font-semibold !text-paper">Appearance</NavLink>
         <Link href="/" className="ml-auto text-sm text-paper/75 hover:text-paper hover:underline">← Portal</Link>
       </nav>
       <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>

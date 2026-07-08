@@ -111,3 +111,8 @@ export const auditLogs = pgTable('audit_logs', {
   payload: jsonb('payload'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+export const portalSettings = pgTable('portal_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+})
