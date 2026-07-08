@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
@@ -29,7 +30,12 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
   return (
     <main>
       <h1 className="mb-1 text-xl font-bold">{product.name}</h1>
-      <p className="mb-4 text-sm text-muted">status: {product.status}</p>
+      <p className="mb-4 flex items-center gap-3 text-sm text-muted">
+        status: {product.status}
+        <Link href={`/admin/apis/${product.id}/spec`} className="btn-outline btn-sm">
+          {product.openapiSpec ? 'Edit spec' : 'Write spec'}
+        </Link>
+      </p>
 
       <div className="card mb-6">
         <h2 className="mb-2 font-semibold">Setup checklist (read-only from Kong)</h2>

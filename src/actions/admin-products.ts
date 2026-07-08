@@ -10,8 +10,9 @@ import { audit } from '@/lib/audit'
 import { isUniqueViolation } from '@/lib/db-errors'
 import { diffEndpoints, isEmptyDiff } from '@/lib/openapi-diff'
 import { isPostmanCollection, postmanToOpenApi } from '@/lib/postman'
+import { parseSpecText, specsEqual } from '@/lib/spec-edit'
 
-export type ActionState = { error?: string }
+export type ActionState = { error?: string; ok?: boolean }
 
 // Simpan snapshot spec + changelog endpoint saat spec diganti.
 async function snapshotSpec(
@@ -119,6 +120,37 @@ export async function updateProduct(_prev: ActionState, formData: FormData): Pro
   revalidatePath(`/admin/apis/${id}`)
   revalidatePath(`/apis/${parsed.values.slug}`)
   return {}
+}
+
+// Edit spec langsung dari editor web. Selalu snapshot bila konten berubah
+// (termasuk perubahan doc-only) — beda dengan upload yang hanya snapshot
+// saat endpoint berubah, karena edit manual adalah tindakan sengaja.
+export async function updateProductSpec(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await requireAdmin()
+  const id = String(formData.get('id') ?? '')
+  const text = String(formData.get('specText') ?? '')
+  if (text.length > 5 * 1024 * 1024) return { error: 'Spec terlalu besar (maks 5MB).' }
+
+  const { error, spec } = parseSpecText(text)
+  if (error || spec === undefined) return { error }
+
+  const prior = await db.query.apiProducts.findFirst({
+    where: eq(apiProducts.id, id),
+    columns: { openapiSpec: true, version: true, slug: true },
+  })
+  if (!prior) return { error: 'Product tidak ditemukan.' }
+
+  if (specsEqual(prior.openapiSpec, spec)) return { ok: true }
+
+  await db.update(apiProducts).set({ openapiSpec: spec, updatedAt: new Date() })
+    .where(eq(apiProducts.id, id))
+  await snapshotSpec(id, prior.version, prior.openapiSpec, spec,
+    String(formData.get('changeNote') ?? ''), session.user.id)
+  await audit(session.user.id, 'product.spec-edit', 'api_product', id, { slug: prior.slug })
+  revalidatePath(`/admin/apis/${id}`)
+  revalidatePath(`/admin/apis/${id}/spec`)
+  revalidatePath(`/apis/${prior.slug}`)
+  return { ok: true }
 }
 
 export async function setProductStatus(id: string, status: 'draft' | 'published' | 'deprecated' | 'retired'): Promise<void> {
