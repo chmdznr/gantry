@@ -46,7 +46,7 @@ export default async function AppDetailPage({ params, searchParams }: { params: 
   return (
     <main className="page">
       <Link href="/apps" className="text-sm font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">← {t('apps.title')}</Link>
-      <div className="mt-2 mb-1 flex items-center justify-between">
+      <div className="mt-2 mb-1 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{app.name}</h1>
         {app.blockedAt && <span className="badge-stop">{t('apps.blocked')}</span>}
         <form action={deleteApp.bind(null, app.id)}>
@@ -55,6 +55,9 @@ export default async function AppDetailPage({ params, searchParams }: { params: 
       </div>
       <p className="text-sm text-muted">{app.description || '—'}</p>
       <p className="mt-1 font-mono text-xs text-muted">consumer: {app.kongConsumerUsername}</p>
+
+      <h2 className="section-title !mt-0">{t('apps.usageTitle')}</h2>
+      <AppStats consumerUsername={app.kongConsumerUsername} range={range} />
 
       <h2 className="section-title">{t('apps.credentialsTitle')}</h2>
       <CredentialCreator appId={app.id} />
@@ -77,9 +80,6 @@ export default async function AppDetailPage({ params, searchParams }: { params: 
           </tbody>
         </table>
       )}
-
-      <h2 className="section-title">{t('apps.usageTitle')}</h2>
-      <AppStats consumerUsername={app.kongConsumerUsername} range={range} />
 
       <h2 className="section-title">{t('apps.subscriptionsTitle')}</h2>
       {subs.length === 0 ? (
