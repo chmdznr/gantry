@@ -45,7 +45,9 @@ export function resolveContent(rows: Map<string, string>, locale: string, def: C
     heroText: get('heroText', true, def.heroText),
     ctaStart: get('ctaStart', true, def.ctaStart),
     ctaCatalog: get('ctaCatalog', true, def.ctaCatalog),
-    footer: get('footer', true, def.footer),
+    // footer default composes from the RESOLVED name/tagline, so a rebrand
+    // (appName/tagline override) flows into the footer even when footer is unset.
+    footer: get('footer', true, `${appName} — ${tagline}`),
   }
 }
 

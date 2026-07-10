@@ -34,4 +34,8 @@ describe('resolveContent', () => {
     const rows = new Map([['content.tagline.en', '   ']])
     expect(resolveContent(rows, 'en', DEF).tagline).toBe('Dev portal')
   })
+  it('footer default composes from the resolved (overridden) name/tagline', () => {
+    const rows = new Map([['content.appName', 'Acme'], ['content.tagline.en', 'The API hub']])
+    expect(resolveContent(rows, 'en', DEF).footer).toBe('Acme — The API hub')
+  })
 })
