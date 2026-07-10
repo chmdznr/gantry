@@ -18,13 +18,13 @@ export default async function Home() {
   return (
     <main>
       <SiteHeader />
-      <section className="bg-ink text-paper">
+      <section className="bg-band text-band-ink">
         <div className="mx-auto max-w-6xl px-6 pt-14 pb-16">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-amber">{BRAND.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             {t('heroTitle')}
           </h1>
-          <p className="mt-5 max-w-xl text-paper/70">
+          <p className="mt-5 max-w-xl text-band-ink/70">
             {t('heroText')}
           </p>
           {!session?.user && (
