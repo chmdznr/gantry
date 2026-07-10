@@ -5,7 +5,7 @@ import { GeistMono } from 'geist/font/mono'
 // Display: Clash Display (self-hosted variable woff2, CSP-safe — no CDN fetch).
 export const displayFont = localFont({
   src: './fonts/ClashDisplay-Variable.woff2',
-  variable: '--font-display',
+  variable: '--font-clash',
   weight: '400 700',
   display: 'swap',
 })

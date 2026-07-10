@@ -22,7 +22,7 @@
   --color-band: #0c1f1a;      /* fixed spruce band (header/hero/nav) — never inverts */
   --color-band-ink: #f2f4f1;  /* text on the band */
 
-  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-clash), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
