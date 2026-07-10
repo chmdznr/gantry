@@ -171,11 +171,11 @@ export async function listServices(): Promise<{ name: string; host: string }[]> 
   return data
 }
 
-export async function listServiceRoutes(serviceName: string): Promise<{ name: string | null; paths: string[] }[]> {
-  const { data } = await kong<{ data: { name: string | null; paths: string[] | null }[] }>(
+export async function listServiceRoutes(serviceName: string): Promise<{ name: string | null; paths: string[]; methods: string[] | null }[]> {
+  const { data } = await kong<{ data: { name: string | null; paths: string[] | null; methods: string[] | null }[] }>(
     `/services/${serviceName}/routes?size=1000`,
   )
-  return data.map((r) => ({ name: r.name, paths: r.paths ?? [] }))
+  return data.map((r) => ({ name: r.name, paths: r.paths ?? [], methods: r.methods ?? null }))
 }
 
 // ---------- blacklist consumer (request-termination per consumer) ----------

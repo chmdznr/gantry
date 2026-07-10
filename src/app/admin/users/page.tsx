@@ -4,6 +4,8 @@ import { users } from '@/db/schema'
 import { approveUser, suspendUser, activateUser } from '@/actions/admin-users'
 import PendingButton from '@/components/PendingButton'
 import FilterBar, { countActive } from '@/components/FilterBar'
+import NewUserForm from '@/components/NewUserForm'
+import SetPasswordForm from '@/components/SetPasswordForm'
 
 const badge: Record<string, string> = {
   pending: 'badge-warn',
@@ -39,6 +41,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         <h1 className="text-xl font-bold">Users</h1>
         <span className="text-sm text-muted">{rows.length} users{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
+
+      <NewUserForm />
 
       <FilterBar resetHref="/admin/users" activeCount={active}>
         <label className="text-sm">
@@ -89,9 +93,12 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               <td>{u.emailVerifiedAt ? '✓' : '✗'}</td>
               <td><span className={badge[u.status]}>{u.status}</span></td>
               <td className="space-x-2">
-                {u.status === 'pending' && u.emailVerifiedAt && (
+                {u.status === 'pending' && (
                   <form action={approveUser.bind(null, u.id)} className="inline">
-                    <PendingButton className="btn-primary btn-sm">Approve</PendingButton>
+                    <PendingButton
+                      confirm={u.emailVerifiedAt ? undefined : `${u.email} has not verified their email. Approving also marks it verified (admin vouches). Continue?`}
+                      className="btn-primary btn-sm"
+                    >Approve</PendingButton>
                   </form>
                 )}
                 {u.status === 'active' && (
@@ -104,6 +111,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     <PendingButton className="btn-outline btn-sm">Activate</PendingButton>
                   </form>
                 )}
+                <SetPasswordForm userId={u.id} />
               </td>
             </tr>
           ))}

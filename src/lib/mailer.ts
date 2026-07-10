@@ -25,3 +25,8 @@ export async function sendPasswordResetEmail(to: string, url: string): Promise<v
   const t = await getTranslations('mailer')
   await send(to, t('resetSubject', { brand: BRAND.name }), t('resetBody', { url }), 'password reset link')
 }
+
+export async function sendInviteEmail(to: string, url: string): Promise<void> {
+  const t = await getTranslations('mailer')
+  await send(to, t('inviteSubject', { brand: BRAND.name }), t('inviteBody', { brand: BRAND.name, url }), 'invite link')
+}

@@ -17,14 +17,16 @@ const statusBadge: Record<string, string> = {
   revoked: 'badge-muted',
 }
 
-export default async function AppDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AppDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<{ range?: string }> }) {
   const { id } = await params
+  const range = ((await searchParams)?.range) ?? '24h'
   const t = await getTranslations()
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
 
+  const isAdmin = session.user.role === 'portal-admin'
   const app = await db.query.applications.findFirst({
-    where: and(eq(applications.id, id), eq(applications.ownerUserId, session.user.id)),
+    where: isAdmin ? eq(applications.id, id) : and(eq(applications.id, id), eq(applications.ownerUserId, session.user.id)),
   })
   if (!app) notFound()
 
@@ -77,7 +79,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
       )}
 
       <h2 className="section-title">{t('apps.usageTitle')}</h2>
-      <AppStats consumerUsername={app.kongConsumerUsername} />
+      <AppStats consumerUsername={app.kongConsumerUsername} range={range} />
 
       <h2 className="section-title">{t('apps.subscriptionsTitle')}</h2>
       {subs.length === 0 ? (

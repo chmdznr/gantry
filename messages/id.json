@@ -66,7 +66,9 @@
     "resetTitle": "Atur Ulang Password",
     "newPassword": "Password baru (min 8 karakter)",
     "saveNewPassword": "Simpan password baru",
-    "saving": "Menyimpan…"
+    "saving": "Menyimpan…",
+    "resetLinkInvalid": "Tautan ini tidak valid atau sudah kedaluwarsa.",
+    "requestNewLink": "Minta tautan baru"
   },
   "catalog": {
     "backToCatalog": "← Katalog",
@@ -98,7 +100,9 @@
     "sending": "Mengirim…",
     "bodyPlaceholder": "Request body (JSON)",
     "requestFailed": "Request gagal.",
-    "rateRemaining": "rate limit sisa: {left}/{limit}"
+    "rateRemaining": "rate limit sisa: {left}/{limit}",
+    "notRoutable": "belum ada di gateway",
+    "notRoutableHint": "Endpoint ini ada di spec tetapi tidak ada route gateway yang cocok — request pasti 404. Hubungi publisher API."
   },
   "reference": {
     "parameters": "Parameter",
@@ -147,11 +151,14 @@
     "confirmRevoke": "Revoke credential ini? Semua yang memakainya langsung berhenti bekerja.",
     "usageTitle": "Pemakaian API",
     "usageUnavailable": "Analytics tidak tersedia (Prometheus tidak terkonfigurasi/terjangkau).",
-    "usageEmpty": "Belum ada traffic 24 jam terakhir.",
-    "usageTotal": "Total {total} request (24 jam terakhir)",
+    "usageEmpty": "Belum ada traffic dalam {range} terakhir.",
+    "usageTotal": "Total {total} request ({range} terakhir)",
     "kongService": "Kong service",
     "status": "Status",
     "countCol": "Jumlah",
+    "rangeLabel": "Rentang:",
+    "bandwidthTitle": "Bandwidth ({range} terakhir)",
+    "typeCol": "Tipe",
     "subscriptionsTitle": "Subscriptions",
     "subscriptionsEmpty": "Belum ada. Subscribe lewat halaman <link>katalog</link>.",
     "api": "API"
@@ -206,6 +213,8 @@
     "verifySubject": "Verifikasi email — {brand}",
     "verifyBody": "Klik untuk verifikasi email Anda: {url}\nLink berlaku 24 jam.",
     "resetSubject": "Reset password — {brand}",
-    "resetBody": "Klik untuk mengatur ulang password Anda: {url}\nLink berlaku 1 jam. Abaikan email ini jika Anda tidak meminta reset."
+    "resetBody": "Klik untuk mengatur ulang password Anda: {url}\nLink berlaku 1 jam. Abaikan email ini jika Anda tidak meminta reset.",
+    "inviteSubject": "Akun {brand} Anda sudah dibuat — atur kata sandi",
+    "inviteBody": "Administrator telah membuatkan akun {brand} untuk Anda.\n\nAtur kata sandi lewat tautan ini (berlaku 3 hari):\n{url}\n\nAbaikan email ini jika Anda tidak merasa didaftarkan."
   }
 }

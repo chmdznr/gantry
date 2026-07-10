@@ -2,6 +2,7 @@
 
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { db } from '@/db'
 import { applications, apiProducts, plans, subscriptions } from '@/db/schema'
 import { requireAdmin, requireUser } from '@/lib/require-admin'
@@ -66,10 +67,23 @@ async function loadFull(subscriptionId: string) {
   return { sub, app: { ...app, kongConsumerId: app.kongConsumerId }, product, plan }
 }
 
+// error operasional (Kong down, service hilang) bukan crash: tampilkan sebagai pesan
+// di /admin/subscriptions lewat query param, jangan lempar ke error boundary generik.
+function failApprove(message: string): never {
+  redirect(`/admin/subscriptions?error=${encodeURIComponent(message)}`)
+}
+
 export async function approveSubscription(subscriptionId: string): Promise<void> {
   const session = await requireAdmin()
-  const { sub, app, product, plan } = await loadFull(subscriptionId)
+  const { sub, app, product, plan } = await loadFull(subscriptionId).catch((err: Error) => failApprove(err.message))
   if (sub.status !== 'requested') return
+
+  // pre-validasi supaya pesannya presisi sebelum menyentuh Kong
+  for (const svc of product.kongServiceNames) {
+    if (!(await kong.getServiceId(svc).catch(() => null))) {
+      failApprove(`Kong service "${svc}" not found. Fix the Kong service names of "${product.name}" in Admin › APIs.`)
+    }
+  }
 
   // tulis ke Kong dulu; rollback best-effort kalau gagal di tengah
   const createdPlugins: string[] = []
@@ -85,7 +99,8 @@ export async function approveSubscription(subscriptionId: string): Promise<void>
     for (const id of createdPlugins) await kong.deletePlugin(id).catch(() => {})
     if (aclAdded) await kong.removeAclGroup(app.kongConsumerId, product.aclGroup).catch(() => {})
     console.error('[subscriptions] approve failed:', err)
-    throw new Error('Failed to apply changes on Kong — the subscription stays requested.')
+    const detail = err instanceof kong.KongError ? ` (${err.message}: ${err.body.slice(0, 120)})` : ''
+    failApprove(`Failed to apply changes on Kong — the subscription stays requested.${detail}`)
   }
 
   await db.update(subscriptions)

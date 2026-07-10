@@ -7,6 +7,8 @@ import { apiProducts, applications, plans, subscriptions } from '@/db/schema'
 import Markdown from 'react-markdown'
 import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
+import { listServiceRoutes } from '@/lib/kong'
+import { isEndpointRoutable, type GatewayRoute } from '@/lib/routable'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -55,6 +57,17 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
     !mySubs.some((s) => s.applicationId === a.id && (s.status === 'requested' || s.status === 'approved')))
   const spec = product.openapiSpec as OpenApiSpec | null
   const latency = await serviceLatencyP95(product.kongServiceNames)
+
+  // route gateway → endpoint spec yang tidak bisa di-route dinonaktifkan di Try It.
+  // Kong tidak terjangkau → null → jangan blokir apa pun (konservatif).
+  let gatewayRoutes: GatewayRoute[] | null = null
+  if (session?.user && product.kongServiceNames.length > 0) {
+    try {
+      gatewayRoutes = (await Promise.all(product.kongServiceNames.map((s) => listServiceRoutes(s)))).flat()
+    } catch {
+      gatewayRoutes = null
+    }
+  }
 
   return (
     <main className="page">
@@ -125,7 +138,12 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
             baseUrl={product.proxyBaseUrl}
             endpoints={spec?.paths
               ? Object.entries(spec.paths).flatMap(([p, methods]) =>
-                  Object.entries(methods).map(([method, op]) => ({ method, path: p, summary: op?.summary })))
+                  Object.entries(methods).map(([method, op]) => ({
+                    method,
+                    path: p,
+                    summary: op?.summary,
+                    routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
+                  })))
               : []}
           />
         </>

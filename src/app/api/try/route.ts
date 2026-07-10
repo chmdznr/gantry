@@ -2,6 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
+import { matchesSpecOperation } from '@/lib/routable'
 
 const MAX_BODY = 100 * 1024
 const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'])
@@ -27,6 +28,14 @@ export async function POST(req: Request) {
     where: and(eq(apiProducts.id, String(payload.productId ?? '')), inArray(apiProducts.status, ['published', 'deprecated'])),
   })
   if (!product) return Response.json({ error: 'API tidak ditemukan.' }, { status: 404 })
+
+  // Guard: hanya endpoint yang terdaftar di spec produk yang boleh di-proxy.
+  // Mencegah user memakai portal untuk probing path yang tidak terdokumentasi
+  // (authz asli tetap ditegakkan Kong; ini lapisan tambahan sesuai maksud portal).
+  const spec = product.openapiSpec as { paths?: Record<string, Record<string, unknown>> } | null
+  if (!spec?.paths || !matchesSpecOperation(path, method, spec.paths)) {
+    return Response.json({ error: 'Endpoint tidak terdaftar pada spec API ini.' }, { status: 400 })
+  }
 
   const headers: Record<string, string> = {}
   if (payload.apiKey) headers['apikey'] = String(payload.apiKey).slice(0, 512)

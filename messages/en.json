@@ -66,7 +66,9 @@
     "resetTitle": "Reset Password",
     "newPassword": "New password (min 8 characters)",
     "saveNewPassword": "Save new password",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "resetLinkInvalid": "This link is invalid or has expired.",
+    "requestNewLink": "Request a new link"
   },
   "catalog": {
     "backToCatalog": "← Catalog",
@@ -98,7 +100,9 @@
     "sending": "Sending…",
     "bodyPlaceholder": "Request body (JSON)",
     "requestFailed": "Request failed.",
-    "rateRemaining": "rate limit left: {left}/{limit}"
+    "rateRemaining": "rate limit left: {left}/{limit}",
+    "notRoutable": "not on gateway",
+    "notRoutableHint": "This endpoint is documented in the spec but no gateway route matches it — the request would return 404. Contact the API publisher."
   },
   "reference": {
     "parameters": "Parameters",
@@ -147,11 +151,14 @@
     "confirmRevoke": "Revoke this credential? Anything using it stops working immediately.",
     "usageTitle": "API Usage",
     "usageUnavailable": "Analytics unavailable (Prometheus is not configured/reachable).",
-    "usageEmpty": "No traffic in the last 24 hours.",
-    "usageTotal": "{total} requests in total (last 24 hours)",
+    "usageEmpty": "No traffic in the last {range}.",
+    "usageTotal": "{total} requests in total (last {range})",
     "kongService": "Kong service",
     "status": "Status",
     "countCol": "Count",
+    "rangeLabel": "Range:",
+    "bandwidthTitle": "Bandwidth (last {range})",
+    "typeCol": "Type",
     "subscriptionsTitle": "Subscriptions",
     "subscriptionsEmpty": "None yet. Subscribe from the <link>catalog</link>.",
     "api": "API"
@@ -206,6 +213,8 @@
     "verifySubject": "Verify your email — {brand}",
     "verifyBody": "Click to verify your email: {url}\nThe link is valid for 24 hours.",
     "resetSubject": "Reset your password — {brand}",
-    "resetBody": "Click to reset your password: {url}\nThe link is valid for 1 hour. Ignore this email if you did not request a reset."
+    "resetBody": "Click to reset your password: {url}\nThe link is valid for 1 hour. Ignore this email if you did not request a reset.",
+    "inviteSubject": "Your {brand} account is ready — set your password",
+    "inviteBody": "An administrator created a {brand} account for you.\n\nSet your password via this link (valid for 3 days):\n{url}\n\nIf you were not expecting this, you can ignore this email."
   }
 }

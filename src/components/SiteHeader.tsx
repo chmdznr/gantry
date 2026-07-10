@@ -20,7 +20,7 @@ export default async function SiteHeader() {
   const [session, t] = await Promise.all([auth(), getTranslations('nav')])
   return (
     <header className="bg-ink text-paper">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <BrandMark />
         <nav className="flex items-center gap-2 text-sm">
           <NavLink href="/#katalog" className="btn-ghost btn-sm border-transparent text-paper/80 hover:text-paper">{t('catalog')}</NavLink>
@@ -51,7 +51,7 @@ export async function SiteFooter() {
   const t = await getTranslations('nav')
   return (
     <footer className="mt-auto border-t border-line">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 text-sm text-muted">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-sm text-muted">
         <span>{BRAND.name} — {BRAND.tagline}</span>
         <span className="font-mono text-xs">{t('openSource')}</span>
       </div>

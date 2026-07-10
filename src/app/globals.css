@@ -112,7 +112,8 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
 
 @layer components {
-  .page { @apply mx-auto max-w-5xl px-6 py-10; }
+  /* w-full wajib: body flex-col + mx-auto membuat flex item jatuh ke fit-content tanpa ini */
+  .page { @apply mx-auto w-full max-w-6xl px-6 py-10; }
 
   /* tombol (basis didaftarkan sebagai @utility supaya bisa di-@apply) */
   .btn-primary { @apply btn bg-ink text-paper hover:bg-ink-soft; }

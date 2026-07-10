@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
-type Endpoint = { method: string; path: string; summary?: string }
+type Endpoint = { method: string; path: string; summary?: string; routable?: boolean }
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string }
 
 const methodChip: Record<string, string> = {
@@ -55,11 +55,14 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
             const active = m === method && x.path === path
             return (
               <li key={m + x.path} role="option" aria-selected={active}>
-                <button type="button" onClick={() => { onPick(m, x.path); setOpen(false) }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-paper ${active ? 'bg-paper' : ''}`}>
+                <button type="button" disabled={x.routable === false}
+                  onClick={() => { onPick(m, x.path); setOpen(false) }}
+                  title={x.routable === false ? t('notRoutable') : undefined}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${x.routable === false ? 'cursor-not-allowed opacity-50' : 'hover:bg-paper'} ${active ? 'bg-paper' : ''}`}>
                   <span className={`w-14 rounded py-0.5 text-center font-mono text-xs font-bold ${methodChip[m] ?? 'bg-line/60'}`}>{m}</span>
                   <span className="font-mono text-xs">{x.path}</span>
                   {x.summary && <span className="truncate text-xs text-muted">— {x.summary}</span>}
+                  {x.routable === false && <span className="ml-auto shrink-0 badge-stop">{t('notRoutable')}</span>}
                 </button>
               </li>
             )
@@ -76,8 +79,9 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   endpoints: Endpoint[]
 }) {
   const t = useTranslations('tryit')
-  const [method, setMethod] = useState(endpoints[0]?.method?.toUpperCase() ?? 'GET')
-  const [path, setPath] = useState(endpoints[0]?.path ?? '/')
+  const first = endpoints.find((e) => e.routable !== false) ?? endpoints[0]
+  const [method, setMethod] = useState(first?.method?.toUpperCase() ?? 'GET')
+  const [path, setPath] = useState(first?.path ?? '/')
   const [apiKey, setApiKey] = useState('')
   const [body, setBody] = useState('')
   const [result, setResult] = useState<TryResult | null>(null)
@@ -103,6 +107,8 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     }
   }
 
+  const blocked = endpoints.some((e) => e.routable === false && e.method.toUpperCase() === method && e.path === path)
+
   const statusColor = (s?: number) =>
     !s ? '' : s < 300 ? 'text-go' : s < 500 ? 'text-warn' : 'text-stop'
 
@@ -121,11 +127,12 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
           className="input min-w-40 flex-1 font-mono" />
         <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder={t('apikeyPlaceholder')}
           type="password" className="input w-56 font-mono" />
-        <button onClick={send} disabled={busy}
+        <button onClick={send} disabled={busy || blocked}
           className="btn-primary">
           {busy ? t('sending') : t('send')}
         </button>
       </div>
+      {blocked && <p className="mt-2 text-sm text-warn">{t('notRoutableHint')}</p>}
       {method !== 'GET' && (
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4}
           placeholder={t('bodyPlaceholder')} className="input mt-2 font-mono" />

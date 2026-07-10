@@ -12,7 +12,7 @@ const badge: Record<string, string> = {
   revoked: 'badge-muted',
 }
 
-type Filters = { q?: string; status?: string; product?: string; plan?: string }
+type Filters = { q?: string; status?: string; product?: string; plan?: string; error?: string }
 
 export default async function AdminSubscriptionsPage({ searchParams }: { searchParams: Promise<Filters> }) {
   const sp = await searchParams
@@ -58,6 +58,13 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
         <h1 className="text-xl font-bold">Subscriptions</h1>
         <span className="text-sm text-muted">{rows.length} subscriptions{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
+
+      {sp.error && (
+        <div className="mb-4 flex items-start justify-between gap-4 rounded-lg border border-stop/30 bg-stop-soft px-4 py-3 text-sm text-stop">
+          <span>{sp.error}</span>
+          <a href="/admin/subscriptions" className="shrink-0 font-semibold underline">dismiss</a>
+        </div>
+      )}
 
       <FilterBar resetHref="/admin/subscriptions" activeCount={active}>
         <label className="text-sm">

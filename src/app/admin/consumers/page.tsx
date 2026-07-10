@@ -1,14 +1,20 @@
 import { and, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm'
+import { getTranslations } from 'next-intl/server'
 import { db } from '@/db'
 import { appCredentials, applications, subscriptions, users } from '@/db/schema'
 import FilterBar, { countActive } from '@/components/FilterBar'
 import { adminDeleteApp, adminRevokeCredential, blockApp, unblockApp } from '@/actions/admin-consumers'
 import PendingButton from '@/components/PendingButton'
+import { allConsumersUsage } from '@/lib/metrics'
+import { RANGES } from '@/lib/ranges'
+import { RangeSelector } from '@/components/RangeSelector'
+import { BandwidthTable, RequestTable } from '@/components/AppStats'
 
-type Filters = { q?: string; blocked?: string }
+type Filters = { q?: string; blocked?: string; range?: string }
 
 export default async function AdminConsumersPage({ searchParams }: { searchParams: Promise<Filters> }) {
   const sp = await searchParams
+  const range = (RANGES as readonly string[]).includes(sp.range ?? '') ? sp.range! : '24h'
   const conds: SQL[] = []
   if (sp.q?.trim()) {
     const like = `%${sp.q.trim()}%`
@@ -36,10 +42,17 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
     .where(conds.length ? and(...conds) : undefined)
     .orderBy(desc(applications.createdAt))
 
-  const [creds, subs] = await Promise.all([
+  const [creds, subs, usage, t] = await Promise.all([
     db.select().from(appCredentials),
     db.select({ applicationId: subscriptions.applicationId, status: subscriptions.status }).from(subscriptions),
+    allConsumersUsage(range),
+    getTranslations('apps'),
   ])
+  const requestsByConsumer = new Map<string, number>()
+  for (const r of usage?.requests ?? []) {
+    requestsByConsumer.set(r.consumer, (requestsByConsumer.get(r.consumer) ?? 0) + r.count)
+  }
+  const maxRequests = Math.max(1, ...requestsByConsumer.values())
 
   return (
     <main>
@@ -60,7 +73,13 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
             <option value="no">Not blocked</option>
           </select>
         </label>
+        <input type="hidden" name="range" value={range} />
       </FilterBar>
+      <div className="mb-3 flex items-center gap-2 text-xs text-muted">
+        <span>Requests over:</span>
+        <RangeSelector current={range} />
+        {usage === null && <span>· usage stats unavailable (Prometheus not configured or unreachable)</span>}
+      </div>
       {apps.length === 0 && <p className="text-sm text-muted">No applications match the filters.</p>}
       <div className="space-y-4">
         {apps.map((a) => {
@@ -91,6 +110,42 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
                   </form>
                 </span>
               </div>
+              {a.consumerUsername && usage !== null && (() => {
+                const total = requestsByConsumer.get(a.consumerUsername) ?? 0
+                const reqRows = usage.requests.filter((r) => r.consumer === a.consumerUsername)
+                const bwRows = usage.bandwidth.filter((r) => r.consumer === a.consumerUsername)
+                const statLine = (
+                  <span className="inline-flex items-center gap-2 align-middle">
+                    <span className="inline-block h-2 w-48 overflow-hidden rounded-full bg-ink/10">
+                      <span className="block h-full rounded-full bg-amber" style={{ width: `${(total / maxRequests) * 100}%` }} />
+                    </span>
+                    <span className="text-xs text-muted">{total.toLocaleString()} requests ({range})</span>
+                  </span>
+                )
+                if (reqRows.length === 0 && bwRows.length === 0) {
+                  return <div className="mt-2">{statLine}</div>
+                }
+                return (
+                  <details className="mt-2 group">
+                    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      {statLine}
+                      <span className="ml-2 align-middle text-xs text-ink-soft underline decoration-amber decoration-2 underline-offset-2">
+                        <span className="group-open:hidden">breakdown ▾</span>
+                        <span className="hidden group-open:inline">hide ▴</span>
+                      </span>
+                    </summary>
+                    <div className="mt-3 max-w-3xl space-y-4">
+                      {reqRows.length > 0 && <RequestTable stats={reqRows} t={t} />}
+                      {bwRows.length > 0 && (
+                        <div>
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Bandwidth</p>
+                          <BandwidthTable bw={bwRows} t={t} />
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                )
+              })()}
               {appCreds.length > 0 && (
                 <table className="table-base mt-3">
                   <thead><tr className="border-b text-left text-xs text-muted"><th>Credential</th><th>Hint</th><th>Created</th><th></th></tr></thead>

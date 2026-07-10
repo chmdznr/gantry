@@ -19,7 +19,7 @@ export default async function Home() {
     <main>
       <SiteHeader />
       <section className="bg-ink text-paper">
-        <div className="mx-auto max-w-5xl px-6 pt-14 pb-16">
+        <div className="mx-auto max-w-6xl px-6 pt-14 pb-16">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-amber">{BRAND.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             {t('heroTitle')}
@@ -36,7 +36,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 py-14">
+      <section className="mx-auto max-w-6xl px-6 py-14">
         <div className="route-line">
           {steps.map((s) => (
             <div key={s.t} className="station">
@@ -47,7 +47,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="katalog" className="mx-auto max-w-5xl px-6 pb-20">
+      <section id="katalog" className="mx-auto max-w-6xl px-6 pb-20">
         <div className="mb-5 flex items-baseline justify-between">
           <h2 className="text-2xl font-bold">{t('catalogTitle')}</h2>
           <span className="text-sm text-muted">{t('available', { count: products.length })}</span>

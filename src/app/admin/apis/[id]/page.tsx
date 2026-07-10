@@ -4,8 +4,11 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import { checkServiceSetup, listServiceRoutes, type ServiceCheck } from '@/lib/kong'
+import { isEndpointRoutable, type GatewayRoute } from '@/lib/routable'
 import ProductForm from '@/components/ProductForm'
 import SpecHistory from '@/components/SpecHistory'
+
+const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
 function Check({ ok, label }: { ok: boolean; label: string }) {
   return <span className={ok ? 'text-go' : 'text-stop'}>{ok ? '✓' : '✗'} {label}</span>
@@ -16,16 +19,25 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
   const product = await db.query.apiProducts.findFirst({ where: eq(apiProducts.id, id) })
   if (!product) notFound()
 
-  let checks: (ServiceCheck & { routes: string[] })[] = []
+  let checks: (ServiceCheck & { routes: GatewayRoute[] })[] = []
   let kongDown = false
   try {
     checks = await Promise.all(product.kongServiceNames.map(async (s) => ({
       ...(await checkServiceSetup(s, product.aclGroup)),
-      routes: (await listServiceRoutes(s).catch(() => [])).flatMap((r) => r.paths),
+      routes: await listServiceRoutes(s).catch(() => []),
     })))
   } catch {
     kongDown = true
   }
+
+  // validitas endpoint spec vs route gateway — tampil terus, bukan hanya saat import
+  const allRoutes: GatewayRoute[] = checks.flatMap((c) => c.routes)
+  const spec = product.openapiSpec as { paths?: Record<string, Record<string, unknown>> } | null
+  const specOps = !kongDown && spec?.paths
+    ? Object.entries(spec.paths).flatMap(([p, ops]) =>
+        Object.keys(ops).filter((m) => HTTP_METHODS.includes(m)).map((m) => ({ method: m.toUpperCase(), path: p })))
+    : []
+  const unroutable = specOps.filter((op) => !isEndpointRoutable(op.path, op.method, allRoutes))
 
   return (
     <main>
@@ -53,10 +65,24 @@ export default async function EditApiPage({ params }: { params: Promise<{ id: st
                 <Check ok={c.hasAuth} label="key-auth/jwt" />
                 <Check ok={c.hasAcl} label="plugin acl" />
                 <Check ok={c.aclAllowsGroup} label={`allow ${product.aclGroup}`} />
-                <span className="font-mono text-xs text-muted">routes: {c.routes.join(', ') || '(none)'}</span>
+                <span className="font-mono text-xs text-muted">routes: {c.routes.flatMap((r) => r.paths).join(', ') || '(none)'}</span>
               </li>
             ))}
           </ul>
+        )}
+        {!kongDown && specOps.length > 0 && (
+          unroutable.length === 0 ? (
+            <p className="mt-3 border-t border-line pt-3 text-sm text-go">✓ All {specOps.length} spec endpoints are routable on the gateway.</p>
+          ) : (
+            <div className="mt-3 border-t border-line pt-3 text-sm">
+              <p className="text-stop">✗ {unroutable.length} of {specOps.length} spec endpoints are NOT routable — Try It is disabled for these:</p>
+              <ul className="mt-1 space-y-0.5">
+                {unroutable.map((op) => (
+                  <li key={op.method + op.path} className="font-mono text-xs text-muted">{op.method} {op.path}</li>
+                ))}
+              </ul>
+            </div>
+          )
         )}
       </div>
 
