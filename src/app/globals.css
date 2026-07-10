@@ -11,7 +11,7 @@
   --color-muted: #5c6b64;
   --color-amber: #ff5d33;      /* accent — coral (token slot kept) */
   --color-amber-deep: #e24a22; /* accent-strong */
-  --color-accent-ink: #ffffff; /* text on accent */
+  --color-accent-ink: #0c1f1a; /* text on accent — spruce (AA on coral, was #fff = 3.06) */
   --color-go: #1a7f4e;
   --color-go-soft: #e2f2e9;
   --color-warn: #c77a0a;
@@ -21,6 +21,7 @@
 
   --color-band: #0c1f1a;      /* fixed spruce band (header/hero/nav) — never inverts */
   --color-band-ink: #f2f4f1;  /* text on the band */
+  --color-band-accent: #ff6b45; /* accent-as-text on the always-dark band (AA); per-preset below */
 
   --font-display: var(--font-clash), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -69,23 +70,23 @@
 /* ── Presets: shift ONLY the accent; neutrals + type come from the Atlas base + dark ── */
 /* atlas needs no block — it is the @theme base (light) + the dark override above. */
 
-[data-theme="mainline"] { --color-amber:#8fbf00; --color-amber-deep:#6f9600; --color-accent-ink:#0c1f0a; }
+[data-theme="mainline"] { --color-amber:#8fbf00; --color-amber-deep:#6f9600; --color-accent-ink:#0c1f0a; --color-band-accent:#b6ee2e; }
 :root[data-mode="dark"][data-theme="mainline"] { --color-amber:#b6ee2e; --color-amber-deep:#d0ff5a; --color-accent-ink:#101a05; }
 @media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="mainline"] { --color-amber:#b6ee2e; --color-amber-deep:#d0ff5a; --color-accent-ink:#101a05; } }
 
-[data-theme="heritage"] { --color-amber:#c9a227; --color-amber-deep:#9e7d17; --color-accent-ink:#241c05; }
+[data-theme="heritage"] { --color-amber:#c9a227; --color-amber-deep:#9e7d17; --color-accent-ink:#241c05; --color-band-accent:#e0bd4a; }
 :root[data-mode="dark"][data-theme="heritage"] { --color-amber:#e0bd4a; --color-amber-deep:#f0d472; --color-accent-ink:#221a04; }
 @media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="heritage"] { --color-amber:#e0bd4a; --color-amber-deep:#f0d472; --color-accent-ink:#221a04; } }
 
-[data-theme="horizon"] { --color-amber:#2f6ba8; --color-amber-deep:#215488; --color-accent-ink:#ffffff; }
+[data-theme="horizon"] { --color-amber:#2f6ba8; --color-amber-deep:#215488; --color-accent-ink:#ffffff; --color-band-accent:#5b9bd8; }
 :root[data-mode="dark"][data-theme="horizon"] { --color-amber:#5b9bd8; --color-amber-deep:#7bb0e0; --color-accent-ink:#08131f; }
 @media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="horizon"] { --color-amber:#5b9bd8; --color-amber-deep:#7bb0e0; --color-accent-ink:#08131f; } }
 
-[data-theme="twilight"] { --color-amber:#6a5cff; --color-amber-deep:#4a3ce0; --color-accent-ink:#ffffff; }
+[data-theme="twilight"] { --color-amber:#6a5cff; --color-amber-deep:#4a3ce0; --color-accent-ink:#ffffff; --color-band-accent:#8f84ff; }
 :root[data-mode="dark"][data-theme="twilight"] { --color-amber:#8f84ff; --color-amber-deep:#a99fff; --color-accent-ink:#0a0820; }
 @media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="twilight"] { --color-amber:#8f84ff; --color-amber-deep:#a99fff; --color-accent-ink:#0a0820; } }
 
-[data-theme="semaphore"] { --color-amber:#da3a2c; --color-amber-deep:#a92417; --color-accent-ink:#ffffff; }
+[data-theme="semaphore"] { --color-amber:#da3a2c; --color-amber-deep:#a92417; --color-accent-ink:#ffffff; --color-band-accent:#f2675a; }
 :root[data-mode="dark"][data-theme="semaphore"] { --color-amber:#f2675a; --color-amber-deep:#f78b80; --color-accent-ink:#2a0c08; }
 @media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="semaphore"] { --color-amber:#f2675a; --color-amber-deep:#f78b80; --color-accent-ink:#2a0c08; } }
 

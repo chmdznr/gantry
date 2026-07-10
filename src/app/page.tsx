@@ -20,7 +20,7 @@ export default async function Home() {
       <SiteHeader />
       <section className="bg-band text-band-ink">
         <div className="mx-auto max-w-6xl px-6 pt-14 pb-16">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-amber">{BRAND.tagline}</p>
+          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-band-accent">{BRAND.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             {t('heroTitle')}
           </h1>
