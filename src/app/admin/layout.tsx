@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getLocale } from 'next-intl/server'
 import { auth } from '@/auth'
-import { BRAND } from '@/lib/brand'
+import { getSiteContent } from '@/lib/site-content'
 import AdminNav from '@/components/AdminNav'
 import SidebarToggle from '@/components/SidebarToggle'
 
@@ -9,6 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth()
   if (session?.user?.role !== 'portal-admin') redirect('/auth/login')
   const collapsed = (await cookies()).get('adminNav')?.value === 'collapsed'
+  const c = await getSiteContent(await getLocale())
   return (
     <div className="lg:flex lg:min-h-screen">
       {/* Desktop sidebar — <aside> stretches to full container height (band bg always covers),
@@ -18,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className={`flex items-center gap-2 ${collapsed ? 'flex-col' : 'justify-between px-1'}`}>
             <span className="flex items-center gap-2 font-display font-bold">
               <span className="inline-block h-3 w-3 rounded-full border-[3px] border-band-ink/90 bg-amber" aria-hidden />
-              {!collapsed && <span>{BRAND.name} · Admin</span>}
+              {!collapsed && <span>{c.appName} · Admin</span>}
             </span>
             <SidebarToggle collapsed={collapsed} />
           </div>
@@ -31,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <summary aria-label="Admin menu" className="flex cursor-pointer items-center justify-between px-6 py-3 [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2 font-display font-bold">
             <span className="inline-block h-3 w-3 rounded-full border-[3px] border-band-ink/90 bg-amber" aria-hidden />
-            {BRAND.name} · Admin
+            {c.appName} · Admin
           </span>
           <span className="text-sm text-band-ink/75" aria-hidden>Menu <span className="inline-block transition-transform group-open:rotate-180">▾</span></span>
         </summary>

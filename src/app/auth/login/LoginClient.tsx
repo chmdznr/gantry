@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { login } from '@/actions/login'
 import { resendVerification } from '@/actions/signup'
-import { BRAND } from '@/lib/brand'
 import { useTranslations } from 'next-intl'
 
 function ResendForm() {
@@ -26,7 +25,7 @@ function ResendForm() {
   )
 }
 
-function LoginForm() {
+function LoginForm({ appName }: { appName: string }) {
   const t = useTranslations('auth')
   const [state, action, pending] = useActionState(login, {})
   const params = useSearchParams()
@@ -34,7 +33,7 @@ function LoginForm() {
   const next = params.get('next') ?? ''
   return (
     <main>
-      <h1 className="mb-6 text-2xl font-bold">{t('signInTitle', { brand: BRAND.name })}</h1>
+      <h1 className="mb-6 text-2xl font-bold">{t('signInTitle', { brand: appName })}</h1>
       {verify === 'ok' && <p className="mb-4 rounded bg-green-100 p-3 text-sm text-green-800">{t('verifiedOk')}</p>}
       {verify === 'invalid' && <p className="mb-4 rounded bg-red-100 p-3 text-sm text-red-800">{t('verifiedInvalid')}</p>}
       {params.get('reset') === 'ok' && <p className="mb-4 rounded bg-green-100 p-3 text-sm text-green-800">{t('resetOk')}</p>}
@@ -54,6 +53,6 @@ function LoginForm() {
   )
 }
 
-export default function LoginClient() {
-  return <Suspense><LoginForm /></Suspense>
+export default function LoginClient({ appName }: { appName: string }) {
+  return <Suspense><LoginForm appName={appName} /></Suspense>
 }

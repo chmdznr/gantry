@@ -3,8 +3,8 @@ import { desc, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
-import { getTranslations } from 'next-intl/server'
-import { BRAND } from '@/lib/brand'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { getSiteContent } from '@/lib/site-content'
 import SiteHeader, { SiteFooter } from '@/components/SiteHeader'
 import FilterBar, { countActive } from '@/components/FilterBar'
 
@@ -12,6 +12,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   const sp = await searchParams
   const t = await getTranslations('landing')
   const tf = await getTranslations('filters')
+  const c = await getSiteContent(await getLocale())
   const steps = t.raw('steps') as { t: string; d: string }[]
   const session = await auth()
   const products = await db.select().from(apiProducts)
@@ -31,17 +32,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
       <SiteHeader />
       <section className="bg-band text-band-ink">
         <div className="mx-auto max-w-6xl px-6 pt-14 pb-16">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-band-accent">{BRAND.tagline}</p>
+          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-band-accent">{c.tagline}</p>
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            {t('heroTitle')}
+            {c.heroTitle}
           </h1>
           <p className="mt-5 max-w-xl text-band-ink/70">
-            {t('heroText')}
+            {c.heroText}
           </p>
           {!session?.user && (
             <div className="mt-8 flex gap-3">
-              <Link href="/auth/signup" className="btn-accent">{t('ctaStart')}</Link>
-              <Link href="#katalog" className="btn-ghost">{t('ctaCatalog')}</Link>
+              <Link href="/auth/signup" className="btn-accent">{c.ctaStart}</Link>
+              <Link href="#katalog" className="btn-ghost">{c.ctaCatalog}</Link>
             </div>
           )}
         </div>

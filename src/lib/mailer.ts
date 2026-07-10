@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { BRAND } from '@/lib/brand'
+import { getAppName } from '@/lib/site-content'
 import { getTranslations } from 'next-intl/server'
 
 async function send(to: string, subject: string, text: string, logLabel: string): Promise<void> {
@@ -17,16 +17,16 @@ async function send(to: string, subject: string, text: string, logLabel: string)
 }
 
 export async function sendVerificationEmail(to: string, url: string): Promise<void> {
-  const t = await getTranslations('mailer')
-  await send(to, t('verifySubject', { brand: BRAND.name }), t('verifyBody', { url }), 'verification link')
+  const [t, brand] = await Promise.all([getTranslations('mailer'), getAppName()])
+  await send(to, t('verifySubject', { brand }), t('verifyBody', { url }), 'verification link')
 }
 
 export async function sendPasswordResetEmail(to: string, url: string): Promise<void> {
-  const t = await getTranslations('mailer')
-  await send(to, t('resetSubject', { brand: BRAND.name }), t('resetBody', { url }), 'password reset link')
+  const [t, brand] = await Promise.all([getTranslations('mailer'), getAppName()])
+  await send(to, t('resetSubject', { brand }), t('resetBody', { url }), 'password reset link')
 }
 
 export async function sendInviteEmail(to: string, url: string): Promise<void> {
-  const t = await getTranslations('mailer')
-  await send(to, t('inviteSubject', { brand: BRAND.name }), t('inviteBody', { brand: BRAND.name, url }), 'invite link')
+  const [t, brand] = await Promise.all([getTranslations('mailer'), getAppName()])
+  await send(to, t('inviteSubject', { brand }), t('inviteBody', { brand, url }), 'invite link')
 }

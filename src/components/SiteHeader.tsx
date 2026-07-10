@@ -1,27 +1,27 @@
 import Link from 'next/link'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { auth } from '@/auth'
 import { logout } from '@/actions/login'
-import { BRAND } from '@/lib/brand'
+import { getSiteContent } from '@/lib/site-content'
 import NavLink from '@/components/NavLink'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 
-export function BrandMark() {
+export function BrandMark({ appName }: { appName: string }) {
   return (
     <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
       <span className="inline-block h-3.5 w-3.5 rounded-full border-4 border-band-ink/90 bg-amber" aria-hidden />
-      {BRAND.name}
+      {appName}
     </Link>
   )
 }
 
 // Header gelap yang sama untuk SEMUA halaman publik/developer — satu identitas.
 export default async function SiteHeader() {
-  const [session, t] = await Promise.all([auth(), getTranslations('nav')])
+  const [session, t, c] = await Promise.all([auth(), getTranslations('nav'), getSiteContent(await getLocale())])
   return (
     <header className="bg-band text-band-ink">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-        <BrandMark />
+        <BrandMark appName={c.appName} />
         <nav className="flex items-center gap-2 text-sm">
           <NavLink href="/#katalog" className="btn-ghost btn-sm border-transparent text-band-ink/80 hover:text-band-ink">{t('catalog')}</NavLink>
           {session?.user ? (
@@ -48,11 +48,11 @@ export default async function SiteHeader() {
 }
 
 export async function SiteFooter() {
-  const t = await getTranslations('nav')
+  const [t, c] = await Promise.all([getTranslations('nav'), getSiteContent(await getLocale())])
   return (
     <footer className="mt-auto border-t border-line">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-sm text-muted">
-        <span>{BRAND.name} — {BRAND.tagline}</span>
+        <span>{c.footer}</span>
         <span className="font-mono text-xs">{t('openSource')}</span>
       </div>
     </footer>

@@ -3,15 +3,14 @@
 import { useActionState } from 'react'
 import { signup } from '@/actions/signup'
 import CaptchaField from '@/components/CaptchaField'
-import { BRAND } from '@/lib/brand'
 import { useTranslations } from 'next-intl'
 
-export default function SignupClient() {
+export default function SignupClient({ appName }: { appName: string }) {
   const t = useTranslations('auth')
   const [state, action, pending] = useActionState(signup, {})
   return (
     <main>
-      <h1 className="mb-6 text-2xl font-bold">{t('signUpTitle', { brand: BRAND.name })}</h1>
+      <h1 className="mb-6 text-2xl font-bold">{t('signUpTitle', { brand: appName })}</h1>
       <form action={action} className="space-y-4">
         <input name="name" required placeholder={t('fullName')} className="input" />
         <input name="email" type="email" required placeholder={t('email')} className="input" />

@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { displayFont, sansFont, monoFont } from "./fonts";
-import { BRAND } from "@/lib/brand";
+import { getSiteContent } from "@/lib/site-content";
 import { getTheme, getMode } from "@/lib/themes";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: BRAND.name,
-  description: BRAND.tagline,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const c = await getSiteContent(await getLocale());
+  return { title: c.appName, description: c.tagline };
+}
 
 export default async function RootLayout({
   children,
