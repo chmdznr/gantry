@@ -19,9 +19,9 @@
   --color-stop-soft: #fbe9e6;
   --color-accent-ink: #10312b; /* teks di atas accent; theme accent gelap set putih */
 
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui;
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 :root { color-scheme: light; }
@@ -37,7 +37,6 @@
   --color-amber: #ccff00;
   --color-amber-deep: #001408; /* hover btn-accent flip ke near-black */
   --color-accent-ink: #101613;
-  --font-display: var(--font-space), ui-sans-serif, system-ui;
 }
 /* lime terlalu terang untuk focus ring di atas paper terang */
 [data-theme="mainline"] :focus-visible { outline-color: #6a8500; }
@@ -51,7 +50,6 @@
   --color-amber: #c9a227;
   --color-amber-deep: #96761c;
   --color-accent-ink: #1c2c54;
-  --font-display: var(--font-lora), ui-serif, Georgia, serif;
 }
 [data-theme="horizon"] {
   --color-paper: #f2f6fa;
@@ -62,7 +60,6 @@
   --color-amber: #f59823;
   --color-amber-deep: #c47410;
   --color-accent-ink: #003a70;
-  --font-display: var(--font-jakarta), ui-sans-serif, system-ui;
 }
 [data-theme="twilight"] {
   --color-paper: #f7f3ef;
@@ -73,7 +70,6 @@
   --color-amber: #f08200;
   --color-amber-deep: #bd6600;
   --color-accent-ink: #2f318b;
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui;
 }
 [data-theme="semaphore"] {
   --color-paper: #f8f7f5;
@@ -84,7 +80,6 @@
   --color-amber: #da3a2c; /* signal red: kontras AA vs putih & tetap terbaca di hero navy */
   --color-amber-deep: #a92417;
   --color-accent-ink: #ffffff; /* accent merah gelap → teks putih */
-  --font-display: var(--font-sora), ui-sans-serif, system-ui;
 }
 
 body {
