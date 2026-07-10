@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* Desktop sidebar — <aside> stretches to full container height (band bg always covers),
           the inner column is the sticky/scrolling nav so the spruce never "cuts off" at 1 screen. */}
       <aside className={`hidden bg-band text-band-ink lg:block lg:shrink-0 ${collapsed ? 'lg:w-16' : 'lg:w-60'}`}>
-        <div className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:gap-6 lg:overflow-y-auto lg:px-3 lg:py-6">
+        <div className={`lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:gap-6 lg:px-3 lg:py-6 ${collapsed ? 'lg:overflow-visible' : 'lg:overflow-y-auto'}`}>
           <div className={`flex items-center gap-2 ${collapsed ? 'flex-col' : 'justify-between px-1'}`}>
             <span className="flex items-center gap-2 font-display font-bold">
               <span className="inline-block h-3 w-3 rounded-full border-[3px] border-band-ink/90 bg-amber" aria-hidden />

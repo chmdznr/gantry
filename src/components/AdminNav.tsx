@@ -28,8 +28,18 @@ function Icon({ d }: { d: string }) {
   )
 }
 
+// Styled hover tooltip for the collapsed rail — appears instantly (no native-title delay),
+// floats to the right of the icon over the content, using Atlas surface tokens.
+function Tip({ text }: { text: string }) {
+  return (
+    <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-line bg-surface px-2 py-1 text-xs font-medium text-ink shadow-lg group-hover:block">
+      {text}
+    </span>
+  )
+}
+
 export default function AdminNav({ collapsed = false }: { collapsed?: boolean }) {
-  const linkBase = `flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-band-ink/75 hover:bg-band-ink/10 hover:text-band-ink ${collapsed ? 'justify-center' : ''}`
+  const linkBase = `flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-band-ink/75 hover:bg-band-ink/10 hover:text-band-ink ${collapsed ? 'group relative justify-center' : ''}`
   return (
     <nav className="flex flex-col gap-6">
       {GROUPS.map((g) => (
@@ -38,20 +48,19 @@ export default function AdminNav({ collapsed = false }: { collapsed?: boolean })
           <ul className="flex flex-col gap-0.5">
             {g.links.map((l) => (
               <li key={l.href}>
-                <NavLink href={l.href} title={collapsed ? l.text : undefined}
-                  className={linkBase}
+                <NavLink href={l.href} className={linkBase}
                   activeClassName="!bg-amber !text-accent-ink font-semibold">
                   <Icon d={l.icon} />
-                  {!collapsed && <span>{l.text}</span>}
+                  {collapsed ? <Tip text={l.text} /> : <span>{l.text}</span>}
                 </NavLink>
               </li>
             ))}
           </ul>
         </div>
       ))}
-      <Link href="/" title={collapsed ? 'Portal' : undefined}
-        className={`mt-2 flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-band-ink/75 hover:bg-band-ink/10 hover:text-band-ink ${collapsed ? 'justify-center' : ''}`}>
-        <Icon d="M19 12H5M12 19l-7-7 7-7" />{!collapsed && <span>Portal</span>}
+      <Link href="/"
+        className={`mt-2 flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-band-ink/75 hover:bg-band-ink/10 hover:text-band-ink ${collapsed ? 'group relative justify-center' : ''}`}>
+        <Icon d="M19 12H5M12 19l-7-7 7-7" />{collapsed ? <Tip text="Portal" /> : <span>Portal</span>}
       </Link>
     </nav>
   )
