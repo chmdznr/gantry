@@ -1,9 +1,10 @@
-import { updateTheme } from '@/actions/admin-settings'
+import { updateMode, updateTheme } from '@/actions/admin-settings'
 import PendingButton from '@/components/PendingButton'
-import { getTheme, THEMES } from '@/lib/themes'
+import { getMode, getTheme, THEMES } from '@/lib/themes'
 
 export default async function AdminAppearancePage() {
   const current = await getTheme()
+  const mode = await getMode()
   return (
     <main>
       <h1 className="mb-1 text-xl font-bold">Appearance</h1>
@@ -43,6 +44,16 @@ export default async function AdminAppearancePage() {
           ))}
         </div>
         <PendingButton className="btn-accent">Save theme</PendingButton>
+      </form>
+
+      <h2 className="section-title">Mode</h2>
+      <form action={updateMode} className="flex items-center gap-2">
+        <select name="mode" defaultValue={mode} className="input w-auto">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button className="btn-primary btn-sm">Save mode</button>
       </form>
     </main>
   )
