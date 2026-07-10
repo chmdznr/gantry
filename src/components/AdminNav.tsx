@@ -18,6 +18,9 @@ const GROUPS: { label: string; links: L[] }[] = [
     { href: '/admin/setup', text: 'Setup', icon: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6' },
     { href: '/admin/appearance', text: 'Appearance', icon: 'M12 2.5S5 9 5 14a7 7 0 0014 0c0-5-7-11.5-7-11.5z' },
   ] },
+  { label: 'Site', links: [
+    { href: '/admin/content', text: 'Site content', icon: 'M4 7V5a2 2 0 012-2h12a2 2 0 012 2v2M9 3v18M4 7h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7z' },
+  ] },
 ]
 
 function Icon({ d }: { d: string }) {
