@@ -180,7 +180,9 @@
     "activeCount": "{count} filter aktif",
     "status": "Status",
     "from": "Dari",
-    "to": "Sampai"
+    "to": "Sampai",
+    "tag": "Tag",
+    "searchPlaceholder": "nama / tag"
   },
   "actions": {
     "rateLimited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",

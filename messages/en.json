@@ -180,7 +180,9 @@
     "activeCount": "{count} active filters",
     "status": "Status",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "tag": "Tag",
+    "searchPlaceholder": "name / tag"
   },
   "actions": {
     "rateLimited": "Too many attempts. Try again in a few minutes.",

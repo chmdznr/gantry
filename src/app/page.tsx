@@ -11,6 +11,7 @@ import FilterBar, { countActive } from '@/components/FilterBar'
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; tag?: string }> }) {
   const sp = await searchParams
   const t = await getTranslations('landing')
+  const tf = await getTranslations('filters')
   const steps = t.raw('steps') as { t: string; d: string }[]
   const session = await auth()
   const products = await db.select().from(apiProducts)
@@ -64,13 +65,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
         </div>
         <FilterBar resetHref="/#katalog" activeCount={activeCount}>
           <label className="text-sm">
-            <span className="label">Search</span>
-            <input name="q" defaultValue={sp.q ?? ''} placeholder="name / tag" className="input w-56" />
+            <span className="label">{tf('search')}</span>
+            <input name="q" defaultValue={sp.q ?? ''} placeholder={tf('searchPlaceholder')} className="input w-56" />
           </label>
           <label className="text-sm">
-            <span className="label">Tag</span>
+            <span className="label">{tf('tag')}</span>
             <select name="tag" defaultValue={tag} className="input w-auto">
-              <option value="">All</option>
+              <option value="">{tf('all')}</option>
               {allTags.map((tg) => <option key={tg} value={tg}>{tg}</option>)}
             </select>
           </label>
