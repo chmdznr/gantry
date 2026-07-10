@@ -89,72 +89,95 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         </p>
       )}
 
-      <h2 className="section-title">{t('catalog.plansTitle')}</h2>
-      <table className="table-base max-w-lg">
-        <thead><tr><th>{t('catalog.plan')}</th><th>{t('catalog.rateLimit')}</th><th>{t('catalog.description')}</th></tr></thead>
-        <tbody>
-          {allPlans.map((p) => (
-            <tr key={p.id}>
-              <td className="font-medium">{p.name}</td>
-              <td>{fmtLimits(p.rateLimit as Record<string, number>)}</td>
-              <td className="text-muted">{p.description}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <h2 className="section-title">{t('catalog.subscribeTitle')}</h2>
-      {!session?.user ? (
-        <p className="text-sm text-muted">{t.rich('catalog.signInToSubscribe', { link: (c) => <Link href="/auth/login" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{c}</Link> })}</p>
-      ) : (
-        <>
-          {mySubs.length > 0 && (
-            <ul className="mb-3 space-y-1 text-sm">
-              {mySubs.map((s) => (
-                <li key={s.applicationId}>
-                  <b>{s.appName}</b> — {t('catalog.planWord')} {s.planName} — <span className="badge-muted">{s.status}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        {/* Main column: the developer loop — Try It, then Reference */}
+        <div className="order-1 space-y-10 lg:order-none">
+          {session?.user && (
+            <section>
+              <h2 className="section-title !mt-0">{t('catalog.tryItTitle')}</h2>
+              <TryIt
+                productId={product.id}
+                baseUrl={product.proxyBaseUrl}
+                endpoints={spec?.paths
+                  ? Object.entries(spec.paths).flatMap(([p, methods]) =>
+                      Object.entries(methods).map(([method, op]) => ({
+                        method,
+                        path: p,
+                        summary: op?.summary,
+                        routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
+                      })))
+                  : []}
+              />
+            </section>
           )}
-          {subscribable ? (
-            <SubscribeForm
-              productId={product.id}
-              hasApps={myApps.length > 0}
-              apps={subscribableApps}
-              plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
-            />
-          ) : (
-            <p className="text-sm text-warn">{t('catalog.subscribeClosed')}</p>
+
+          {spec?.paths && (
+            <section>
+              <h2 className="section-title !mt-0">{t('catalog.referenceTitle')}</h2>
+              <ApiReference spec={spec} />
+            </section>
           )}
-        </>
-      )}
+        </div>
 
-      {session?.user && (
-        <>
-          <h2 className="section-title">{t('catalog.tryItTitle')}</h2>
-          <TryIt
-            productId={product.id}
-            baseUrl={product.proxyBaseUrl}
-            endpoints={spec?.paths
-              ? Object.entries(spec.paths).flatMap(([p, methods]) =>
-                  Object.entries(methods).map(([method, op]) => ({
-                    method,
-                    path: p,
-                    summary: op?.summary,
-                    routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
-                  })))
-              : []}
-          />
-        </>
-      )}
+        {/* Sidebar: Plans, Subscribe, quick facts — sticky on desktop */}
+        <aside className="order-2 space-y-6 lg:sticky lg:top-6 lg:order-none lg:self-start">
+          <section>
+            <h2 className="section-title !mt-0">{t('catalog.plansTitle')}</h2>
+            <table className="table-base">
+              <thead><tr><th>{t('catalog.plan')}</th><th>{t('catalog.rateLimit')}</th><th>{t('catalog.description')}</th></tr></thead>
+              <tbody>
+                {allPlans.map((p) => (
+                  <tr key={p.id}>
+                    <td className="font-medium">{p.name}</td>
+                    <td>{fmtLimits(p.rateLimit as Record<string, number>)}</td>
+                    <td className="text-muted">{p.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
-      {spec?.paths && (
-        <>
-          <h2 className="section-title">{t('catalog.referenceTitle')}</h2>
-          <ApiReference spec={spec} />
-        </>
-      )}
+          <section>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">{t('catalog.subscribeTitle')}</h3>
+            <div className="mt-2">
+              {!session?.user ? (
+                <p className="text-sm text-muted">{t.rich('catalog.signInToSubscribe', { link: (c) => <Link href="/auth/login" className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{c}</Link> })}</p>
+              ) : (
+                <>
+                  {mySubs.length > 0 && (
+                    <ul className="mb-3 space-y-1 text-sm">
+                      {mySubs.map((s) => (
+                        <li key={s.applicationId}>
+                          <b>{s.appName}</b> — {t('catalog.planWord')} {s.planName} — <span className="badge-muted">{s.status}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {subscribable ? (
+                    <SubscribeForm
+                      productId={product.id}
+                      hasApps={myApps.length > 0}
+                      apps={subscribableApps}
+                      plans={allPlans.map((p) => ({ id: p.id, name: p.name, limits: fmtLimits(p.rateLimit as Record<string, number>) }))}
+                    />
+                  ) : (
+                    <p className="text-sm text-warn">{t('catalog.subscribeClosed')}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+
+          <div className="card text-sm text-muted">
+            <p>{t('catalog.baseUrl')} <code className="code-chip">{product.proxyBaseUrl}</code></p>
+            {latency && latency.length > 0 && (
+              <p className="mt-1">
+                {t('catalog.latency', { list: latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ') })}
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
 
       <h2 className="section-title">{t('catalog.versionsTitle')}</h2>
       <SpecHistory productId={product.id} />
