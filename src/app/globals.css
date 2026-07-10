@@ -2,22 +2,22 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  /* switchyard palette */
-  --color-paper: #f2efe6;
+  /* Atlas — default (light) */
+  --color-paper: #f2f4f1;
   --color-surface: #ffffff;
-  --color-ink: #10312b;        /* spruce gelap — header, teks kuat */
-  --color-ink-soft: #33534d;
-  --color-line: #ccc7b6;       /* border hangat */
-  --color-muted: #6b7671;
-  --color-amber: #f5b700;      /* signal amber — aksen, fokus, signature */
-  --color-amber-deep: #b98a00;
-  --color-go: #1a7f4e;         /* status hijau */
-  --color-go-soft: #e2f3ea;
-  --color-warn: #a16207;
+  --color-ink: #0c1f1a;        /* spruce */
+  --color-ink-soft: #33453e;
+  --color-line: #dde3dd;
+  --color-muted: #5c6b64;
+  --color-amber: #ff5d33;      /* accent — coral (token slot kept) */
+  --color-amber-deep: #e24a22; /* accent-strong */
+  --color-accent-ink: #ffffff; /* text on accent */
+  --color-go: #1a7f4e;
+  --color-go-soft: #e2f2e9;
+  --color-warn: #c77a0a;
   --color-warn-soft: #fdf3d7;
-  --color-stop: #b3372c;       /* status merah */
+  --color-stop: #d64545;
   --color-stop-soft: #fbe9e6;
-  --color-accent-ink: #10312b; /* teks di atas accent; theme accent gelap set putih */
 
   --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -88,7 +88,12 @@ body {
   font-family: var(--font-sans);
 }
 
-h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
 
 :focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }
 
