@@ -167,15 +167,6 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
               )}
             </div>
           </section>
-
-          <div className="card text-sm text-muted">
-            <p>{t('catalog.baseUrl')} <code className="code-chip">{product.proxyBaseUrl}</code></p>
-            {latency && latency.length > 0 && (
-              <p className="mt-1">
-                {t('catalog.latency', { list: latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ') })}
-              </p>
-            )}
-          </div>
         </aside>
       </div>
 
