@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { displayFont, sansFont, monoFont } from "./fonts";
 import { BRAND } from "@/lib/brand";
-import { getTheme } from "@/lib/themes";
+import { getTheme, getMode } from "@/lib/themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,11 +16,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [locale, theme] = await Promise.all([getLocale(), getTheme()]);
+  const [locale, theme, mode] = await Promise.all([getLocale(), getTheme(), getMode()]);
   return (
     <html
       lang={locale}
       data-theme={theme}
+      data-mode={mode}
       className={`${displayFont.variable} ${sansFont.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

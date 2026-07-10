@@ -67,3 +67,23 @@ export async function getTheme(): Promise<ThemeKey> {
     return DEFAULT_THEME
   }
 }
+
+export type Mode = 'light' | 'dark' | 'system'
+
+export const DEFAULT_MODE: Mode = 'system'
+
+export function isMode(v: string): v is Mode {
+  return v === 'light' || v === 'dark' || v === 'system'
+}
+
+export async function getMode(): Promise<Mode> {
+  try {
+    const row = await db.query.portalSettings.findFirst({
+      where: eq(portalSettings.key, 'mode'),
+    })
+    return row && isMode(row.value) ? (row.value as Mode) : DEFAULT_MODE
+  } catch {
+    // ponytail: layout tidak boleh crash hanya karena setting mode gagal dibaca
+    return DEFAULT_MODE
+  }
+}

@@ -26,6 +26,41 @@
 
 :root { color-scheme: light; }
 
+/* ── Dark mode: prefers-color-scheme default, data-mode overrides both ways ── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) {
+    color-scheme: dark;
+    --color-paper: #0d1512;
+    --color-surface: #131c18;
+    --color-ink: #eef2ee;
+    --color-ink-soft: #c2ccc5;
+    --color-line: #24302a;
+    --color-muted: #93a49b;
+    --color-amber: #ff6b45;
+    --color-amber-deep: #ff8563;
+    --color-accent-ink: #10201b;
+    --color-go: #37c98a;   --color-go-soft: #123024;
+    --color-warn: #e0a13a; --color-warn-soft: #33280f;
+    --color-stop: #f07a7a; --color-stop-soft: #331a1a;
+  }
+}
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --color-paper: #0d1512;
+  --color-surface: #131c18;
+  --color-ink: #eef2ee;
+  --color-ink-soft: #c2ccc5;
+  --color-line: #24302a;
+  --color-muted: #93a49b;
+  --color-amber: #ff6b45;
+  --color-amber-deep: #ff8563;
+  --color-accent-ink: #10201b;
+  --color-go: #37c98a;   --color-go-soft: #123024;
+  --color-warn: #e0a13a; --color-warn-soft: #33280f;
+  --color-stop: #f07a7a; --color-stop-soft: #331a1a;
+}
+:root[data-mode="light"] { color-scheme: light; }
+
 /* ── Site-wide themes (data-theme di <html>, dipilih admin) ──
    Hanya override variable; komponen tidak berubah. Daftar theme: src/lib/themes.ts */
 [data-theme="mainline"] {
