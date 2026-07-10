@@ -92,7 +92,7 @@ export default async function AppDetailPage({ params, searchParams }: { params: 
               <tr key={s.id}>
                 <td><Link href={`/apis/${s.productSlug}`} className="font-medium text-ink-soft underline decoration-amber decoration-2 underline-offset-2">{s.productName}</Link></td>
                 <td>{s.planName}</td>
-                <td><span className={`${statusBadge[s.status] ?? 'bg-gray-100'}`}>{s.status}</span></td>
+                <td><span className={statusBadge[s.status] ?? 'badge-muted'}>{s.status}</span></td>
               </tr>
             ))}
           </tbody>
