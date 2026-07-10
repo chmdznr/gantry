@@ -34,9 +34,9 @@ function LoginForm({ appName }: { appName: string }) {
   return (
     <main>
       <h1 className="mb-6 text-2xl font-bold">{t('signInTitle', { brand: appName })}</h1>
-      {verify === 'ok' && <p className="mb-4 rounded bg-green-100 p-3 text-sm text-green-800">{t('verifiedOk')}</p>}
-      {verify === 'invalid' && <p className="mb-4 rounded bg-red-100 p-3 text-sm text-red-800">{t('verifiedInvalid')}</p>}
-      {params.get('reset') === 'ok' && <p className="mb-4 rounded bg-green-100 p-3 text-sm text-green-800">{t('resetOk')}</p>}
+      {verify === 'ok' && <p className="mb-4 rounded bg-go-soft p-3 text-sm text-go">{t('verifiedOk')}</p>}
+      {verify === 'invalid' && <p className="mb-4 rounded bg-stop-soft p-3 text-sm text-stop">{t('verifiedInvalid')}</p>}
+      {params.get('reset') === 'ok' && <p className="mb-4 rounded bg-go-soft p-3 text-sm text-go">{t('resetOk')}</p>}
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <input name="email" type="email" required placeholder={t('email')} className="input" />

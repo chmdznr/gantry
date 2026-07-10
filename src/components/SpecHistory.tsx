@@ -31,8 +31,8 @@ export default async function SpecHistory({ productId }: { productId: string }) 
           <div key={v.id} className="card p-4">
             <div className="flex items-center gap-2 text-sm">
               <b>v{v.version}</b>
-              {isCurrent && <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">{t('current')}</span>}
-              {d.removed.length > 0 && <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-stop">{t('breaking')}</span>}
+              {isCurrent && <span className="badge-go">{t('current')}</span>}
+              {d.removed.length > 0 && <span className="badge-stop">{t('breaking')}</span>}
               <span className="ml-auto text-xs text-muted">{v.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</span>
             </div>
             {v.note && <p className="mt-1 text-sm text-ink-soft">{v.note}</p>}

@@ -47,7 +47,7 @@ export default async function ImportApisPage() {
               ))}
             </tbody>
           </table>
-          <button className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Import selected</button>
+          <button className="mt-4 btn-accent">Import selected</button>
         </form>
       )}
     </main>
