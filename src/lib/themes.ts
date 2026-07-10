@@ -5,52 +5,46 @@ import { portalSettings } from '@/db/schema'
 // Site-wide themes. Key dipakai sebagai data-theme di <html>; blok CSS-nya di globals.css.
 export const THEMES = [
   {
-    key: 'switchyard',
-    name: 'Switchyard',
-    description: 'Warm cream, spruce green, signal amber — the original Gantry look.',
-    fontVar: 'var(--font-bricolage)',
-    swatch: ['#f2efe6', '#10312b', '#f5b700'],
+    key: 'atlas',
+    name: 'Atlas',
+    description: 'Deep spruce and signal coral — the Gantry default.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#ff5d33'],
   },
   {
     key: 'mainline',
     name: 'Mainline',
-    description: 'Charcoal black with an electric lime signal — sleek and technical.',
-    fontVar: 'var(--font-space)',
-    swatch: ['#f4f6f1', '#101613', '#ccff00'],
+    description: 'Spruce with an electric lime signal.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#8fbf00'],
   },
   {
     key: 'heritage',
     name: 'Heritage',
-    description: 'Archival white, deep navy, and gold with a serif display face.',
-    fontVar: 'var(--font-lora)',
-    swatch: ['#f7f4ec', '#1c2c54', '#c9a227'],
+    description: 'Spruce with an archival gold accent.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#c9a227'],
   },
   {
     key: 'horizon',
     name: 'Horizon',
-    description: 'Corporate sky blue with a bright dawn-orange accent.',
-    fontVar: 'var(--font-jakarta)',
-    swatch: ['#f2f6fa', '#003a70', '#f59823'],
+    description: 'Spruce with a corporate sky-blue accent.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#2f6ba8'],
   },
   {
     key: 'twilight',
     name: 'Twilight',
-    description: 'Sunset orange over deep indigo — bold and energetic.',
-    fontVar: 'var(--font-archivo)',
-    swatch: ['#f7f3ef', '#2f318b', '#f08200'],
+    description: 'Spruce with a deep indigo accent.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#6a5cff'],
   },
   {
     key: 'semaphore',
     name: 'Semaphore',
-    description: 'Clean white, signal red, and midnight navy.',
-    fontVar: 'var(--font-sora)',
-    swatch: ['#f8f7f5', '#101d33', '#da3a2c'],
+    description: 'Spruce with a signal-red accent.',
+    swatch: ['#f2f4f1', '#0c1f1a', '#da3a2c'],
   },
 ] as const
 
 export type ThemeKey = (typeof THEMES)[number]['key']
 
-export const DEFAULT_THEME: ThemeKey = 'switchyard'
+export const DEFAULT_THEME: ThemeKey = 'atlas'
 
 export function isThemeKey(v: string): v is ThemeKey {
   return THEMES.some((t) => t.key === v)

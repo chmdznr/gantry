@@ -23,7 +23,7 @@ export default async function AdminAppearancePage() {
               />
               <span className="card block h-full border-2 transition peer-checked:border-amber peer-checked:shadow-[0_6px_20px_-8px_rgb(16_49_43_/_0.25)] peer-focus-visible:outline-2 peer-focus-visible:outline-amber">
                 <span className="mb-2 flex items-center justify-between">
-                  <span className="text-lg font-bold" style={{ fontFamily: `${t.fontVar}, sans-serif` }}>
+                  <span className="text-lg font-bold">
                     {t.name}
                   </span>
                   {t.key === current && <span className="badge-go">Active</span>}

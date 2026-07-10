@@ -10,6 +10,6 @@ describe('themes', () => {
     expect(isThemeKey(DEFAULT_THEME)).toBe(true)
   })
   it('rejects unknown values', () => {
-    for (const bad of ['', 'dark', 'bri', 'switchyard ']) expect(isThemeKey(bad)).toBe(false)
+    for (const bad of ['', 'dark', 'bri', 'legacy ']) expect(isThemeKey(bad)).toBe(false)
   })
 })

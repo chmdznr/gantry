@@ -63,59 +63,28 @@
 
 /* ── Site-wide themes (data-theme di <html>, dipilih admin) ──
    Hanya override variable; komponen tidak berubah. Daftar theme: src/lib/themes.ts */
-[data-theme="mainline"] {
-  --color-paper: #f4f6f1;
-  --color-ink: #101613;
-  --color-ink-soft: #3a4438;
-  --color-line: #d3d8cf;
-  --color-muted: #656d64;
-  --color-amber: #ccff00;
-  --color-amber-deep: #001408; /* hover btn-accent flip ke near-black */
-  --color-accent-ink: #101613;
-}
-/* lime terlalu terang untuk focus ring di atas paper terang */
-[data-theme="mainline"] :focus-visible { outline-color: #6a8500; }
+/* ── Presets: shift ONLY the accent; neutrals + type come from the Atlas base + dark ── */
+/* atlas needs no block — it is the @theme base (light) + the dark override above. */
 
-[data-theme="heritage"] {
-  --color-paper: #f7f4ec;
-  --color-ink: #1c2c54;
-  --color-ink-soft: #3d4f7c;
-  --color-line: #ddd6c4;
-  --color-muted: #6d7180;
-  --color-amber: #c9a227;
-  --color-amber-deep: #96761c;
-  --color-accent-ink: #1c2c54;
-}
-[data-theme="horizon"] {
-  --color-paper: #f2f6fa;
-  --color-ink: #003a70;
-  --color-ink-soft: #2f6ba8;
-  --color-line: #c9d6e4;
-  --color-muted: #5f7186;
-  --color-amber: #f59823;
-  --color-amber-deep: #c47410;
-  --color-accent-ink: #003a70;
-}
-[data-theme="twilight"] {
-  --color-paper: #f7f3ef;
-  --color-ink: #2f318b;
-  --color-ink-soft: #4c4ea6;
-  --color-line: #ded4c9;
-  --color-muted: #6f6a75;
-  --color-amber: #f08200;
-  --color-amber-deep: #bd6600;
-  --color-accent-ink: #2f318b;
-}
-[data-theme="semaphore"] {
-  --color-paper: #f8f7f5;
-  --color-ink: #101d33;
-  --color-ink-soft: #33415c;
-  --color-line: #dbd9d4;
-  --color-muted: #6b7280;
-  --color-amber: #da3a2c; /* signal red: kontras AA vs putih & tetap terbaca di hero navy */
-  --color-amber-deep: #a92417;
-  --color-accent-ink: #ffffff; /* accent merah gelap → teks putih */
-}
+[data-theme="mainline"] { --color-amber:#8fbf00; --color-amber-deep:#6f9600; --color-accent-ink:#0c1f0a; }
+:root[data-mode="dark"][data-theme="mainline"] { --color-amber:#b6ee2e; --color-amber-deep:#d0ff5a; --color-accent-ink:#101a05; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="mainline"] { --color-amber:#b6ee2e; --color-amber-deep:#d0ff5a; --color-accent-ink:#101a05; } }
+
+[data-theme="heritage"] { --color-amber:#c9a227; --color-amber-deep:#9e7d17; --color-accent-ink:#241c05; }
+:root[data-mode="dark"][data-theme="heritage"] { --color-amber:#e0bd4a; --color-amber-deep:#f0d472; --color-accent-ink:#221a04; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="heritage"] { --color-amber:#e0bd4a; --color-amber-deep:#f0d472; --color-accent-ink:#221a04; } }
+
+[data-theme="horizon"] { --color-amber:#2f6ba8; --color-amber-deep:#215488; --color-accent-ink:#ffffff; }
+:root[data-mode="dark"][data-theme="horizon"] { --color-amber:#5b9bd8; --color-amber-deep:#7bb0e0; --color-accent-ink:#08131f; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="horizon"] { --color-amber:#5b9bd8; --color-amber-deep:#7bb0e0; --color-accent-ink:#08131f; } }
+
+[data-theme="twilight"] { --color-amber:#6a5cff; --color-amber-deep:#4a3ce0; --color-accent-ink:#ffffff; }
+:root[data-mode="dark"][data-theme="twilight"] { --color-amber:#8f84ff; --color-amber-deep:#a99fff; --color-accent-ink:#0a0820; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="twilight"] { --color-amber:#8f84ff; --color-amber-deep:#a99fff; --color-accent-ink:#0a0820; } }
+
+[data-theme="semaphore"] { --color-amber:#da3a2c; --color-amber-deep:#a92417; --color-accent-ink:#ffffff; }
+:root[data-mode="dark"][data-theme="semaphore"] { --color-amber:#f2675a; --color-amber-deep:#f78b80; --color-accent-ink:#2a0c08; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"])[data-theme="semaphore"] { --color-amber:#f2675a; --color-amber-deep:#f78b80; --color-accent-ink:#2a0c08; } }
 
 body {
   background: var(--color-paper);
