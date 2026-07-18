@@ -80,7 +80,11 @@ export async function createCredential(_prev: SecretState, formData: FormData): 
           applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
         })
       } catch (err) {
-        await kong.deleteKeyAuth(app.kongConsumerId, cred.id)
+        try {
+          await kong.deleteKeyAuth(app.kongConsumerId, cred.id)
+        } catch (cleanupErr) {
+          throw new AggregateError([err, cleanupErr], 'Credential persistence and compensation failed')
+        }
         throw err
       }
       await audit(session.user.id, 'credential.create', 'app_credential', cred.id, { appId, type })
@@ -93,7 +97,11 @@ export async function createCredential(_prev: SecretState, formData: FormData): 
         applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
       })
     } catch (err) {
-      await kong.deleteJwtCred(app.kongConsumerId, cred.id)
+      try {
+        await kong.deleteJwtCred(app.kongConsumerId, cred.id)
+      } catch (cleanupErr) {
+        throw new AggregateError([err, cleanupErr], 'Credential persistence and compensation failed')
+      }
       throw err
     }
     await audit(session.user.id, 'credential.create', 'app_credential', cred.id, { appId, type })
