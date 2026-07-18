@@ -15,6 +15,7 @@
 
 # internal agent artifacts
 /docs/superpowers/
+/.worktrees/
 
 # next.js
 /.next/
