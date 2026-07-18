@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
   revalidatePath: vi.fn(),
   getTranslations: vi.fn(),
+  createConsumer: vi.fn(),
+  deleteConsumer: vi.fn(),
   createKeyAuth: vi.fn(),
   createJwtCred: vi.fn(),
   deleteKeyAuth: vi.fn(),
@@ -23,6 +25,8 @@ vi.mock('@/db', () => ({
 vi.mock('@/lib/require-admin', () => ({ requireUser: mocks.requireUser }))
 vi.mock('@/lib/audit', () => ({ audit: mocks.audit }))
 vi.mock('@/lib/kong', () => ({
+  createConsumer: mocks.createConsumer,
+  deleteConsumer: mocks.deleteConsumer,
   createKeyAuth: mocks.createKeyAuth,
   createJwtCred: mocks.createJwtCred,
   deleteKeyAuth: mocks.deleteKeyAuth,
@@ -31,7 +35,7 @@ vi.mock('@/lib/kong', () => ({
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }))
 vi.mock('next-intl/server', () => ({ getTranslations: mocks.getTranslations }))
 
-import { createCredential } from '@/actions/apps'
+import { createApp, createCredential } from '@/actions/apps'
 
 const credentialCases = [
   {
@@ -76,6 +80,8 @@ describe('createCredential compensation', () => {
     mocks.requireUser.mockResolvedValue({ user: { id: 'user-1' } })
     mocks.audit.mockResolvedValue(undefined)
     mocks.getTranslations.mockResolvedValue((key: string) => key)
+    mocks.createConsumer.mockResolvedValue({ id: 'consumer-1' })
+    mocks.deleteConsumer.mockResolvedValue(undefined)
     mocks.deleteKeyAuth.mockResolvedValue(undefined)
     mocks.deleteJwtCred.mockResolvedValue(undefined)
   })
@@ -146,6 +152,22 @@ describe('createCredential compensation', () => {
 
     await expect(createCredential({}, credentialForm(type))).resolves.toEqual({ error: 'credCreateFailed' })
 
+    const loggedError = vi.mocked(console.error).mock.calls.at(-1)?.[1]
+    expect(loggedError).toBeInstanceOf(AggregateError)
+    expect((loggedError as AggregateError).errors).toEqual([dbError, cleanupError])
+  })
+
+  it('preserves database and Consumer cleanup errors while translating the result', async () => {
+    const dbError = new Error('database failed')
+    const cleanupError = new Error('cleanup failed')
+    const formData = new FormData()
+    formData.set('name', 'Test app')
+    mocks.insertValues.mockRejectedValueOnce(dbError)
+    mocks.deleteConsumer.mockRejectedValueOnce(cleanupError)
+
+    await expect(createApp({}, formData)).resolves.toEqual({ error: 'appSaveFailed' })
+
+    expect(mocks.deleteConsumer).toHaveBeenCalledWith('consumer-1')
     const loggedError = vi.mocked(console.error).mock.calls.at(-1)?.[1]
     expect(loggedError).toBeInstanceOf(AggregateError)
     expect((loggedError as AggregateError).errors).toEqual([dbError, cleanupError])

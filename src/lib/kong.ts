@@ -26,6 +26,15 @@ async function kong<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+async function deleteIfExists(path: string): Promise<void> {
+  try {
+    await kong(path, { method: 'DELETE' })
+  } catch (err) {
+    if (err instanceof KongError && err.status === 404) return
+    throw err
+  }
+}
+
 // ---------- consumers ----------
 
 export async function createConsumer(username: string): Promise<{ id: string }> {
@@ -59,7 +68,7 @@ export async function createKeyAuth(consumer: string): Promise<{ id: string; key
 }
 
 export async function deleteKeyAuth(consumer: string, credId: string): Promise<void> {
-  await kong(`/consumers/${consumer}/key-auth/${credId}`, { method: 'DELETE' })
+  await deleteIfExists(`/consumers/${consumer}/key-auth/${credId}`)
 }
 
 export async function createJwtCred(consumer: string): Promise<{ id: string; key: string; secret: string }> {
@@ -70,7 +79,7 @@ export async function createJwtCred(consumer: string): Promise<{ id: string; key
 }
 
 export async function deleteJwtCred(consumer: string, credId: string): Promise<void> {
-  await kong(`/consumers/${consumer}/jwt/${credId}`, { method: 'DELETE' })
+  await deleteIfExists(`/consumers/${consumer}/jwt/${credId}`)
 }
 
 // ---------- ACL (subscription membership) ----------

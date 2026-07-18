@@ -45,8 +45,13 @@ export async function createApp(_prev: ActionState, formData: FormData): Promise
       kongConsumerId: consumer.id,
     })
   } catch (err) {
-    await kong.deleteConsumer(consumer.id)
-    console.error('[apps] insert failed:', err)
+    let reportedError: unknown = err
+    try {
+      await kong.deleteConsumer(consumer.id)
+    } catch (cleanupErr) {
+      reportedError = new AggregateError([err, cleanupErr], 'Application persistence and compensation failed')
+    }
+    console.error('[apps] insert failed:', reportedError)
     return { error: t('appSaveFailed') }
   }
   await audit(session.user.id, 'app.create', 'application', id, { name })

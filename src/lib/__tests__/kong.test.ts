@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createConsumerRateLimit, deleteConsumer, removeAclGroup, KongError } from '../kong'
+import {
+  createConsumerRateLimit,
+  deleteConsumer,
+  deleteJwtCred,
+  deleteKeyAuth,
+  removeAclGroup,
+  KongError,
+} from '../kong'
 
 const fetchMock = vi.fn()
 vi.stubGlobal('fetch', fetchMock)
@@ -77,6 +84,28 @@ describe('deleteConsumer', () => {
 
     await expect(deleteConsumer('c1')).resolves.toBeUndefined()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe.each([
+  ['key-auth', deleteKeyAuth],
+  ['jwt', deleteJwtCred],
+] as const)('delete %s credential', (type, deleteCredential) => {
+  it('deletes an existing credential', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204 })
+
+    await expect(deleteCredential('c1', 'cred-1')).resolves.toBeUndefined()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://kong:8001/consumers/c1/${type}/cred-1`,
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('treats a missing credential as already deleted', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 404, text: async () => 'not found' })
+
+    await expect(deleteCredential('c1', 'cred-1')).resolves.toBeUndefined()
   })
 })
 
