@@ -36,7 +36,17 @@ export async function createConsumer(username: string): Promise<{ id: string }> 
 }
 
 export async function deleteConsumer(idOrUsername: string): Promise<void> {
-  await kong(`/consumers/${idOrUsername}`, { method: 'DELETE' })
+  let consumer: { id: string; tags?: string[] }
+  try {
+    consumer = await kong<{ id: string; tags?: string[] }>(`/consumers/${idOrUsername}`)
+  } catch (err) {
+    if (err instanceof KongError && err.status === 404) return
+    throw err
+  }
+  if (!consumer.tags?.includes(TAG)) {
+    throw new Error(`Kong Consumer "${idOrUsername}" is not owned by Gantry`)
+  }
+  await kong(`/consumers/${consumer.id}`, { method: 'DELETE' })
 }
 
 // ---------- credentials ----------

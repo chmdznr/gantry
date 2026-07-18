@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createConsumerRateLimit, removeAclGroup, KongError } from '../kong'
+import { createConsumerRateLimit, deleteConsumer, removeAclGroup, KongError } from '../kong'
 
 const fetchMock = vi.fn()
 vi.stubGlobal('fetch', fetchMock)
@@ -45,6 +45,37 @@ describe('removeAclGroup', () => {
   it('no-op jika membership tidak ada', async () => {
     fetchMock.mockResolvedValueOnce(ok({ data: [] }))
     await removeAclGroup('c1', 'gold')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('deleteConsumer', () => {
+  it('deletes a Consumer tagged devportal', async () => {
+    fetchMock
+      .mockResolvedValueOnce(ok({ id: 'c1', tags: ['devportal'] }))
+      .mockResolvedValueOnce({ ok: true, status: 204, json: async () => ({}) })
+
+    await deleteConsumer('c1')
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://kong:8001/consumers/c1')
+    expect(fetchMock.mock.calls[1][1].method).toBe('DELETE')
+  })
+
+  it('refuses to delete a Consumer not owned by devportal', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ id: 'c1', tags: ['bimtek'] }))
+
+    await expect(deleteConsumer('c1')).rejects.toThrow(/not owned by Gantry/)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('treats a missing Consumer as already deleted', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: async () => 'not found',
+    })
+
+    await expect(deleteConsumer('c1')).resolves.toBeUndefined()
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
