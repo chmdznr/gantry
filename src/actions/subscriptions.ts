@@ -126,16 +126,14 @@ export async function revokeSubscription(subscriptionId: string): Promise<void> 
   const { sub, app, product } = await loadFull(subscriptionId)
   if (sub.status !== 'approved') return
 
-  await kong.removeAclGroup(app.kongConsumerId, product.aclGroup).catch(() => {})
-  // hapus hanya rate-limit milik service produk ini (app bisa punya subscription lain)
-  const serviceIds = new Set<string>()
-  for (const svc of product.kongServiceNames) {
-    const sid = await kong.getServiceId(svc).catch(() => null)
-    if (sid) serviceIds.add(sid)
-  }
-  const rls = await kong.findConsumerRateLimits(app.kongConsumerId)
-  for (const p of rls) {
-    if (p.service?.id && serviceIds.has(p.service.id)) await kong.deletePlugin(p.id).catch(() => {})
+  const serviceIds = new Set(await Promise.all(product.kongServiceNames.map(kong.getServiceId)))
+  const rateLimits = await kong.findConsumerRateLimits(app.kongConsumerId)
+
+  await kong.removeAclGroup(app.kongConsumerId, product.aclGroup)
+  for (const plugin of rateLimits) {
+    if (plugin.service?.id && serviceIds.has(plugin.service.id)) {
+      await kong.deletePlugin(plugin.id)
+    }
   }
 
   await db.update(subscriptions)

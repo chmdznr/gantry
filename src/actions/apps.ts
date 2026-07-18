@@ -45,7 +45,7 @@ export async function createApp(_prev: ActionState, formData: FormData): Promise
       kongConsumerId: consumer.id,
     })
   } catch (err) {
-    await kong.deleteConsumer(consumer.id).catch(() => {})
+    await kong.deleteConsumer(consumer.id)
     console.error('[apps] insert failed:', err)
     return { error: t('appSaveFailed') }
   }
@@ -57,7 +57,7 @@ export async function createApp(_prev: ActionState, formData: FormData): Promise
 export async function deleteApp(appId: string): Promise<void> {
   const session = await requireUser()
   const app = await ownedApp(appId, session.user.id)
-  if (app.kongConsumerId) await kong.deleteConsumer(app.kongConsumerId).catch(() => {})
+  if (app.kongConsumerId) await kong.deleteConsumer(app.kongConsumerId)
   await db.delete(applications).where(eq(applications.id, appId))
   await audit(session.user.id, 'app.delete', 'application', appId, { name: app.name })
   revalidatePath('/apps')
@@ -102,8 +102,8 @@ export async function revokeCredential(appId: string, credentialId: string): Pro
     where: and(eq(appCredentials.id, credentialId), eq(appCredentials.applicationId, appId)),
   })
   if (!cred || !app.kongConsumerId) return
-  if (cred.type === 'key-auth') await kong.deleteKeyAuth(app.kongConsumerId, cred.kongCredentialId).catch(() => {})
-  else await kong.deleteJwtCred(app.kongConsumerId, cred.kongCredentialId).catch(() => {})
+  if (cred.type === 'key-auth') await kong.deleteKeyAuth(app.kongConsumerId, cred.kongCredentialId)
+  else await kong.deleteJwtCred(app.kongConsumerId, cred.kongCredentialId)
   await db.delete(appCredentials).where(eq(appCredentials.id, credentialId))
   await audit(session.user.id, 'credential.revoke', 'app_credential', cred.kongCredentialId, { appId, type: cred.type })
   revalidatePath(`/apps/${appId}`)
