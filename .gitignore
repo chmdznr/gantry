@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# internal agent artifacts
+/docs/superpowers/
+
 # next.js
 /.next/
 /out/
