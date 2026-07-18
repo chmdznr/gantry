@@ -40,8 +40,8 @@ export async function adminRevokeCredential(appId: string, credentialId: string)
     where: and(eq(appCredentials.id, credentialId), eq(appCredentials.applicationId, appId)),
   })
   if (!cred) return
-  if (cred.type === 'key-auth') await kong.deleteKeyAuth(app.kongConsumerId!, cred.kongCredentialId).catch(() => {})
-  else await kong.deleteJwtCred(app.kongConsumerId!, cred.kongCredentialId).catch(() => {})
+  if (cred.type === 'key-auth') await kong.deleteKeyAuth(app.kongConsumerId!, cred.kongCredentialId)
+  else await kong.deleteJwtCred(app.kongConsumerId!, cred.kongCredentialId)
   await db.delete(appCredentials).where(eq(appCredentials.id, credentialId))
   await audit(session.user.id, 'credential.revoke.admin', 'app_credential', cred.kongCredentialId, {
     appId, type: cred.type,
@@ -53,7 +53,7 @@ export async function adminRevokeCredential(appId: string, credentialId: string)
 export async function adminDeleteApp(appId: string): Promise<void> {
   const session = await requireAdmin()
   const app = await loadApp(appId)
-  await kong.deleteConsumer(app.kongConsumerId!).catch(() => {})
+  await kong.deleteConsumer(app.kongConsumerId!)
   await db.delete(applications).where(eq(applications.id, appId))
   await audit(session.user.id, 'app.delete.admin', 'application', appId, { name: app.name })
   revalidatePath('/admin/consumers')
