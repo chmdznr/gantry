@@ -75,17 +75,27 @@ export async function createCredential(_prev: SecretState, formData: FormData): 
   try {
     if (type === 'key-auth') {
       const cred = await kong.createKeyAuth(app.kongConsumerId)
-      await db.insert(appCredentials).values({
-        applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
-      })
+      try {
+        await db.insert(appCredentials).values({
+          applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
+        })
+      } catch (err) {
+        await kong.deleteKeyAuth(app.kongConsumerId, cred.id)
+        throw err
+      }
       await audit(session.user.id, 'credential.create', 'app_credential', cred.id, { appId, type })
       revalidatePath(`/apps/${appId}`)
       return { secret: { type, key: cred.key } }
     }
     const cred = await kong.createJwtCred(app.kongConsumerId)
-    await db.insert(appCredentials).values({
-      applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
-    })
+    try {
+      await db.insert(appCredentials).values({
+        applicationId: appId, type, kongCredentialId: cred.id, hint: cred.key.slice(-4),
+      })
+    } catch (err) {
+      await kong.deleteJwtCred(app.kongConsumerId, cred.id)
+      throw err
+    }
     await audit(session.user.id, 'credential.create', 'app_credential', cred.id, { appId, type })
     revalidatePath(`/apps/${appId}`)
     return { secret: { type, key: cred.key, jwtSecret: cred.secret } }

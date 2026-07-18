@@ -32,4 +32,10 @@ describe('Kong destructive action consistency', () => {
     expect(body.indexOf('await Promise.all')).toBeLessThan(body.indexOf('removeAclGroup'))
     expect(body.indexOf('findConsumerRateLimits')).toBeLessThan(body.indexOf('removeAclGroup'))
   })
+
+  it('compensates both credential types when persistence fails', () => {
+    const body = actionBody('src/actions/apps.ts', 'createCredential')
+    expect(body).toContain('await kong.deleteKeyAuth(app.kongConsumerId, cred.id)')
+    expect(body).toContain('await kong.deleteJwtCred(app.kongConsumerId, cred.id)')
+  })
 })
