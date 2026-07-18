@@ -3,6 +3,11 @@ import { getRedis } from '@/lib/redis'
 
 const TTL_MS = 10 * 60_000
 
+export function captchaCookieSecure(publicUrl = process.env.PORTAL_BASE_URL): boolean {
+  if (!publicUrl) return process.env.NODE_ENV === 'production'
+  return new URL(publicUrl).protocol === 'https:'
+}
+
 function mac(payload: string): string {
   return createHmac('sha256', process.env.AUTH_SECRET!).update(payload).digest('hex')
 }
