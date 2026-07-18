@@ -20,6 +20,9 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/scripts/migrate.mjs ./scripts/migrate.mjs
+# Next standalone tracing does not include imports from this separately copied script.
+COPY --from=build /app/node_modules/postgres ./node_modules/postgres
+COPY --from=build /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 USER app
 EXPOSE 3000
 CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]
