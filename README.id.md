@@ -1,15 +1,23 @@
-# Gantry (dokumentasi Bahasa Indonesia)
+# Gantry
 
 > English version: [README.md](README.md)
 
-**Gantry** — developer portal untuk **Kong Gateway 3.9**; padanan WSO2 Developer Portal /
-Red Hat 3scale Developer Portal. Aplikasi **standalone**, terpisah total dari kong-kai-be/fe
-(yang berperan sebagai Publisher Portal). Direncanakan dirilis open-source; branding generik &
-configurable (`NEXT_PUBLIC_PORTAL_NAME` / `NEXT_PUBLIC_PORTAL_TAGLINE`), bahasa utama English
-dengan i18n (EN/ID) via next-intl.
+**Gantry** adalah **developer portal self-hosted untuk Kong Gateway 3.9**, setara
+dengan WSO2 Developer Portal atau Red Hat 3scale Developer Portal untuk tim yang
+menjalankan Kong OSS. Developer dapat menemukan API, membuat application,
+mendapatkan credential secara mandiri, berlangganan rate-limit plan, dan mencoba
+endpoint dari browser; admin mengelola katalog serta approval akses.
 
-- **Progress ledger** (riwayat eksekusi per-fase): `.superpowers/sdd/progress.md`
 - **Stack**: Next.js 16 (App Router, TypeScript, Tailwind 4) · Drizzle ORM · PostgreSQL · Auth.js v5 · next-intl
+- **License**: MIT
+- Branding dapat diatur melalui `NEXT_PUBLIC_PORTAL_NAME` dan `NEXT_PUBLIC_PORTAL_TAGLINE`; UI tersedia dalam bahasa Inggris dan Indonesia melalui next-intl berbasis cookie.
+- Container production sudah divalidasi di Kubernetes dengan deployment Kong sungguhan. Manifest dan network policy yang spesifik per-environment tetap berada di luar repository ini.
+
+![Halaman landing](docs/screenshots/landing.png)
+
+| Pemilih theme (admin) | Referensi API |
+|---|---|
+| ![Daftar theme](docs/screenshots/themes.png) | ![Detail API](docs/screenshots/api-detail.png) |
 
 ---
 
@@ -57,7 +65,8 @@ npm run seed:admin             # admin dari ADMIN_EMAIL/ADMIN_PASSWORD di .env.l
 npm run dev                    # http://localhost:3000
 ```
 
-Login admin default: `admin@kai.id` / `admin12345` (dari `.env.local`).
+Isi `ADMIN_EMAIL` dan `ADMIN_PASSWORD` di `.env.local`, lalu jalankan
+`npm run seed:admin`. Jangan commit credential.
 Tanpa `SMTP_HOST`, semua link email (verifikasi, reset password) dicetak ke **console dev server**.
 
 **Prasyarat first-run terhadap Kong**: buka `/admin/setup` sebagai admin — halaman ini
@@ -70,15 +79,22 @@ memverifikasi koneksi + prasyarat dan punya tombol **auto-fix** untuk plugin pro
 |---|---|---|
 | `DATABASE_URL` | ✓ | PostgreSQL portal (fail-fast kalau kosong) |
 | `AUTH_SECRET` | ✓ | Auth.js + HMAC captcha token |
+| `AUTH_URL` | – | origin publik Auth.js; direkomendasikan di belakang reverse proxy |
 | `KONG_ADMIN_URL` | ✓ | Kong Admin API (dev `http://localhost:8106`) |
-| `PORTAL_BASE_URL` | ✓ | basis link email |
-| `INTERNAL_EMAIL_DOMAINS` | – | domain → user `type=internal` (default `kai.id`) |
+| `PORTAL_BASE_URL` | ✓ | origin publik portal untuk link email dan keamanan cookie CAPTCHA |
+| `INTERNAL_EMAIL_DOMAINS` | – | domain yang dipetakan menjadi user `type=internal` |
 | `PROMETHEUS_URL` | – | analytics per-app; kalau kosong analytics dinonaktifkan |
 | `KONG_PROXY_URL` | – | default proxyBaseUrl saat import katalog (dev `http://localhost:8104`) |
 | `SMTP_HOST/PORT/USER/PASS/FROM` | – | email; kalau kosong → console fallback (dev). Auth opsional (relay internal tanpa auth didukung) |
 | `ADMIN_EMAIL/ADMIN_PASSWORD` | – | dipakai `npm run seed:admin` |
-| `REDIS_URL` | – | rate-limit & captcha nonce multi-replica (dev: Dragonfly `redis://:redispassword123@localhost:6479`); kosong = in-memory |
+| `REDIS_URL` | – | rate-limit dan CAPTCHA nonce lintas replica; kosong = in-memory |
 | `NEXT_PUBLIC_PORTAL_NAME/TAGLINE` | – | branding (default "Gantry" / "Developer portal for Kong Gateway") |
+
+Untuk production, set `AUTH_URL` dan `PORTAL_BASE_URL` ke origin publik yang
+sama. Atribut `Secure` pada cookie CAPTCHA mengikuti scheme `PORTAL_BASE_URL`:
+aktif pada HTTPS dan nonaktif pada HTTP. Gunakan HTTP hanya melalui jaringan
+internal atau VPN yang tepercaya. Deployment yang menghadap internet sebaiknya
+melakukan terminasi HTTPS di reverse proxy dan meneruskan host serta scheme asal.
 
 ---
 
@@ -98,10 +114,11 @@ Docker: `Dockerfile` (multi-stage, standalone, jalankan `scripts/migrate.mjs` sa
 
 ---
 
-## 4. Fitur yang sudah ada (semua E2E-verified lokal)
+## 4. Fitur yang sudah ada (divalidasi E2E dengan Kong sungguhan)
 
-**Auth & user** — signup (email verify + captcha anti-replay) → approval admin → login;
-forgot/reset password; resend verifikasi; role `developer`/`portal-admin`; rate-limit endpoint
+**Auth & user** — signup (verifikasi email + CAPTCHA anti-replay) → approval admin → login;
+admin dapat approve sekaligus memverifikasi akun pending secara manual saat SMTP tidak tersedia;
+forgot/reset password; kirim ulang verifikasi; role `developer`/`portal-admin`; rate-limit endpoint
 auth; suspend user efektif seketika (cek status DB per-aksi, bukan hanya JWT).
 
 **Katalog (admin)** — CRUD API product; upload/ganti spec **OpenAPI JSON atau Postman
@@ -122,6 +139,14 @@ revoke; halaman `/apps` & `/apps/[id]`.
 **Subscription** — developer request (app+plan) → antrian approval admin (`/admin/subscriptions`)
 → approve menulis ACL+rate-limit ke Kong (rollback bila gagal) → revoke menghapusnya;
 re-subscribe setelah revoked/rejected.
+
+**Konsistensi Kong** — mutasi database dan Kong memakai compensating rollback atau fail closed.
+Operasi cleanup melakukan retry, error awal dari Kong tetap dipertahankan saat rollback atau
+revocation credential gagal, dan consumer tidak dihapus selama masih memiliki referensi.
+
+**Deployment** — image production standalone sudah divalidasi di Kubernetes, termasuk akses
+melalui HTTP NodePort pada VPN tepercaya. Deployment HTTPS di belakang reverse proxy didukung;
+manifest, secret, dan network policy tetap dikelola oleh masing-masing environment.
 
 **Consumer management (admin)** — `/admin/consumers`: blacklist/unblock (request-termination),
 revoke credential siapa pun, hapus app.
@@ -209,18 +234,13 @@ src/db/schema.ts         11 tabel; migrasi di drizzle/0000..0004
 
 ---
 
-## 5. Roadmap (untuk dilanjutkan model/pengembang lain)
+## 5. Roadmap
 
-Status: **semua fitur dari spec + permintaan tambahan user sudah selesai untuk pakai lokal.**
-Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
+Fitur inti sudah divalidasi secara E2E, termasuk pada deployment Kubernetes.
+Item berikut belum masuk scope implementasi saat ini.
 
-### Ditunda secara sadar (keputusan user tercatat)
-- **Deploy remote / K8s** — Dockerfile siap sebagai artefak, tapi build/push ke registry dan
-  manifest K8s (namespace `kai-dev`, nexus) DIBATALKAN user; fokus lokal. Lanjutkan bila mau
-  produksi: build image `nexus.msvc.app/kai/kong-kai-devportal:YYYYMMDD.N`, tulis Deployment+
-  Service+Ingress, secret dari env di §2.
-- **Spec-change lanjutan** (scope dipilih user = "history + auto-diff" saja). Dua lapis berikut
-  ditawarkan tapi ditunda:
+### Ditunda secara sadar
+- **Spec-change lanjutan** (scope saat ini hanya history + auto-diff):
   - *Deteksi breaking + notifikasi subscriber*: sudah ada `hasBreakingChange()` di
     `openapi-diff.ts` dan badge "breaking"; tinggal tambah banner di `/apis/[slug]` untuk
     subscriber + entri di `/apps/[id]`, opsional email.
@@ -229,9 +249,8 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
 
 ### Backlog teknis (status per Jul 2026)
 - ~~Rate-limit & captcha nonce in-memory~~ **SELESAI**: kini Redis-backed bila `REDIS_URL`
-  diset (aman multi-replica; dev pakai Dragonfly `redis://:redispassword123@localhost:6479`),
-  fallback in-memory otomatis bila kosong/down (`src/lib/redis.ts`, verified: key `rl:*` dan
-  `captcha:nonce:*` benar tertulis di Dragonfly, replay & limit ditolak).
+  diset (aman lintas replica), dengan fallback in-memory bila kosong atau tidak tersedia
+  (`src/lib/redis.ts`).
 - ~~Latency agregat per produk~~ **SELESAI**: `serviceLatencyP95()` di `src/lib/metrics.ts`
   (histogram `kong_request_latency_ms_bucket`, butuh `latency_metrics=true` — auto-fix Setup
   sudah mencakupnya); tampil di halaman detail API. Catatan: seri histogram baru butuh ≥2
@@ -244,9 +263,7 @@ Yang berikut ditawarkan ke user dan **sengaja ditunda** atau belum dikerjakan.
 ### Backlog tambahan
 - **i18n halaman admin**: UI admin masih English hardcode; infrastruktur next-intl sudah ada —
   tinggal ekstraksi string ke `messages/*.json` (ikuti pola halaman publik).
-- **Open-source housekeeping**: rename repo → `gantry` **sudah**
-  (https://github.com/chmdznr/gantry, masih private). Sisanya belum: LICENSE (MIT/Apache-2.0),
-  README bahasa Inggris, CONTRIBUTING, screenshot — kerjakan sebelum flip ke public.
+- **Open-source housekeeping**: tambahkan panduan kontribusi (`CONTRIBUTING.md`).
 
 ### Ide fitur lanjutan (belum di-scope)
 - Notifikasi email saat subscription di-approve/reject.

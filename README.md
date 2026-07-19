@@ -11,6 +11,7 @@ try endpoints from the browser; admins curate the catalog and approve access.
 - **Stack**: Next.js 16 (App Router, TypeScript, Tailwind 4) · Drizzle ORM · PostgreSQL · Auth.js v5 · next-intl
 - **License**: MIT
 - Branding is configurable (`NEXT_PUBLIC_PORTAL_NAME` / `NEXT_PUBLIC_PORTAL_TAGLINE`); UI is English with full Indonesian translation (cookie-based next-intl).
+- The production container has been validated on Kubernetes against a real Kong deployment. Environment-specific manifests and network policies stay outside this repository.
 
 ![Landing page](docs/screenshots/landing.png)
 
@@ -81,8 +82,9 @@ prometheus plugin (`per_consumer`, `latency_metrics`). Run it once per Kong.
 |---|---|---|
 | `DATABASE_URL` | ✓ | portal PostgreSQL (fails fast when empty) |
 | `AUTH_SECRET` | ✓ | Auth.js + captcha token HMAC |
+| `AUTH_URL` | – | public Auth.js origin; recommended behind a reverse proxy |
 | `KONG_ADMIN_URL` | ✓ | Kong Admin API (dev `http://localhost:8106`) |
-| `PORTAL_BASE_URL` | ✓ | base for email links |
+| `PORTAL_BASE_URL` | ✓ | public portal origin for email links and CAPTCHA cookie security |
 | `INTERNAL_EMAIL_DOMAINS` | – | domains mapped to `type=internal` users |
 | `PROMETHEUS_URL` | – | per-app analytics; empty disables analytics |
 | `KONG_PROXY_URL` | – | default proxyBaseUrl during catalog import (dev `http://localhost:8104`) |
@@ -90,6 +92,12 @@ prometheus plugin (`per_consumer`, `latency_metrics`). Run it once per Kong.
 | `ADMIN_EMAIL/ADMIN_PASSWORD` | – | used by `npm run seed:admin` |
 | `REDIS_URL` | – | rate-limit & captcha nonce across replicas; empty = in-memory |
 | `NEXT_PUBLIC_PORTAL_NAME/TAGLINE` | – | branding (default "Gantry" / "Developer portal for Kong Gateway") |
+
+Set `AUTH_URL` and `PORTAL_BASE_URL` to the same public origin in production.
+The CAPTCHA cookie follows the `PORTAL_BASE_URL` scheme: `Secure` is enabled
+for HTTPS and disabled for HTTP. Use HTTP only on trusted internal or VPN
+paths; internet-facing deployments should terminate HTTPS at a reverse proxy
+and forward the original host and scheme.
 
 ---
 
@@ -112,7 +120,8 @@ start, then `server.js`).
 ## 4. Features (all verified E2E against a real Kong)
 
 **Auth & users** — signup (email verification + anti-replay captcha) → admin
-approval → login; forgot/reset password; resend verification; roles
+approval → login; an admin can approve and verify a pending account manually
+when SMTP is unavailable; forgot/reset password; resend verification; roles
 `developer`/`portal-admin`; rate-limited auth endpoints; suspending a user
 takes effect immediately (DB status checked per action, not just the JWT).
 
@@ -136,6 +145,15 @@ Key/JWT (shown once), revoke; `/apps` and `/apps/[id]`.
 **Subscriptions** — developer requests (app+plan) → admin approval queue
 (`/admin/subscriptions`) → approve writes ACL+rate-limit to Kong (rolls back
 on failure) → revoke removes them; re-subscribe after revoked/rejected.
+
+**Kong consistency** — database and Kong mutations use compensating rollback
+or fail closed. Cleanup operations retry, credential rollback/revocation keeps
+the original Kong error, and consumers are not deleted while still referenced.
+
+**Deployment** — the standalone production image has been validated on
+Kubernetes, including access over an HTTP NodePort on a trusted VPN. HTTPS
+reverse-proxy deployments are supported; manifests, secrets, and network
+policies remain environment-owned.
 
 **Consumer management (admin)** — `/admin/consumers`: blacklist/unblock
 (request-termination), revoke anyone's credential, delete apps.
@@ -234,8 +252,6 @@ src/db/schema.ts         11 tables; migrations in drizzle/0000..0004
 ## 5. Roadmap
 
 ### Deliberately deferred
-- **Remote / K8s deployment** — the `Dockerfile` is ready as an artifact;
-  image build/push and manifests are up to your environment.
 - **Advanced spec-change handling** (current scope = history + auto-diff):
   - *Breaking-change detection + subscriber notification*:
     `hasBreakingChange()` and the "breaking" badge already exist; what's left

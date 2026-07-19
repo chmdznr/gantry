@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
-import { displayFont, sansFont, monoFont } from "./fonts";
+import { sansFont, monoFont } from "./fonts";
 import { getSiteContent } from "@/lib/site-content";
 import { getTheme, getMode } from "@/lib/themes";
 import "./globals.css";
@@ -22,7 +22,7 @@ export default async function RootLayout({
       lang={locale}
       data-theme={theme}
       data-mode={mode}
-      className={`${displayFont.variable} ${sansFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${sansFont.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
