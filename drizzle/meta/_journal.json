@@ -36,6 +36,13 @@
       "when": 1783487699770,
       "tag": "0004_mature_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784446756552,
+      "tag": "0005_lucky_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

@@ -121,8 +121,9 @@ start, then `server.js`).
 
 **Auth & users** — signup (email verification + anti-replay captcha) → admin
 approval → login; an admin can approve and verify a pending account manually
-when SMTP is unavailable; forgot/reset password; resend verification; roles
-`developer`/`portal-admin`; rate-limited auth endpoints; suspending a user
+when SMTP is unavailable; forgot/reset password; authenticated password change
+that revokes all sessions; resend verification; roles `developer`/`portal-admin`;
+rate-limited auth endpoints; suspending a user
 takes effect immediately (DB status checked per action, not just the JWT).
 
 **Catalog (admin)** — CRUD API products; upload/replace specs as **OpenAPI

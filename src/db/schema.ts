@@ -1,5 +1,5 @@
 import {
-  pgTable, pgEnum, uuid, text, timestamp, jsonb, uniqueIndex,
+  pgTable, pgEnum, uuid, text, timestamp, jsonb, uniqueIndex, integer,
 } from 'drizzle-orm/pg-core'
 
 export const userType = pgEnum('user_type', ['internal', 'external'])
@@ -18,6 +18,7 @@ export const users = pgTable('users', {
   type: userType('type').notNull().default('external'),
   status: userStatus('status').notNull().default('pending'),
   role: userRole('role').notNull().default('developer'),
+  sessionVersion: integer('session_version').notNull().default(0),
   emailVerifiedAt: timestamp('email_verified_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })

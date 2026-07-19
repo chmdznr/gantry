@@ -118,8 +118,9 @@ Docker: `Dockerfile` (multi-stage, standalone, jalankan `scripts/migrate.mjs` sa
 
 **Auth & user** — signup (verifikasi email + CAPTCHA anti-replay) → approval admin → login;
 admin dapat approve sekaligus memverifikasi akun pending secara manual saat SMTP tidak tersedia;
-forgot/reset password; kirim ulang verifikasi; role `developer`/`portal-admin`; rate-limit endpoint
-auth; suspend user efektif seketika (cek status DB per-aksi, bukan hanya JWT).
+forgot/reset password; ganti password saat login dengan pencabutan seluruh session; kirim ulang
+verifikasi; role `developer`/`portal-admin`; rate-limit endpoint auth; suspend user efektif seketika
+(cek status DB per-aksi, bukan hanya JWT).
 
 **Katalog (admin)** — CRUD API product; upload/ganti spec **OpenAPI JSON atau Postman
 Collection v2** (Postman dikonversi otomatis ke OpenAPI — folder→tag, path var, contoh body &

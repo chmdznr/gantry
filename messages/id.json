@@ -2,6 +2,7 @@
   "nav": {
     "catalog": "Katalog",
     "myApps": "Aplikasi Saya",
+    "security": "Keamanan",
     "admin": "Admin",
     "signOut": "Keluar",
     "signIn": "Masuk",
@@ -69,6 +70,15 @@
     "saving": "Menyimpan…",
     "resetLinkInvalid": "Tautan ini tidak valid atau sudah kedaluwarsa.",
     "requestNewLink": "Minta tautan baru"
+  },
+  "account": {
+    "securityTitle": "Keamanan akun",
+    "securityText": "Ganti password Anda. Semua session yang sedang login akan dicabut.",
+    "currentPassword": "Password saat ini",
+    "newPassword": "Password baru",
+    "confirmPassword": "Konfirmasi password baru",
+    "savePassword": "Ganti password",
+    "saving": "Mengubah…"
   },
   "catalog": {
     "backToCatalog": "← Katalog",
@@ -196,6 +206,10 @@
     "resendOk": "Jika email terdaftar dan belum terverifikasi, link baru sudah dikirim.",
     "resetRequestOk": "Jika email terdaftar dan aktif, link reset sudah dikirim.",
     "passwordMin": "Password minimal 8 karakter.",
+    "passwordLength": "Password harus terdiri dari 8–128 karakter.",
+    "passwordMismatch": "Konfirmasi password baru tidak cocok.",
+    "passwordUnchanged": "Password baru harus berbeda dari password saat ini.",
+    "currentPasswordInvalid": "Password saat ini salah.",
     "resetInvalid": "Link reset tidak valid atau kedaluwarsa.",
     "appNameMin": "Nama application minimal 3 karakter.",
     "kongConsumerFailed": "Gagal membuat consumer di Kong. Coba lagi nanti.",

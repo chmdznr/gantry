@@ -9,9 +9,9 @@ export default auth((req) => {
     // sudah login tapi bukan admin -> ke home, bukan halaman login
     return Response.redirect(user ? new URL('/', req.url) : loginUrl)
   }
-  if (pathname.startsWith('/apps') && !user) {
+  if ((pathname.startsWith('/apps') || pathname.startsWith('/account')) && !user) {
     return Response.redirect(loginUrl)
   }
 })
 
-export const config = { matcher: ['/admin/:path*', '/apps/:path*'] }
+export const config = { matcher: ['/admin/:path*', '/apps/:path*', '/account/:path*'] }

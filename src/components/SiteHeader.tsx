@@ -22,11 +22,12 @@ export default async function SiteHeader() {
     <header className="bg-band text-band-ink">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <BrandMark appName={c.appName} />
-        <nav className="flex items-center gap-2 text-sm">
+        <nav className="flex w-full flex-wrap items-center justify-end gap-2 text-sm sm:w-auto">
           <NavLink href="/#katalog" className="btn-ghost btn-sm border-transparent text-band-ink/80 hover:text-band-ink">{t('catalog')}</NavLink>
           {session?.user ? (
             <>
               <NavLink href="/apps" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('myApps')}</NavLink>
+              <NavLink href="/account/security" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('security')}</NavLink>
               {session.user.role === 'portal-admin' && (
                 <NavLink href="/admin" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('admin')}</NavLink>
               )}
