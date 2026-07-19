@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { issueCaptchaToken, verifyCaptchaToken } from '../captcha'
+import { captchaCookieSecure, issueCaptchaToken, verifyCaptchaToken } from '../captcha'
 
 beforeAll(() => { process.env.AUTH_SECRET = 'test-secret' })
 
@@ -28,5 +28,15 @@ describe('captcha token', () => {
   it('menolak token cacat', async () => {
     expect(await verifyCaptchaToken('abc3d', 'bukan.token')).toBe(false)
     expect(await verifyCaptchaToken('abc3d', '')).toBe(false)
+  })
+})
+
+describe('captcha cookie', () => {
+  it('tidak memakai Secure untuk public URL HTTP meski runtime production', () => {
+    expect(captchaCookieSecure('http://10.120.1.81:32131')).toBe(false)
+  })
+
+  it('memakai Secure untuk public URL HTTPS', () => {
+    expect(captchaCookieSecure('https://gantry-bimtek.arsip.go.id')).toBe(true)
   })
 })

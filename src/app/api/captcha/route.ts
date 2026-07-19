@@ -1,6 +1,6 @@
 import svgCaptcha from 'svg-captcha'
 import { cookies } from 'next/headers'
-import { issueCaptchaToken } from '@/lib/captcha'
+import { captchaCookieSecure, issueCaptchaToken } from '@/lib/captcha'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +9,7 @@ export async function GET() {
   const jar = await cookies()
   jar.set('captcha_digest', issueCaptchaToken(captcha.text), {
     httpOnly: true, sameSite: 'lax', path: '/', maxAge: 600,
-    secure: process.env.NODE_ENV === 'production',
+    secure: captchaCookieSecure(),
   })
   return new Response(captcha.data, { headers: { 'Content-Type': 'image/svg+xml' } })
 }
