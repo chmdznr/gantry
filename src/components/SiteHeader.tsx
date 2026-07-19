@@ -27,6 +27,7 @@ export default async function SiteHeader() {
           {session?.user ? (
             <>
               <NavLink href="/apps" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('myApps')}</NavLink>
+              <NavLink href="/account/security" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('security')}</NavLink>
               {session.user.role === 'portal-admin' && (
                 <NavLink href="/admin" className="btn-ghost btn-sm" activeClassName="!border-transparent !bg-amber !text-accent-ink">{t('admin')}</NavLink>
               )}

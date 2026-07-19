@@ -2,6 +2,7 @@
   "nav": {
     "catalog": "Catalog",
     "myApps": "My Applications",
+    "security": "Security",
     "admin": "Admin",
     "signOut": "Sign out",
     "signIn": "Sign in",
@@ -69,6 +70,15 @@
     "saving": "Saving…",
     "resetLinkInvalid": "This link is invalid or has expired.",
     "requestNewLink": "Request a new link"
+  },
+  "account": {
+    "securityTitle": "Account security",
+    "securityText": "Change your password. All signed-in sessions will be revoked.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "savePassword": "Change password",
+    "saving": "Changing…"
   },
   "catalog": {
     "backToCatalog": "← Catalog",
@@ -196,6 +206,10 @@
     "resendOk": "If the email is registered and unverified, a new link has been sent.",
     "resetRequestOk": "If the email is registered and active, a reset link has been sent.",
     "passwordMin": "Password must be at least 8 characters.",
+    "passwordLength": "Password must be 8–128 characters.",
+    "passwordMismatch": "New password confirmation does not match.",
+    "passwordUnchanged": "New password must be different from the current password.",
+    "currentPasswordInvalid": "Current password is incorrect.",
     "resetInvalid": "The reset link is invalid or has expired.",
     "appNameMin": "Application name must be at least 3 characters.",
     "kongConsumerFailed": "Failed to create the consumer on Kong. Try again later.",

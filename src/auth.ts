@@ -1,10 +1,10 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { authorizeUser } from '@/lib/authorize'
+import { refreshSessionToken } from '@/lib/session-version'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true, // di belakang ingress/proxy K8s; host divalidasi di layer ingress
-  // ponytail: 8 jam — suspend/demote baru efektif saat sesi habis; cek status per-aksi menyusul di Plan 2
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 },
   pages: { signIn: '/auth/login' },
   providers: [
@@ -17,8 +17,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.role = (user as { role: string }).role
-      return token
+      if (user) {
+        token.role = user.role
+        token.sessionVersion = user.sessionVersion
+        return token
+      }
+      return refreshSessionToken(token)
     },
     session({ session, token }) {
       session.user.id = token.sub!
