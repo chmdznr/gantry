@@ -12,10 +12,10 @@ export const CONTENT_FIELDS = [
   { base: 'appName', label: 'App name', group: 'Branding', perLocale: false },
   { base: 'tagline', label: 'Tagline', group: 'Branding', perLocale: true },
   { base: 'heroTitle', label: 'Hero title', group: 'Landing', perLocale: true },
-  { base: 'heroText', label: 'Hero text', group: 'Landing', perLocale: true },
+  { base: 'heroText', label: 'Hero text', group: 'Landing', perLocale: true, multiline: true },
   { base: 'ctaStart', label: 'CTA — start', group: 'Landing', perLocale: true },
   { base: 'ctaCatalog', label: 'CTA — catalog', group: 'Landing', perLocale: true },
-  { base: 'footer', label: 'Footer text', group: 'Footer', perLocale: true },
+  { base: 'footer', label: 'Footer text', group: 'Footer', perLocale: true, multiline: true },
 ] as const
 
 export type ContentBase = (typeof CONTENT_FIELDS)[number]['base']

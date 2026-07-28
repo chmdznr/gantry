@@ -4,6 +4,7 @@ import { portalSettings } from '@/db/schema'
 import { CONTENT_FIELDS, CONTENT_LOCALES, contentKey, getContentDefaults } from '@/lib/site-content'
 import { updateSiteContent } from '@/actions/admin-content'
 import PendingButton from '@/components/PendingButton'
+import RichTextField from '@/components/RichTextField'
 
 export default async function AdminContentPage() {
   const rows = await db.select().from(portalSettings).where(like(portalSettings.key, 'content.%'))
@@ -14,7 +15,7 @@ export default async function AdminContentPage() {
   return (
     <main>
       <h1 className="mb-1 text-xl font-bold">Site content</h1>
-      <p className="mb-6 text-sm text-muted">Leave a field empty to use the built-in default. Changes apply immediately.</p>
+      <p className="mb-6 text-sm text-muted">Leave a field empty to use the built-in default. Changes apply immediately. Hero text and Footer support rich text (bold, links, lists).</p>
       <form action={updateSiteContent} className="space-y-8">
         {groups.map((group) => (
           <section key={group}>
@@ -25,12 +26,18 @@ export default async function AdminContentPage() {
                   <label className="label">{f.label}</label>
                   {f.perLocale ? (
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {CONTENT_LOCALES.map((loc) => (
-                        <input key={loc} name={contentKey(f.base, loc)}
-                          defaultValue={stored.get(contentKey(f.base, loc)) ?? ''}
-                          placeholder={`${loc.toUpperCase()} · ${def[loc][f.base as keyof typeof def['en']]}`}
-                          className="input" />
-                      ))}
+                      {CONTENT_LOCALES.map((loc) =>
+                        'multiline' in f ? (
+                          <RichTextField key={loc} name={contentKey(f.base, loc)}
+                            defaultValue={stored.get(contentKey(f.base, loc)) ?? ''}
+                            hint={`${loc.toUpperCase()} · default: ${def[loc][f.base as keyof typeof def['en']]}`} />
+                        ) : (
+                          <input key={loc} name={contentKey(f.base, loc)}
+                            defaultValue={stored.get(contentKey(f.base, loc)) ?? ''}
+                            placeholder={`${loc.toUpperCase()} · ${def[loc][f.base as keyof typeof def['en']]}`}
+                            className="input" />
+                        )
+                      )}
                     </div>
                   ) : (
                     <input name={contentKey(f.base)} defaultValue={stored.get(contentKey(f.base)) ?? ''}

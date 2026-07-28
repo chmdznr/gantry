@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Markdown from 'react-markdown'
 import { desc, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
@@ -36,9 +37,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
           <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             {c.heroTitle}
           </h1>
-          <p className="mt-5 max-w-xl text-band-ink/70">
-            {c.heroText}
-          </p>
+          <div className="mt-5 max-w-xl text-band-ink/70 [&_a]:underline [&_strong]:text-band-ink [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-2">
+            <Markdown>{c.heroText}</Markdown>
+          </div>
           {!session?.user && (
             <div className="mt-8 flex gap-3">
               <Link href="/auth/signup" className="btn-accent">{c.ctaStart}</Link>

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Markdown from 'react-markdown'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { auth } from '@/auth'
 import { logout } from '@/actions/login'
@@ -53,7 +54,9 @@ export async function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-line">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-sm text-muted">
-        <span>{c.footer}</span>
+        <div className="[&_a]:underline [&_p+p]:mt-1">
+          <Markdown>{c.footer}</Markdown>
+        </div>
         <span className="font-mono text-xs">{t('openSource')}</span>
       </div>
     </footer>
