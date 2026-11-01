@@ -1,5 +1,7 @@
 # Kong Integration Requirements
 
+> English version: [kong-integration-requirements.en.md](kong-integration-requirements.en.md)
+
 Dokumen ini merinci apa yang harus dipenuhi sebuah instance Kong agar dapat dilihat
 laporannya dan dikelola oleh Gantry. Sumber pengecekannya adalah halaman `/admin/setup` dan
 `/admin/apis/[id]`; dokumen ini memindahkan syarat tersebut dari halaman runtime ke
@@ -47,8 +49,8 @@ sesuai konstanta `REQUIRED_PLUGINS` di `src/app/admin/setup/page.tsx`:
 key-auth, jwt, acl, rate-limiting, request-termination, prometheus
 ```
 
-Halaman `/admin/setup` memeriksa ketersediaannya dan menampilkan status per plugin dan menandai `Missing: ...` bila ada
-yang kurang. Pemetaan plugin ke fitur portal:
+Halaman `/admin/setup` memeriksa ketersediaannya, menampilkan status per plugin,
+dan menandai `Missing: ...` bila ada yang kurang. Pemetaan plugin ke fitur portal:
 
 | Plugin | Fitur portal yang bergantung padanya |
 |---|---|
