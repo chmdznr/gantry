@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { MAX_MULTIPART_BYTES, type FormField, type TryEndpoint } from '@/lib/tryit'
 
-type Endpoint = { method: string; path: string; summary?: string; routable?: boolean }
-type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string }
+type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string; code?: string }
+
+const MB = MAX_MULTIPART_BYTES / (1024 * 1024)
 
 const methodChip: Record<string, string> = {
   GET: 'bg-go-soft text-go',
@@ -14,9 +16,13 @@ const methodChip: Record<string, string> = {
   DELETE: 'bg-stop-soft text-stop',
 }
 
+function fmtBytes(n: number) {
+  return n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`
+}
+
 // Dropdown custom — popup select native dirender OS (posisi/tema di luar kendali halaman).
 function EndpointPicker({ endpoints, method, path, onPick }: {
-  endpoints: Endpoint[]
+  endpoints: TryEndpoint[]
   method: string
   path: string
   onPick: (method: string, path: string) => void
@@ -76,7 +82,7 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
 export default function TryIt({ productId, baseUrl, endpoints }: {
   productId: string
   baseUrl: string
-  endpoints: Endpoint[]
+  endpoints: TryEndpoint[]
 }) {
   const t = useTranslations('tryit')
   const first = endpoints.find((e) => e.routable !== false) ?? endpoints[0]
@@ -84,22 +90,105 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   const [path, setPath] = useState(first?.path ?? '/')
   const [apiKey, setApiKey] = useState('')
   const [body, setBody] = useState('')
+  const [text, setText] = useState<Record<string, string>>({})
+  const [files, setFiles] = useState<Record<string, File[]>>({})
+  const [formError, setFormError] = useState<string | null>(null)
   const [result, setResult] = useState<TryResult | null>(null)
   const [busy, setBusy] = useState(false)
 
+  const current = endpoints.find((e) => e.method.toUpperCase() === method && e.path === path)
+  // GET tidak punya body; endpoint dengan schema yang tidak bisa dibaca dimatikan.
+  const multipart = method !== 'GET' && current?.bodyContentType === 'multipart/form-data'
+  const unsupported = method !== 'GET' && current?.bodyContentType === 'unsupported'
+
+  function pick(m: string, p: string) {
+    setMethod(m)
+    setPath(p)
+    setText({})
+    setFiles({})
+    setFormError(null)
+    setResult(null)
+  }
+
+  // Bangun FormData upstream: kontrol berprefiks @ (F5), field mengikuti schema.
+  // Nama field/file berprefiks @ dari spec dilewati supaya tidak menabrak kontrol.
+  function buildMultipart(): FormData | null {
+    const fields: FormField[] = (current?.formFields ?? []).filter((f) => !f.unsupported && !f.name.startsWith('@'))
+    const filled = fields.some((f) =>
+      f.type === 'binary' ? (files[f.name]?.length ?? 0) > 0 : (text[f.name] ?? '') !== '')
+    if (!filled) {
+      setFormError(t('multipartBodyEmpty'))
+      return null
+    }
+
+    const fd = new FormData()
+    fd.set('@productId', productId)
+    fd.set('@method', method)
+    fd.set('@path', path)
+    if (apiKey) fd.set('@apiKey', apiKey)
+
+    let total = 0
+    for (const f of fields) {
+      if (f.type === 'binary') {
+        const picked = files[f.name] ?? []
+        if (picked.length === 0) {
+          if (f.required) {
+            setFormError(t('fileRequired', { field: f.name }))
+            return null
+          }
+          continue
+        }
+        for (const file of picked) {
+          if (file.size > MAX_MULTIPART_BYTES) {
+            setFormError(t('fileSizeLimit', { size: MB }))
+            return null
+          }
+          total += file.size
+          fd.append(f.name, file)
+        }
+      } else {
+        const value = text[f.name] ?? ''
+        if (!value) {
+          if (f.required) {
+            setFormError(t('fieldRequired', { field: f.name }))
+            return null
+          }
+          continue
+        }
+        fd.append(f.name, value)
+      }
+    }
+    if (total > MAX_MULTIPART_BYTES) {
+      setFormError(t('uploadTooLarge', { size: MB }))
+      return null
+    }
+    return fd
+  }
+
   async function send() {
+    setFormError(null)
+    const fd = multipart ? buildMultipart() : null
+    if (multipart && !fd) return
+
     setBusy(true)
     setResult(null)
     try {
-      const res = await fetch('/api/try', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId, method, path, apiKey,
-          ...(method !== 'GET' && body ? { body, contentType: 'application/json' } : {}),
-        }),
-      })
-      setResult(await res.json())
+      const res = await fetch('/api/try', fd
+        ? { method: 'POST', body: fd }
+        : {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId, method, path, apiKey,
+            ...(method !== 'GET' && body ? { body, contentType: 'application/json' } : {}),
+          }),
+        })
+      const data = (await res.json()) as TryResult
+      // Kode error proxy punya padanan i18n; 429 dari upstream tetap lewat
+      // body {status:429} (HTTP proxy 200) sehingga tidak tertimpa di sini.
+      if (data.code === 'uploadTooLarge') data.error = t('uploadTooLarge', { size: MB })
+      else if (data.code === 'tooManyConcurrent') data.error = t('tooManyConcurrent')
+      setResult(data)
     } catch {
       setResult({ error: t('requestFailed') })
     } finally {
@@ -116,10 +205,10 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     <div className="card">
       {endpoints.length > 0 && (
         <EndpointPicker endpoints={endpoints} method={method} path={path}
-          onPick={(m, p) => { setMethod(m); setPath(p) }} />
+          onPick={(m, p) => pick(m, p)} />
       )}
       <div className="flex flex-wrap items-end gap-2">
-        <select value={method} onChange={(e) => setMethod(e.target.value)} className="input w-auto">
+        <select value={method} onChange={(e) => pick(e.target.value, path)} className="input w-auto">
           {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => <option key={m}>{m}</option>)}
         </select>
         <span className="pb-2 font-mono text-xs text-muted">{baseUrl}</span>
@@ -127,16 +216,79 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
           className="input min-w-40 flex-1 font-mono" />
         <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder={t('apikeyPlaceholder')}
           type="password" className="input w-56 font-mono" />
-        <button onClick={send} disabled={busy || blocked}
+        <button onClick={send} disabled={busy || blocked || unsupported}
           className="btn-primary">
           {busy ? t('sending') : t('send')}
         </button>
       </div>
       {blocked && <p className="mt-2 text-sm text-warn">{t('notRoutableHint')}</p>}
-      {method !== 'GET' && (
+      {unsupported && <p className="mt-2 text-sm text-warn">{t('endpointUnsupportedRef')}</p>}
+
+      {multipart && current && (
+        <div className="mt-2 space-y-3 rounded-lg border border-line bg-paper/60 p-3">
+          {current.formFields.length === 0 ? (
+            <p className="text-sm text-muted">{t('multipartUnsupportedBySpec')}</p>
+          ) : (
+            current.formFields.map((f) => {
+              const picked = files[f.name] ?? []
+              return (
+                <div key={f.name}>
+                  <span className="label">
+                    {f.name}
+                    {f.required && <span className="text-stop" aria-hidden> *</span>}
+                  </span>
+                  {f.unsupported ? (
+                    <input disabled className="input font-mono" placeholder={f.unsupported} aria-label={f.name} />
+                  ) : f.type === 'binary' ? (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="btn-ghost cursor-pointer text-sm">
+                          {t('fileAdd')}
+                          <input type="file" multiple className="hidden" aria-label={`${t('fileField')}: ${f.name}`}
+                            onChange={(e) => {
+                              const added = Array.from(e.target.files ?? [])
+                              e.target.value = ''
+                              if (added.length > 0) {
+                                setFiles((prev) => ({ ...prev, [f.name]: [...(prev[f.name] ?? []), ...added] }))
+                              }
+                            }} />
+                        </label>
+                      </div>
+                      {picked.length > 0 && (
+                        <ul className="mt-1 space-y-1">
+                          {picked.map((file, i) => (
+                            <li key={`${file.name}-${i}`} className="flex items-center gap-2 text-xs">
+                              <span className="truncate font-mono">{file.name}</span>
+                              <span className="shrink-0 text-muted">{fmtBytes(file.size)}</span>
+                              <button type="button" onClick={() => setFiles((prev) => ({
+                                ...prev,
+                                [f.name]: (prev[f.name] ?? []).filter((_, j) => j !== i),
+                              }))}
+                                className="shrink-0 text-stop underline">{t('fileRemove')}</button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  ) : (
+                    <input value={text[f.name] ?? ''} aria-label={f.name}
+                      onChange={(e) => setText((prev) => ({ ...prev, [f.name]: e.target.value }))}
+                      placeholder={t('textValuePlaceholder')} className="input font-mono" />
+                  )}
+                </div>
+              )
+            })
+          )}
+          <p className="text-xs text-muted">{t('fileSizeLimit', { size: MB })}</p>
+        </div>
+      )}
+
+      {method !== 'GET' && !multipart && !unsupported && (
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4}
           placeholder={t('bodyPlaceholder')} className="input mt-2 font-mono" />
       )}
+      {formError && <p className="mt-2 text-sm text-stop">{formError}</p>}
+
       {result && (
         <div className="mt-3 rounded bg-paper p-3 text-sm">
           {result.error ? (

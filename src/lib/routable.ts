@@ -22,16 +22,27 @@ const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'
 // Beda dari isEndpointRoutable (prefix Kong): ini exact-per-segmen dengan templating {id},
 // supaya user tidak bisa probing path yang tidak terdaftar (mis. /payments/1/secret).
 export function matchesSpecOperation(reqPath: string, method: string, specPaths: Record<string, Record<string, unknown>>): boolean {
+  return findSpecOperation(reqPath, method, specPaths) !== undefined
+}
+
+// Operasi OpenAPI yang cocok (bukan hanya boolean) — dipakai guard requestBody
+// multipart. Path item yang malformed tetap dianggap cocok (objek kosong), sama
+// dengan perilaku matchesSpecOperation sebelumnya.
+export function findSpecOperation(
+  reqPath: string,
+  method: string,
+  specPaths: Record<string, Record<string, unknown>>,
+): Record<string, unknown> | undefined {
   const m = method.toLowerCase()
   const reqSegs = reqPath.split('?')[0].split('/').filter(Boolean)
   for (const [tmpl, ops] of Object.entries(specPaths)) {
-    const hasMethod = Object.keys(ops).some((k) => k.toLowerCase() === m && HTTP_METHODS.includes(k.toLowerCase()))
-    if (!hasMethod) continue
+    const entry = Object.entries(ops).find(([k]) => k.toLowerCase() === m && HTTP_METHODS.includes(k.toLowerCase()))
+    if (!entry) continue
     const tmplSegs = tmpl.split('/').filter(Boolean)
     if (tmplSegs.length !== reqSegs.length) continue
     const ok = tmplSegs.every((seg, i) =>
       seg.startsWith('{') && seg.endsWith('}') ? reqSegs[i].length > 0 : seg === reqSegs[i])
-    if (ok) return true
+    if (ok) return (entry[1] && typeof entry[1] === 'object' ? entry[1] : {}) as Record<string, unknown>
   }
-  return false
+  return undefined
 }

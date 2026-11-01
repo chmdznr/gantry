@@ -112,7 +112,19 @@
     "requestFailed": "Request gagal.",
     "rateRemaining": "rate limit sisa: {left}/{limit}",
     "notRoutable": "belum ada di gateway",
-    "notRoutableHint": "Endpoint ini ada di spec tetapi tidak ada route gateway yang cocok — request pasti 404. Hubungi publisher API."
+    "notRoutableHint": "Endpoint ini ada di spec tetapi tidak ada route gateway yang cocok — request pasti 404. Hubungi publisher API.",
+    "fileField": "Berkas",
+    "fileAdd": "Pilih berkas",
+    "fileRemove": "Hapus",
+    "fileSizeLimit": "Maks {size} MB per unggahan.",
+    "fileRequired": "{field} butuh minimal satu berkas.",
+    "fieldRequired": "{field} wajib diisi.",
+    "multipartUnsupportedBySpec": "Spec tidak mendefinisikan field unggahan apa pun untuk endpoint ini.",
+    "endpointUnsupportedRef": "Skema body endpoint ini memakai $ref atau skema gabungan yang belum bisa dibuka Try It. Pilih endpoint lain atau baca referensi di bawah.",
+    "multipartBodyEmpty": "Isi minimal satu field atau lampirkan berkas sebelum mengirim.",
+    "uploadTooLarge": "Unggahan terlalu besar — total harus di bawah {size} MB.",
+    "tooManyConcurrent": "Terlalu banyak unggahan berjalan. Tunggu sebentar lalu coba lagi.",
+    "textValuePlaceholder": "Nilai"
   },
   "reference": {
     "parameters": "Parameter",

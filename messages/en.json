@@ -112,7 +112,19 @@
     "requestFailed": "Request failed.",
     "rateRemaining": "rate limit left: {left}/{limit}",
     "notRoutable": "not on gateway",
-    "notRoutableHint": "This endpoint is documented in the spec but no gateway route matches it — the request would return 404. Contact the API publisher."
+    "notRoutableHint": "This endpoint is documented in the spec but no gateway route matches it — the request would return 404. Contact the API publisher.",
+    "fileField": "File",
+    "fileAdd": "Choose files",
+    "fileRemove": "Remove",
+    "fileSizeLimit": "Max {size} MB per upload.",
+    "fileRequired": "{field} needs at least one file.",
+    "fieldRequired": "{field} is required.",
+    "multipartUnsupportedBySpec": "The spec doesn't define any uploadable fields for this endpoint.",
+    "endpointUnsupportedRef": "This endpoint's body schema uses $ref or a composed schema that Try It cannot expand. Pick another endpoint or read the reference below.",
+    "multipartBodyEmpty": "Fill at least one field or attach a file before sending.",
+    "uploadTooLarge": "Upload too large — keep the total under {size} MB.",
+    "tooManyConcurrent": "Too many uploads in progress. Wait a moment, then retry.",
+    "textValuePlaceholder": "Value"
   },
   "reference": {
     "parameters": "Parameters",

@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import { listServiceRoutes } from '@/lib/kong'
 import { isEndpointRoutable, type GatewayRoute } from '@/lib/routable'
+import { type FormField, type TryEndpoint } from '@/lib/tryit'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -18,7 +19,54 @@ function fmtLimits(rl: Record<string, number>) {
   return Object.entries(rl).map(([k, v]) => `${v}/${k}`).join(', ') || '-'
 }
 
-type OpenApiSpec = { paths?: Record<string, Record<string, { summary?: string }>> }
+type SpecSchema = {
+  type?: string
+  format?: string
+  $ref?: string
+  allOf?: unknown
+  anyOf?: unknown
+  oneOf?: unknown
+  required?: string[]
+  properties?: Record<string, SpecSchema>
+  items?: SpecSchema
+}
+type OpenApiOperation = {
+  summary?: string
+  requestBody?: { content?: Record<string, { schema?: SpecSchema }> }
+}
+type OpenApiSpec = { paths?: Record<string, Record<string, OpenApiOperation>> }
+
+// F6: media type body ditentukan dari requestBody.content, schema inline saja.
+// $ref/allOf/anyOf/oneOf tidak pernah di-dereference: endpoint yang schema
+// multipart-nya tidak bisa dibaca ditandai 'unsupported' (UI mematikan Try It).
+function deriveBody(op: OpenApiOperation | undefined): Pick<TryEndpoint, 'bodyContentType' | 'formFields'> {
+  const content = op?.requestBody?.content
+  if (!content || Object.keys(content).length === 0) return { bodyContentType: 'application/json', formFields: [] }
+
+  const multipart = content['multipart/form-data']
+  if (multipart) {
+    const schema = multipart.schema
+    if (!schema || schema.$ref || schema.allOf || schema.anyOf || schema.oneOf) {
+      return { bodyContentType: 'unsupported', formFields: [] }
+    }
+    const required = new Set(schema.required ?? [])
+    const formFields: FormField[] = Object.entries(schema.properties ?? {}).map(([name, prop]) => {
+      const p = prop ?? {}
+      const isBinary = [p.format, p.items?.format].some((f) => f === 'binary' || f === 'byte')
+      const composed = Boolean(p.$ref || p.allOf || p.anyOf || p.oneOf)
+      return {
+        name,
+        type: isBinary ? 'binary' : 'text',
+        required: required.has(name),
+        ...(composed ? { unsupported: '$ref/composed schema not supported in v1' } : {}),
+      }
+    })
+    return { bodyContentType: 'multipart/form-data', formFields }
+  }
+
+  if (content['application/json']) return { bodyContentType: 'application/json', formFields: [] }
+  return { bodyContentType: 'unsupported', formFields: [] }
+}
 
 export default async function ApiDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -105,6 +153,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
                         path: p,
                         summary: op?.summary,
                         routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
+                        ...deriveBody(op),
                       })))
                   : []}
               />
