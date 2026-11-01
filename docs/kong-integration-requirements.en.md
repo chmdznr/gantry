@@ -93,6 +93,74 @@ All four are configured by the publisher directly on Kong, not in the portal.
 The portal only reads them and renders them as a checklist on the admin API
 page.
 
+### 3.4 New product onboarding flow (end-to-end)
+
+The full sequence from a new service on Kong until developers can use it.
+Three links between phases matter:
+
+1. **The `aclGroup` follows the Kong service name.** At import, the portal
+   derives `aclGroup` from the service's slug (`importProducts`,
+   `src/actions/admin-products.ts:178` — `aclGroup: slug`). The `acl` plugin
+   the publisher attaches in phase A must carry that same slug in
+   `config.allow`; if they differ, approved subscriptions still hit the 403
+   from the `acl` plugin.
+2. **Per-consumer quota is written by the portal, not the publisher.** The
+   publisher only attaches authentication + `acl`. When a subscription is
+   approved, `approveSubscription` (`src/actions/subscriptions.ts:76`) adds
+   the ACL membership and a per consumer+service `rate-limiting` plugin; a
+   failure mid-way is rolled back (plugins deleted, ACL removed, subscription
+   stays `requested`).
+3. **Approval is fail-fast on the Kong service.** If the service is missing
+   from Kong (`subscriptions.ts:84`), approval is rejected with a message
+   pointing at Admin › APIs — the request itself is left untouched.
+
+```mermaid
+flowchart TD
+    subgraph A ["Phase A: Publisher (on Kong/Konga, manual)"]
+        A1["Create Service + Route (+ Upstream target)"]
+        A2["Attach key-auth or jwt plugin"]
+        A3["Attach acl plugin with config.allow = service slug"]
+        A1 --> A2 --> A3
+    end
+
+    subgraph B ["Phase B: Portal admin (import)"]
+        B1["/admin/apis/import: pick Kong services not yet in the catalog"]
+        B2["Creates a DRAFT product: aclGroup = service slug"]
+        B1 --> B2
+    end
+
+    subgraph C ["Phase C: Portal admin (complete)"]
+        C1["Description + upload spec (OpenAPI JSON / Postman v2)"]
+        C2["Status: draft → published"]
+        C1 --> C2
+    end
+
+    subgraph D ["Phase D: Runtime (developer + portal)"]
+        D1["Developer creates an Application → consumer app-<uuid>"]
+        D2["Developer requests a subscription (app + plan)"]
+        D3{"Admin approve?"}
+        D4["Portal writes to Kong: ACL membership + per-consumer rate-limiting"]
+        D5["Subscription approved, access active"]
+        D6["Fail-fast: service not found, request stays requested"]
+        D1 --> D2 --> D3
+        D3 -- yes --> D4 --> D5
+        D3 -- fails --> D6
+    end
+
+    A3 -- "service available" --> B1
+    B2 --> C1
+    D5 -- "API key in request" --> G["Kong validates key + ACL + rate limit → backend"]
+```
+
+Outcome per phase:
+
+| Phase | Actor | Produced | If skipped |
+|---|---|---|---|
+| A: Kong/Konga | Publisher (manual) | service, route, auth plugin, `acl.allow` | import finds no service, or approval hits 403 |
+| B: Import | Portal admin | draft product (aclGroup = slug) | product is absent from the catalog |
+| C: Complete | Portal admin | description, spec, published status | product is invisible in the public catalog |
+| D: Runtime | Developer + admin | application, subscription, credential | developers cannot obtain access |
+
 ## 4. Portal Environment Variables
 
 | Variable | Required | Purpose |

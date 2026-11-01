@@ -87,6 +87,74 @@ mengecek empat hal berikut:
 Keempatnya dikonfigurasi oleh publisher pada Kong, bukan pada portal. Portal hanya
 membaca dan menampilkannya sebagai checklist pada halaman admin API.
 
+### 3.4 Alur onboarding produk baru (end-to-end)
+
+Urutan lengkap dari service baru di Kong sampai developer bisa memakainya.
+Tiga tautan penting antar-fase:
+
+1. **`aclGroup` mengikuti nama Kong service.** Saat import, portal menurunkan
+   `aclGroup` dari slug nama service (`importProducts`,
+   `src/actions/admin-products.ts:178` — `aclGroup: slug`). Plugin `acl` yang
+   publisher pasang di fase A harus memakai `config.allow` berisi slug itu;
+   bila beda, subscription yang sudah di-approve tetap menabrak 403 dari plugin
+   `acl`.
+2. **Kuota per-consumer ditulis portal, bukan publisher.** Publisher cukup
+   memasang plugin autentikasi + `acl`. Saat subscription di-approve,
+   `approveSubscription` (`src/actions/subscriptions.ts:76`) menambahkan
+   ACL membership dan plugin `rate-limiting` per consumer+service; gagal di
+   tengah jalan di-rollback (plugin dibatalkan, ACL dicabut, status tetap
+   `requested`).
+3. **Approve bersifat fail-fast terhadap Kong service.** Bila service tidak
+   ada di Kong (`subscriptions.ts:84`), approve ditolak dengan pesan yang
+   menunjuk perbaikan pada Admin › APIs — permintaan tidak diubah.
+
+```mermaid
+flowchart TD
+    subgraph A ["Fase A: Publisher (di Kong/Konga, manual)"]
+        A1["Buat Service + Route (+ Upstream target)"]
+        A2["Pasang plugin key-auth atau jwt"]
+        A3["Pasang plugin acl dengan config.allow = slug service"]
+        A1 --> A2 --> A3
+    end
+
+    subgraph B ["Fase B: Admin portal (import)"]
+        B1["/admin/apis/import: pilih service Kong yang belum ada katalognya"]
+        B2["Dibuat product DRAFT: aclGroup = slug service"]
+        B1 --> B2
+    end
+
+    subgraph C ["Fase C: Admin portal (lengkapi)"]
+        C1["Deskripsi + upload spec (OpenAPI JSON / Postman v2)"]
+        C2["Status: draft → published"]
+        C1 --> C2
+    end
+
+    subgraph D ["Fase D: Runtime (developer + portal)"]
+        D1["Developer buat Application → consumer app-<uuid>"]
+        D2["Developer minta subscription (app + plan)"]
+        D3{"Admin approve?"}
+        D4["Portal tulis ke Kong: ACL membership + rate-limiting per consumer"]
+        D5["Subscription approved, akses aktif"]
+        D6["Fail-fast: service tidak ditemukan, status tetap requested"]
+        D1 --> D2 --> D3
+        D3 -- ya --> D4 --> D5
+        D3 -- gagal --> D6
+    end
+
+    A3 -- "service tersedia" --> B1
+    B2 --> C1
+    D5 -- "API key pada request" --> G["Kong memvalidasi key + ACL + rate limit → backend"]
+```
+
+Ringkasan per fase:
+
+| Fase | Pelaku | Yang dibuat | Bila langkah dilewati |
+|---|---|---|---|
+| A: Kong/Konga | Publisher (manual) | service, route, plugin auth, `acl.allow` | import tidak menemukan service, atau approve menabrak 403 |
+| B: Import | Admin portal | product draft (aclGroup = slug) | product tidak muncul di katalog |
+| C: Lengkapi | Admin portal | deskripsi, spec, status published | product tidak tampil di katalog publik |
+| D: Runtime | Developer + admin | application, subscription, credential | developer tidak bisa mendapatkan akses |
+
 ## 4. Variabel Lingkungan Portal
 
 | Variabel | Status | Guna |
