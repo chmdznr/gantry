@@ -23,6 +23,10 @@ endpoint dari browser; admin mengelola katalog serta approval akses.
 
 ## 1. Konsep inti (WAJIB dibaca sebelum lanjut)
 
+> Ingin mendaftarkan Kong baru (DEV/BIMTEK/PROD) ke portal? Baca
+> [docs/kong-integration-requirements.md](docs/kong-integration-requirements.md) —
+> daftar syarat plugin, variabel wajib, batas kontrol, dan checklist pendaftaran.
+
 Aplikasi ini mengkurasi API yang di-serve Kong dan memberi developer credential self-service.
 Pemetaan konsep:
 

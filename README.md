@@ -23,6 +23,10 @@ try endpoints from the browser; admins curate the catalog and approve access.
 
 ## 1. Core concepts (read this first)
 
+> Registering a new Kong instance (DEV/BIMTEK/PROD) with this portal? Read
+> [docs/kong-integration-requirements.md](docs/kong-integration-requirements.md) —
+> required plugins, mandatory env vars, control boundary, and the registration checklist.
+
 The portal curates APIs already served by Kong and gives developers
 self-service credentials. Concept mapping:
 
