@@ -180,6 +180,7 @@
     "revoke": "Revoke",
     "confirmRevoke": "Revoke this credential? Anything using it stops working immediately.",
     "usageTitle": "API Usage",
+    "usageLoading": "Loading usage stats…",
     "usageUnavailable": "Analytics unavailable (Prometheus is not configured/reachable).",
     "usageEmpty": "No traffic in the last {range}.",
     "usageTotal": "{total} requests in total (last {range})",
@@ -213,6 +214,9 @@
     "to": "To",
     "tag": "Tag",
     "searchPlaceholder": "name / tag"
+  },
+  "setup": {
+    "checking": "Checking…"
   },
   "actions": {
     "rateLimited": "Too many attempts. Try again in a few minutes.",

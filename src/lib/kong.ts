@@ -4,6 +4,9 @@
 
 const TAG = 'devportal'
 
+// Kong Admin API yang hang tidak boleh menahan render halaman admin selamanya.
+export const KONG_TIMEOUT_MS = 8000
+
 export class KongError extends Error {
   constructor(message: string, public status: number, public body: string) {
     super(message)
@@ -17,6 +20,7 @@ async function kong<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init?.headers },
     cache: 'no-store',
+    signal: AbortSignal.timeout(KONG_TIMEOUT_MS),
   })
   if (!res.ok) {
     const body = await res.text()

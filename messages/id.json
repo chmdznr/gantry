@@ -180,6 +180,7 @@
     "revoke": "Revoke",
     "confirmRevoke": "Revoke credential ini? Semua yang memakainya langsung berhenti bekerja.",
     "usageTitle": "Pemakaian API",
+    "usageLoading": "Memuat statistik pemakaian…",
     "usageUnavailable": "Analytics tidak tersedia (Prometheus tidak terkonfigurasi/terjangkau).",
     "usageEmpty": "Belum ada traffic dalam {range} terakhir.",
     "usageTotal": "Total {total} request ({range} terakhir)",
@@ -213,6 +214,9 @@
     "to": "Sampai",
     "tag": "Tag",
     "searchPlaceholder": "nama / tag"
+  },
+  "setup": {
+    "checking": "Memeriksa…"
   },
   "actions": {
     "rateLimited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",

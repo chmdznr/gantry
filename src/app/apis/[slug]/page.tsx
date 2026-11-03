@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -8,10 +9,10 @@ import Markdown from 'react-markdown'
 import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import { listServiceRoutes } from '@/lib/kong'
-import { isEndpointRoutable, type GatewayRoute } from '@/lib/routable'
+import { type GatewayRoute } from '@/lib/routable'
 import { type FormField, type TryEndpoint, specHeaderParams } from '@/lib/tryit'
 import SubscribeForm from '@/components/SubscribeForm'
-import TryIt from '@/components/TryIt'
+import RoutableTryIt from '@/components/RoutableTryIt'
 import SpecHistory from '@/components/SpecHistory'
 import ApiReference from '@/components/ApiReference'
 
@@ -70,6 +71,18 @@ function deriveBody(op: OpenApiOperation | undefined): Pick<TryEndpoint, 'bodyCo
   return { bodyContentType: 'unsupported', formFields: [] }
 }
 
+// Latency dari Prometheus non-kritis: render detail produk dulu, catatan latency menyusul.
+async function LatencyNote({ serviceNames }: { serviceNames: string[] }) {
+  const latency = await serviceLatencyP95(serviceNames)
+  if (!latency || latency.length === 0) return null
+  const t = await getTranslations()
+  return (
+    <p className="mt-1 text-sm text-muted">
+      {t('catalog.latency', { list: latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ') })}
+    </p>
+  )
+}
+
 export default async function ApiDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const t = await getTranslations()
@@ -80,6 +93,13 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
   const subscribable = product.status === 'published'
 
   const session = await auth()
+  // Cek routability butuh Kong Admin API; mulai paralel, Try It tidak menunggunya.
+  // Kong tidak terjangkau → null → jangan blokir endpoint apa pun (konservatif).
+  const routesPromise: Promise<GatewayRoute[] | null> =
+    session?.user && product.kongServiceNames.length > 0
+      ? Promise.all(product.kongServiceNames.map((s) => listServiceRoutes(s)))
+        .then((routes) => routes.flat(), () => null)
+      : Promise.resolve(null)
   const allPlans = await db.select().from(plans).orderBy(plans.name)
 
   let myApps: { id: string; name: string }[] = []
@@ -106,18 +126,18 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
   const subscribableApps = myApps.filter((a) =>
     !mySubs.some((s) => s.applicationId === a.id && (s.status === 'requested' || s.status === 'approved')))
   const spec = product.openapiSpec as OpenApiSpec | null
-  const latency = await serviceLatencyP95(product.kongServiceNames)
-
-  // route gateway → endpoint spec yang tidak bisa di-route dinonaktifkan di Try It.
-  // Kong tidak terjangkau → null → jangan blokir apa pun (konservatif).
-  let gatewayRoutes: GatewayRoute[] | null = null
-  if (session?.user && product.kongServiceNames.length > 0) {
-    try {
-      gatewayRoutes = (await Promise.all(product.kongServiceNames.map((s) => listServiceRoutes(s)))).flat()
-    } catch {
-      gatewayRoutes = null
-    }
-  }
+  const endpoints: TryEndpoint[] = session?.user && spec?.paths
+    ? Object.entries(spec.paths).flatMap(([path, methods]) =>
+        Object.entries(methods)
+          .filter(([method]) => HTTP_METHODS.includes(method.toLowerCase()))
+          .map(([method, op]) => ({
+            method,
+            path,
+            summary: op?.summary,
+            ...deriveBody(op),
+            headerParams: specHeaderParams(methods, op),
+          })))
+    : []
 
   return (
     <main className="page">
@@ -133,11 +153,9 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
         <Markdown>{product.description}</Markdown>
       </div>
       <p className="mt-2 text-sm text-muted">{t('catalog.baseUrl')} <code className="code-chip">{product.proxyBaseUrl}</code></p>
-      {latency && latency.length > 0 && (
-        <p className="mt-1 text-sm text-muted">
-          {t('catalog.latency', { list: latency.map((l) => `${l.service} ${l.p95Ms} ms`).join(' · ') })}
-        </p>
-      )}
+      <Suspense fallback={null}>
+        <LatencyNote serviceNames={product.kongServiceNames} />
+      </Suspense>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         {/* Main column: the developer loop — Try It, then Reference */}
@@ -145,22 +163,11 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
           {session?.user && (
             <section>
               <h2 className="section-title !mt-0">{t('catalog.tryItTitle')}</h2>
-              <TryIt
+              <RoutableTryIt
                 productId={product.id}
                 baseUrl={product.proxyBaseUrl}
-                endpoints={spec?.paths
-                  ? Object.entries(spec.paths).flatMap(([p, methods]) =>
-                      Object.entries(methods)
-                        .filter(([method]) => HTTP_METHODS.includes(method.toLowerCase()))
-                        .map(([method, op]) => ({
-                          method,
-                          path: p,
-                          summary: op?.summary,
-                          routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
-                          ...deriveBody(op),
-                          headerParams: specHeaderParams(methods, op),
-                        })))
-                  : []}
+                endpoints={endpoints}
+                routesPromise={routesPromise}
               />
             </section>
           )}

@@ -1,3 +1,5 @@
+import { Suspense } from 'react'
+import { getTranslations } from 'next-intl/server'
 import { getGlobalPrometheusPlugin, getKongInfo, type KongInfo, type PrometheusPluginState } from '@/lib/kong'
 import { fixPrometheusPlugin } from '@/actions/admin-setup'
 
@@ -20,6 +22,16 @@ function Row({ ok, warn, label, detail, children }: {
   )
 }
 
+// Placeholder untuk baris yang masih menunggu Kong/Prometheus.
+function CheckingRow({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-3 border-b py-3">
+      <span className="w-4 animate-pulse font-bold text-muted" aria-hidden>…</span>
+      <div className="flex-1"><p className="text-sm font-medium text-muted">{text}</p></div>
+    </li>
+  )
+}
+
 async function checkPrometheusUrl(): Promise<boolean> {
   if (!process.env.PROMETHEUS_URL) return false
   try {
@@ -30,18 +42,64 @@ async function checkPrometheusUrl(): Promise<boolean> {
   }
 }
 
-export default async function SetupPage() {
-  let info: KongInfo | null = null
-  let kongError = ''
-  try {
-    info = await getKongInfo()
-  } catch (e) {
-    kongError = e instanceof Error ? e.message : 'unknown'
-  }
-  let prom: PrometheusPluginState | null = null
-  if (info) prom = await getGlobalPrometheusPlugin().catch(() => null)
-  const promUrlOk = await checkPrometheusUrl()
+type KongResult = { info: KongInfo | null; error: string }
+
+// Cek Kong (info + plugin global) berjalan di boundary sendiri supaya baris statis
+// dan cek Prometheus tidak ikut menunggu Kong Admin API.
+async function KongChecks({ infoPromise, promPromise }: {
+  infoPromise: Promise<KongResult>
+  promPromise: Promise<PrometheusPluginState | null>
+}) {
+  const { info, error } = await infoPromise
+  const prom = info ? await promPromise : null
   const missingPlugins = info ? REQUIRED_PLUGINS.filter((p) => !info.availablePlugins.includes(p)) : []
+
+  return (
+    <>
+      <Row ok={!!info} label="Kong Admin API reachable"
+        detail={info ? `${process.env.KONG_ADMIN_URL} — Kong ${info.version}` : `${process.env.KONG_ADMIN_URL ?? 'KONG_ADMIN_URL is not set'} — ${error}`} />
+      {info && (
+        <Row ok={missingPlugins.length === 0} label="Required plugins available on the Kong server"
+          detail={missingPlugins.length === 0
+            ? REQUIRED_PLUGINS.join(', ')
+            : `Missing: ${missingPlugins.join(', ')} — related features will not work`} />
+      )}
+      {info && (
+        <Row ok={!!prom?.exists && prom.enabled && prom.perConsumer && prom.latency}
+          label="Global prometheus plugin enabled (per_consumer + latency_metrics)"
+          detail={!prom?.exists ? 'Not installed — per-app analytics will have no data'
+            : !prom.perConsumer ? 'Installed but per_consumer=false — metrics lack the consumer label'
+            : !prom.latency ? 'Installed but latency_metrics=false — p95 latency unavailable'
+            : 'OK — consumer + latency metrics available'}>
+          {(!prom?.exists || !prom.perConsumer || !prom.enabled || !prom.latency) && (
+            <form action={fixPrometheusPlugin}>
+              <button className="btn-primary btn-sm">Fix automatically</button>
+            </form>
+          )}
+        </Row>
+      )}
+    </>
+  )
+}
+
+async function PrometheusUrlRow({ okPromise }: { okPromise: Promise<boolean> }) {
+  const promUrlOk = await okPromise
+  return (
+    <Row ok={promUrlOk} warn={!process.env.PROMETHEUS_URL}
+      label="Prometheus reachable (analytics)"
+      detail={process.env.PROMETHEUS_URL ? `${process.env.PROMETHEUS_URL}` : 'PROMETHEUS_URL is not set — analytics disabled'} />
+  )
+}
+
+export default async function SetupPage() {
+  // Mulai ketiga pengecekan eksternal bersamaan; masing-masing punya boundary sendiri.
+  const infoPromise: Promise<KongResult> = getKongInfo().then(
+    (info) => ({ info, error: '' }),
+    (e) => ({ info: null, error: e instanceof Error ? e.message : 'unknown' }),
+  )
+  const promPromise = getGlobalPrometheusPlugin().catch(() => null)
+  const promUrlPromise = checkPrometheusUrl()
+  const t = await getTranslations('setup')
 
   return (
     <main className="max-w-3xl">
@@ -50,31 +108,12 @@ export default async function SetupPage() {
         Verify connectivity and prerequisites so every portal feature works. Revisit this page after changing configuration.
       </p>
       <ul>
-        <Row ok={!!info} label="Kong Admin API reachable"
-          detail={info ? `${process.env.KONG_ADMIN_URL} — Kong ${info.version}` : `${process.env.KONG_ADMIN_URL ?? 'KONG_ADMIN_URL is not set'} — ${kongError}`} />
-        {info && (
-          <Row ok={missingPlugins.length === 0} label="Required plugins available on the Kong server"
-            detail={missingPlugins.length === 0
-              ? REQUIRED_PLUGINS.join(', ')
-              : `Missing: ${missingPlugins.join(', ')} — related features will not work`} />
-        )}
-        {info && (
-          <Row ok={!!prom?.exists && prom.enabled && prom.perConsumer && prom.latency}
-            label="Global prometheus plugin enabled (per_consumer + latency_metrics)"
-            detail={!prom?.exists ? 'Not installed — per-app analytics will have no data'
-              : !prom.perConsumer ? 'Installed but per_consumer=false — metrics lack the consumer label'
-              : !prom.latency ? 'Installed but latency_metrics=false — p95 latency unavailable'
-              : 'OK — consumer + latency metrics available'}>
-            {(!prom?.exists || !prom.perConsumer || !prom.enabled || !prom.latency) && (
-              <form action={fixPrometheusPlugin}>
-                <button className="btn-primary btn-sm">Fix automatically</button>
-              </form>
-            )}
-          </Row>
-        )}
-        <Row ok={promUrlOk} warn={!process.env.PROMETHEUS_URL}
-          label="Prometheus reachable (analytics)"
-          detail={process.env.PROMETHEUS_URL ? `${process.env.PROMETHEUS_URL}` : 'PROMETHEUS_URL is not set — analytics disabled'} />
+        <Suspense fallback={<CheckingRow text={t('checking')} />}>
+          <KongChecks infoPromise={infoPromise} promPromise={promPromise} />
+        </Suspense>
+        <Suspense fallback={<CheckingRow text={t('checking')} />}>
+          <PrometheusUrlRow okPromise={promUrlPromise} />
+        </Suspense>
         <Row ok={!!process.env.SMTP_HOST} warn={!process.env.SMTP_HOST}
           label="SMTP configured"
           detail={process.env.SMTP_HOST ? process.env.SMTP_HOST : 'Not set — verification/reset links only appear in the server log (dev mode)'} />

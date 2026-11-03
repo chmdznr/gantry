@@ -1,13 +1,18 @@
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
+  createConsumer,
   createConsumerRateLimit,
   deleteConsumer,
   deleteJwtCred,
   deleteKeyAuth,
   removeAclGroup,
+  KONG_TIMEOUT_MS,
   KongError,
 } from '../kong'
 
+const realFetch = globalThis.fetch
 const fetchMock = vi.fn()
 vi.stubGlobal('fetch', fetchMock)
 
@@ -112,8 +117,37 @@ describe.each([
 describe('error handling', () => {
   it('melempar KongError dengan status dan body', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 409, text: async () => 'conflict' })
-    const { createConsumer } = await import('../kong')
     await expect(createConsumer('app-x')).rejects.toMatchObject({ status: 409, body: 'conflict' })
     await expect(createConsumer('app-x')).rejects.toBeInstanceOf(KongError)
+  })
+})
+
+describe('timeout', () => {
+  it('melempar TimeoutError saat Kong menerima koneksi tapi tidak pernah membalas', async () => {
+    const server = createServer(() => {}) // koneksi diterima, respons tidak pernah dikirim
+    const listening = Promise.withResolvers<void>()
+    server.listen(0, '127.0.0.1', listening.resolve)
+    await listening.promise
+    const { port } = server.address() as AddressInfo
+    process.env.KONG_ADMIN_URL = `http://127.0.0.1:${port}`
+    fetchMock.mockImplementation((input: string | URL | Request, init?: RequestInit) =>
+      realFetch(input, init),
+    )
+    // Timer dipercepat agar test tidak menunggu 8 detik; nilai batas asli tetap diverifikasi.
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal)
+    const timeoutSpy = vi
+      .spyOn(AbortSignal, 'timeout')
+      .mockImplementation((ms = KONG_TIMEOUT_MS) => realTimeout(Math.min(ms, 60)))
+    try {
+      await expect(createConsumer('app-timeout')).rejects.toMatchObject({ name: 'TimeoutError' })
+      expect(timeoutSpy).toHaveBeenCalledWith(KONG_TIMEOUT_MS)
+    } finally {
+      timeoutSpy.mockRestore()
+      fetchMock.mockReset()
+      server.closeAllConnections()
+      const closed = Promise.withResolvers<void>()
+      server.close(() => closed.resolve())
+      await closed.promise
+    }
   })
 })

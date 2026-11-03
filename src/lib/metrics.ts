@@ -1,6 +1,9 @@
 // Query Prometheus untuk analytics per-consumer (label `consumer` = kong_consumer_username app).
 // Prasyarat ops: plugin prometheus Kong dengan per_consumer=true.
 
+// Analytics non-kritis: jangan biarkan Prometheus yang lambat menahan halaman.
+export const PROM_TIMEOUT_MS = 3000
+
 export type ConsumerStat = { service: string; code: string; count: number }
 
 export type ConsumerBandwidth = { service: string; type: string; bytes: number }
@@ -19,7 +22,7 @@ export async function consumerRequestStats(
   try {
     const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(PROM_TIMEOUT_MS),
     })
     if (!res.ok) return null
     const json = (await res.json()) as PromVector
@@ -49,7 +52,7 @@ export async function allConsumersUsage(range = '24h'): Promise<AllConsumersUsag
   const query = async (q: string) => {
     const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(PROM_TIMEOUT_MS),
     })
     if (!res.ok) throw new Error(`prometheus ${res.status}`)
     return ((await res.json()) as PromVector).data?.result ?? []
@@ -95,7 +98,7 @@ export async function consumerBandwidthStats(
   try {
     const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(PROM_TIMEOUT_MS),
     })
     if (!res.ok) return null
     const json = (await res.json()) as PromVector
@@ -124,7 +127,7 @@ export async function serviceLatencyP95(serviceNames: string[], range = '24h'): 
   try {
     const res = await fetch(`${base}/api/v1/query?query=${encodeURIComponent(q)}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(PROM_TIMEOUT_MS),
     })
     if (!res.ok) return null
     const json = (await res.json()) as PromVector
