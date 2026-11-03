@@ -43,6 +43,13 @@
       "when": 1784446756552,
       "tag": "0005_lucky_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793742832917,
+      "tag": "0006_tricky_matthew_murdock",
+      "breakpoints": true
     }
   ]
 }

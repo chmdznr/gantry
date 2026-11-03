@@ -1,5 +1,5 @@
 import {
-  pgTable, pgEnum, uuid, text, timestamp, jsonb, uniqueIndex, integer,
+  pgTable, pgEnum, uuid, text, timestamp, jsonb, uniqueIndex, index, integer,
 } from 'drizzle-orm/pg-core'
 
 export const userType = pgEnum('user_type', ['internal', 'external'])
@@ -34,6 +34,21 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expires_at').notNull(),
 })
+
+// Bearer token untuk Admin API headless (agen AI/otomasi). Yang disimpan hanya
+// hash SHA-256 + prefix; plain token tampil sekali saat dibuat.
+export const adminApiTokens = pgTable('admin_api_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  tokenHash: text('token_hash').notNull().unique(),
+  tokenPrefix: text('token_prefix').notNull(),
+  scopes: text('scopes').array().notNull().default([]),
+  expiresAt: timestamp('expires_at').notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+  revokedAt: timestamp('revoked_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [index('idx_admin_api_tokens_user_id').on(t.userId)])
 
 export const apiProducts = pgTable('api_products', {
   id: uuid('id').primaryKey().defaultRandom(),
