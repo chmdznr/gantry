@@ -6,12 +6,17 @@ import { appCredentials, applications, subscriptions, users } from '@/db/schema'
 import FilterBar, { countActive } from '@/components/FilterBar'
 import { adminDeleteApp, adminRevokeCredential, blockApp, unblockApp } from '@/actions/admin-consumers'
 import PendingButton from '@/components/PendingButton'
+import CopyButton from '@/components/CopyButton'
 import { allConsumersUsage, type AllConsumersUsage } from '@/lib/metrics'
 import { RANGES } from '@/lib/ranges'
 import { RangeSelector } from '@/components/RangeSelector'
 import { BandwidthTable, RequestTable } from '@/components/AppStats'
 
 type Filters = { q?: string; blocked?: string; range?: string }
+
+function fmtDateTime(d: Date): string {
+  return d.toISOString().slice(0, 16).replace('T', ' ')
+}
 
 // Statistik Prometheus dimuat terpisah dari daftar aplikasi: Prometheus yang lambat
 // tidak boleh menahan filter, daftar app, dan form block/revoke/delete.
@@ -21,7 +26,7 @@ async function AppUsage({ consumerUsername, range, usagePromise }: {
   usagePromise: Promise<AllConsumersUsage | null>
 }) {
   const usage = await usagePromise
-  if (usage === null) return null // pesan "unavailable" tampil sekali di header
+  if (usage === null) return null // pesan "unavailable" tampil sekali di header usage
   const t = await getTranslations('apps')
 
   const requestsByConsumer = new Map<string, number>()
@@ -32,24 +37,26 @@ async function AppUsage({ consumerUsername, range, usagePromise }: {
   const total = requestsByConsumer.get(consumerUsername) ?? 0
   const reqRows = usage.requests.filter((r) => r.consumer === consumerUsername)
   const bwRows = usage.bandwidth.filter((r) => r.consumer === consumerUsername)
-  const statLine = (
-    <span className="inline-flex items-center gap-2 align-middle">
-      <span className="inline-block h-2 w-48 overflow-hidden rounded-full bg-ink/10">
-        <span className="block h-full rounded-full bg-amber" style={{ width: `${(total / maxRequests) * 100}%` }} />
+  const statLine = total === 0 ? (
+    <span className="text-xs text-muted tabular-nums">{t('usageNoRequests', { range })}</span>
+  ) : (
+    <span className="inline-flex flex-wrap items-center gap-2 align-middle">
+      <span aria-hidden="true" className="inline-block h-2 w-40 overflow-hidden rounded-full bg-ink/10">
+        <span className="block h-full rounded-full bg-amber" style={{ width: `${Math.max(2, (total / maxRequests) * 100)}%` }} />
       </span>
-      <span className="text-xs text-muted">{total.toLocaleString()} requests ({range})</span>
+      <span className="text-xs text-muted tabular-nums">{t('usageRequests', { total: total.toLocaleString(), range })}</span>
     </span>
   )
   if (reqRows.length === 0 && bwRows.length === 0) {
-    return <div className="mt-2">{statLine}</div>
+    return <div className="mt-3">{statLine}</div>
   }
   return (
-    <details className="mt-2 group">
-      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+    <details className="group mt-3">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 [&::-webkit-details-marker]:hidden">
         {statLine}
-        <span className="ml-2 align-middle text-xs text-ink-soft underline decoration-amber decoration-2 underline-offset-2">
-          <span className="group-open:hidden">breakdown ▾</span>
-          <span className="hidden group-open:inline">hide ▴</span>
+        <span className="text-xs text-ink-soft underline decoration-amber decoration-2 underline-offset-2">
+          <span className="group-open:hidden">{t('breakdownShow')}</span>
+          <span className="hidden group-open:inline">{t('breakdownHide')}</span>
         </span>
       </summary>
       <div className="mt-3 max-w-3xl space-y-4">
@@ -68,7 +75,8 @@ async function AppUsage({ consumerUsername, range, usagePromise }: {
 async function UsageNotice({ usagePromise }: { usagePromise: Promise<AllConsumersUsage | null> }) {
   const usage = await usagePromise
   if (usage !== null) return null
-  return <span>· usage stats unavailable (Prometheus not configured or unreachable)</span>
+  const t = await getTranslations('apps')
+  return <span>· {t('usageUnavailable')}</span>
 }
 
 export default async function AdminConsumersPage({ searchParams }: { searchParams: Promise<Filters> }) {
@@ -130,7 +138,7 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
         </label>
         <input type="hidden" name="range" value={range} />
       </FilterBar>
-      <div className="mb-3 flex items-center gap-2 text-xs text-muted">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">
         <span>Requests over:</span>
         <RangeSelector current={range} />
         <Suspense fallback={null}>
@@ -142,54 +150,85 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
         {apps.map((a) => {
           const appCreds = creds.filter((c) => c.applicationId === a.id)
           const appSubs = subs.filter((s) => s.applicationId === a.id)
+          const activeSubs = appSubs.filter((s) => s.status === 'approved').length
           return (
-            <div key={a.id} className={`rounded border p-4 ${a.blockedAt ? 'border-stop/40 bg-stop-soft/50' : ''}`}>
-              <div className="flex flex-wrap items-center gap-3">
-                <b>{a.name}</b>
-                <span className="font-mono text-xs text-muted">{a.consumerUsername}</span>
-                <span className="text-sm text-muted">{a.ownerName} ({a.ownerEmail})</span>
-                <span className="text-xs text-muted">
-                  {appSubs.filter((s) => s.status === 'approved').length} active subscriptions · {appCreds.length} credentials
-                </span>
-                {a.blockedAt && <span className="badge-stop">BLOCKED</span>}
-                <span className="ml-auto flex gap-2">
+            <div key={a.id} className={`rounded-2xl border p-4 ${a.blockedAt ? 'border-stop/40 bg-stop-soft/50' : 'border-line bg-surface'}`}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base font-semibold break-words">{a.name}</h2>
+                    <span className={a.blockedAt ? 'badge-stop' : 'badge-go'}>
+                      {a.blockedAt ? t('statusBlocked') : t('statusActive')}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex min-w-0 items-center gap-2">
+                    <code className="min-w-0 truncate font-mono text-xs text-muted" title={a.consumerUsername}>
+                      {a.consumerUsername}
+                    </code>
+                    <CopyButton value={a.consumerUsername} />
+                  </div>
+                  <p className="mt-1 text-sm text-muted break-words">
+                    {t('ownerLabel')}: {a.ownerName} · {a.ownerEmail}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted tabular-nums">
+                    <span>{t('createdAt')}: {fmtDateTime(a.createdAt)}</span>
+                    <span>{t('activeSubscriptions', { count: activeSubs })}</span>
+                    <span>{t('credentialsCount', { count: appCreds.length })}</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
                   {a.blockedAt ? (
                     <form action={unblockApp.bind(null, a.id)}>
                       <PendingButton className="btn-outline btn-sm">Unblock</PendingButton>
                     </form>
                   ) : (
                     <form action={blockApp.bind(null, a.id)}>
-                      <PendingButton confirm={`Block "${a.name}"? All its API calls will be rejected.`} className="btn-danger btn-sm">Block</PendingButton>
+                      <PendingButton confirm={`Block "${a.name}"? All its API calls will be rejected.`} className="btn-outline btn-sm">Block</PendingButton>
                     </form>
                   )}
                   <form action={adminDeleteApp.bind(null, a.id)}>
                     <PendingButton confirm={`Delete application "${a.name}" and its Kong consumer? This cannot be undone.`} className="btn-danger btn-sm">Delete</PendingButton>
                   </form>
-                </span>
+                </div>
               </div>
               {a.consumerUsername && (
-                <Suspense fallback={<div className="mt-2 text-xs text-muted">{t('usageLoading')}</div>}>
+                <Suspense fallback={<div className="mt-3 text-xs text-muted">{t('usageLoading')}</div>}>
                   <AppUsage consumerUsername={a.consumerUsername} range={range} usagePromise={usagePromise} />
                 </Suspense>
               )}
-              {appCreds.length > 0 && (
-                <table className="table-base mt-3">
-                  <thead><tr className="border-b text-left text-xs text-muted"><th>Credential</th><th>Hint</th><th>Created</th><th></th></tr></thead>
-                  <tbody>
-                    {appCreds.map((c) => (
-                      <tr key={c.id}>
-                        <td>{c.type === 'key-auth' ? 'API Key' : 'JWT'}</td>
-                        <td className="font-mono">…{c.hint}</td>
-                        <td>{c.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
-                        <td className="text-right">
-                          <form action={adminRevokeCredential.bind(null, a.id, c.id)}>
-                            <PendingButton confirm="Revoke this credential? Apps using it will stop working immediately." className="btn-danger btn-sm">Revoke</PendingButton>
-                          </form>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {appCreds.length > 0 ? (
+                <details className="group mt-4">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+                    <span>{t('credentialsTitle')} ({appCreds.length})</span>
+                    <span className="text-xs font-normal text-muted group-open:hidden">{t('show')}</span>
+                    <span className="hidden text-xs font-normal text-muted group-open:inline">{t('hide')}</span>
+                  </summary>
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="table-base">
+                      <thead>
+                        <tr>
+                          <th>{t('credType')}</th><th>{t('hint')}</th><th>{t('createdAt')}</th><th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {appCreds.map((c) => (
+                          <tr key={c.id}>
+                            <td>{c.type === 'key-auth' ? t('apiKey') : 'JWT'}</td>
+                            <td className="font-mono">…{c.hint}</td>
+                            <td className="whitespace-nowrap tabular-nums">{fmtDateTime(c.createdAt)}</td>
+                            <td className="text-right">
+                              <form action={adminRevokeCredential.bind(null, a.id, c.id)}>
+                                <PendingButton confirm="Revoke this credential? Apps using it will stop working immediately." className="btn-outline btn-sm text-stop">Revoke</PendingButton>
+                              </form>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              ) : (
+                <p className="mt-4 text-xs text-muted">{t('noCredentials')}</p>
               )}
             </div>
           )

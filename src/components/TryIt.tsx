@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { buildCurl } from '@/lib/curl'
+import { copyText } from '@/lib/clipboard'
 import { MAX_MULTIPART_BYTES, type FormField, type TryEndpoint } from '@/lib/tryit'
 
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string; code?: string }
@@ -29,27 +30,6 @@ function specRows(endpoint?: TryEndpoint): HeaderRow[] {
   return (endpoint?.headerParams ?? []).map((h) => ({ name: h.name, value: '', spec: true, required: h.required }))
 }
 
-// Clipboard API tidak tersedia di HTTP non-localhost (BIMTEK), jadi salinan
-// jatuh ke textarea sementara + execCommand — masih dipicu klik user.
-function legacyCopy(text: string): boolean {
-  const area = document.createElement('textarea')
-  area.value = text
-  area.readOnly = true
-  area.style.position = 'fixed'
-  area.style.top = '0'
-  area.style.opacity = '0'
-  document.body.appendChild(area)
-  area.select()
-  let ok = false
-  try {
-    ok = document.execCommand('copy')
-  } catch {
-    ok = false
-  }
-  area.remove()
-  return ok
-}
-
 function CurlPanel({ command, showFileHint }: { command: string; showFileHint: boolean }) {
   const t = useTranslations('tryit')
   const [status, setStatus] = useState<'copied' | 'failed' | null>(null)
@@ -72,16 +52,7 @@ function CurlPanel({ command, showFileHint }: { command: string; showFileHint: b
   }
 
   async function copy() {
-    let ok = false
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(command)
-        ok = true
-      } catch {
-        ok = false
-      }
-    }
-    if (!ok) ok = legacyCopy(command)
+    const ok = await copyText(command)
     window.clearTimeout(timer.current)
     if (ok) {
       setStatus('copied')
