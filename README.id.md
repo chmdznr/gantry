@@ -161,7 +161,9 @@ bukan open relay); developer menempel API key-nya sendiri. Body JSON plus upload
 `multipart/form-data` yang dideklarasikan di spec (batas 10 MB agregat, 3 upload bersamaan);
 envelope respons memuat status, header terpilih, dan 100 KB pertama body. Header request
 tambahan hanya diteruskan bila dideklarasikan spec (`in: header`, level path-item atau
-operation) atau untuk `Authorization`; selain itu ditolak 400.
+operation) atau untuk `Authorization`; selain itu ditolak 400. Panel ringkas
+menampilkan perintah `curl` setara (termasuk API key asli) dan bisa disalin,
+dengan fallback untuk deployment HTTP biasa.
 
 **Analytics** — pemakaian per app (request per service×status, dari PromQL label consumer).
 

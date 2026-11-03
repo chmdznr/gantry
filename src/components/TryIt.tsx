@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { buildCurl } from '@/lib/curl'
 import { MAX_MULTIPART_BYTES, type FormField, type TryEndpoint } from '@/lib/tryit'
 
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string; code?: string }
@@ -26,6 +27,89 @@ function fmtBytes(n: number) {
 
 function specRows(endpoint?: TryEndpoint): HeaderRow[] {
   return (endpoint?.headerParams ?? []).map((h) => ({ name: h.name, value: '', spec: true, required: h.required }))
+}
+
+// Clipboard API tidak tersedia di HTTP non-localhost (BIMTEK), jadi salinan
+// jatuh ke textarea sementara + execCommand — masih dipicu klik user.
+function legacyCopy(text: string): boolean {
+  const area = document.createElement('textarea')
+  area.value = text
+  area.readOnly = true
+  area.style.position = 'fixed'
+  area.style.top = '0'
+  area.style.opacity = '0'
+  document.body.appendChild(area)
+  area.select()
+  let ok = false
+  try {
+    ok = document.execCommand('copy')
+  } catch {
+    ok = false
+  }
+  area.remove()
+  return ok
+}
+
+function CurlPanel({ command, showFileHint }: { command: string; showFileHint: boolean }) {
+  const t = useTranslations('tryit')
+  const [status, setStatus] = useState<'copied' | 'failed' | null>(null)
+  const preRef = useRef<HTMLPreElement>(null)
+  const timer = useRef<number | undefined>(undefined)
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  // Gagal salin: sorot teks perintah supaya user bisa Ctrl/Cmd+C manual.
+  function selectCommand() {
+    const el = preRef.current
+    if (!el) return
+    el.focus()
+    const selection = window.getSelection()
+    if (!selection) return
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+
+  async function copy() {
+    let ok = false
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(command)
+        ok = true
+      } catch {
+        ok = false
+      }
+    }
+    if (!ok) ok = legacyCopy(command)
+    window.clearTimeout(timer.current)
+    if (ok) {
+      setStatus('copied')
+      timer.current = window.setTimeout(() => setStatus(null), 2500)
+    } else {
+      setStatus('failed')
+      selectCommand()
+    }
+  }
+
+  return (
+    <details className="mt-3 rounded-lg border border-line bg-paper/60 p-3">
+      <summary className="cursor-pointer text-sm font-semibold">{t('curlTitle')}</summary>
+      <p className="mt-2 text-xs text-muted">{t('curlCredentialsNote')}</p>
+      <pre ref={preRef} tabIndex={0} aria-label={t('curlTitle')}
+        className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap rounded bg-surface p-2 font-mono text-xs">{command}</pre>
+      {showFileHint && <p className="mt-2 text-xs text-muted">{t('curlFileHint')}</p>}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={copy} className="btn-ghost text-sm">{t('curlCopy')}</button>
+        {status && (
+          <span role="status" aria-live="polite"
+            className={`text-xs ${status === 'copied' ? 'text-go' : 'text-stop'}`}>
+            {t(status === 'copied' ? 'curlCopied' : 'curlCopyFailed')}
+          </span>
+        )}
+      </div>
+    </details>
+  )
 }
 
 // Dropdown custom — popup select native dirender OS (posisi/tema di luar kendali halaman).
@@ -109,6 +193,10 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   // GET tidak punya body; endpoint dengan schema yang tidak bisa dibaca dimatikan.
   const multipart = method !== 'GET' && current?.bodyContentType === 'multipart/form-data'
   const unsupported = method !== 'GET' && current?.bodyContentType === 'unsupported'
+  // Field yang benar-benar dikirim Try It; nama berprefiks @ dicadangkan untuk kontrol.
+  const multipartFields = multipart
+    ? (current?.formFields ?? []).filter((f) => !f.unsupported && !f.name.startsWith('@'))
+    : []
 
   function pick(m: string, p: string) {
     setMethod(m)
@@ -133,7 +221,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   // Bangun FormData upstream: kontrol berprefiks @ (F5), field mengikuti schema.
   // Nama field/file berprefiks @ dari spec dilewati supaya tidak menabrak kontrol.
   function buildMultipart(headers: Record<string, string>): FormData | null {
-    const fields: FormField[] = (current?.formFields ?? []).filter((f) => !f.unsupported && !f.name.startsWith('@'))
+    const fields: FormField[] = multipartFields
     const filled = fields.some((f) =>
       f.type === 'binary' ? (files[f.name]?.length ?? 0) > 0 : (text[f.name] ?? '') !== '')
     if (!filled) {
@@ -231,6 +319,25 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   const statusColor = (s?: number) =>
     !s ? '' : s < 300 ? 'text-go' : s < 500 ? 'text-warn' : 'text-stop'
 
+  // State yang sama dengan send(): target upstream (bukan /api/try), header
+  // terisi, body JSON, atau field/file multipart.
+  const curlCommand = buildCurl({
+    baseUrl, method, path, apiKey,
+    headers: headerValues(),
+    ...(!multipart && method !== 'GET' && body ? { json: body } : {}),
+    ...(multipart ? {
+      multipart: {
+        fields: multipartFields
+          .filter((f) => f.type === 'text')
+          .map((f) => ({ name: f.name, value: text[f.name] ?? '' })),
+        files: multipartFields
+          .filter((f) => f.type === 'binary')
+          .flatMap((f) => (files[f.name] ?? []).map((file) => ({ name: f.name, filename: file.name }))),
+      },
+    } : {}),
+  })
+  const curlHasFiles = multipart && Object.values(files).some((picked) => picked.length > 0)
+
   return (
     <div className="card">
       {endpoints.length > 0 && (
@@ -256,7 +363,8 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
         <span className="label">{t('headersTitle')}</span>
         <div className="space-y-2">
           {headerRows.map((row, i) => (
-            <div key={`${row.name}-${i}`} className="flex flex-wrap items-center gap-2">
+            // Key jangan memuat nama yang sedang diketik: remount memutus fokus input.
+            <div key={row.spec ? `spec-${row.name}` : `custom-${i}`} className="flex flex-wrap items-center gap-2">
               {row.spec ? (
                 <span className="w-56 truncate font-mono text-xs">
                   {row.name}
@@ -350,6 +458,8 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
           placeholder={t('bodyPlaceholder')} className="input mt-2 font-mono" />
       )}
       {formError && <p className="mt-2 text-sm text-stop">{formError}</p>}
+
+      <CurlPanel command={curlCommand} showFileHint={curlHasFiles} />
 
       {result && (
         <div className="mt-3 rounded bg-paper p-3 text-sm">

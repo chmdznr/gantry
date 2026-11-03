@@ -132,7 +132,13 @@
     "headerRemove": "Remove",
     "headerRequired": "{name} is required by the spec.",
     "invalidHeader": "Invalid header — check the name and value (no line breaks, at most 10 headers).",
-    "headerNotAllowed": "Header not allowed — only headers declared in the spec plus Authorization are forwarded."
+    "headerNotAllowed": "Header not allowed — only headers declared in the spec plus Authorization are forwarded.",
+    "curlTitle": "cURL command",
+    "curlCredentialsNote": "This command includes your real API key and headers — keep it private.",
+    "curlCopy": "Copy",
+    "curlCopied": "Copied",
+    "curlCopyFailed": "Copy failed — select manually",
+    "curlFileHint": "Files use the selected file name only — run this from the file's folder or replace them with full paths."
   },
   "reference": {
     "parameters": "Parameters",

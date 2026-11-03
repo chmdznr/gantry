@@ -170,6 +170,8 @@ JSON bodies plus `multipart/form-data` file uploads declared in the spec
 selected headers and the first 100 KB of the body. Custom request headers are
 forwarded only when the spec declares them (`in: header`, path-item or
 operation level) or for `Authorization`; anything else is rejected with 400.
+A collapsible panel previews the equivalent `curl` command (real key included)
+and copies it, with a fallback for plain-HTTP deployments.
 
 **Analytics** — per-app usage (requests per service×status via the PromQL
 `consumer` label) and p95 latency per service.

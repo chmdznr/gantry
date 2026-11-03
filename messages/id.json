@@ -132,7 +132,13 @@
     "headerRemove": "Hapus",
     "headerRequired": "{name} wajib diisi sesuai spec.",
     "invalidHeader": "Header tidak valid — periksa nama dan nilainya (tanpa baris baru, maksimal 10 header).",
-    "headerNotAllowed": "Header tidak diizinkan — hanya header yang dideklarasikan di spec plus Authorization yang diteruskan."
+    "headerNotAllowed": "Header tidak diizinkan — hanya header yang dideklarasikan di spec plus Authorization yang diteruskan.",
+    "curlTitle": "Perintah cURL",
+    "curlCredentialsNote": "Perintah ini memuat API key dan header asli kamu — jangan dibagikan.",
+    "curlCopy": "Salin",
+    "curlCopied": "Tersalin",
+    "curlCopyFailed": "Gagal menyalin — pilih manual",
+    "curlFileHint": "Berkas memakai nama berkas yang dipilih saja — jalankan dari folder berkas atau ganti dengan path lengkap."
   },
   "reference": {
     "parameters": "Parameter",
