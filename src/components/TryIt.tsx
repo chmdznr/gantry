@@ -100,7 +100,7 @@ function CurlPanel({ command, showFileHint }: { command: string; showFileHint: b
         className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap rounded bg-surface p-2 font-mono text-xs">{command}</pre>
       {showFileHint && <p className="mt-2 text-xs text-muted">{t('curlFileHint')}</p>}
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <button type="button" onClick={copy} className="btn-ghost text-sm">{t('curlCopy')}</button>
+        <button type="button" onClick={copy} className="btn-outline text-sm">{t('curlCopy')}</button>
         {status && (
           <span role="status" aria-live="polite"
             className={`text-xs ${status === 'copied' ? 'text-go' : 'text-stop'}`}>
@@ -388,7 +388,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
         </div>
         <button type="button"
           onClick={() => setHeaderRows((prev) => [...prev, { name: '', value: '', spec: false, required: false }])}
-          className="btn-ghost mt-2 text-sm">{t('headerAdd')}</button>
+          className="btn-outline mt-2 text-sm">{t('headerAdd')}</button>
       </div>
 
       {blocked && <p className="mt-2 text-sm text-warn">{t('notRoutableHint')}</p>}
@@ -412,7 +412,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
                   ) : f.type === 'binary' ? (
                     <>
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="btn-ghost cursor-pointer text-sm">
+                        <label className="btn-outline cursor-pointer text-sm">
                           {t('fileAdd')}
                           <input type="file" multiple className="hidden" aria-label={`${t('fileField')}: ${f.name}`}
                             onChange={(e) => {
