@@ -10,6 +10,9 @@ export type FormField = {
   unsupported?: string
 }
 
+// Parameter `in: header` dari spec (path-item + operation) yang boleh diisi user.
+type HeaderParam = { name: string; required: boolean }
+
 export type TryEndpoint = {
   method: string // key method OpenAPI lowercase, sesuai spec
   path: string // template spec, mis. /files/{id}
@@ -17,6 +20,7 @@ export type TryEndpoint = {
   routable?: boolean
   bodyContentType: 'application/json' | 'multipart/form-data' | 'unsupported'
   formFields: FormField[] // [] untuk endpoint JSON
+  headerParams: HeaderParam[] // header yang dideklarasikan spec; Authorization selalu boleh
 }
 
 export type BodyContentType = TryEndpoint['bodyContentType']
@@ -41,8 +45,109 @@ export type ControlEnvelope = {
   method: string
   path: string
   apiKey?: string
+  // Header tambahan dari kontrol `@headers` (JSON objek string->string).
+  headers?: Record<string, string>
   // Field non-kontrol (teks & file) yang boleh diteruskan ke upstream.
   parts: Array<[string, FormDataEntryValue]>
+}
+
+const MAX_HEADERS = 10
+const MAX_HEADER_NAME = 64
+const MAX_HEADER_VALUE = 2048
+const HEADER_NAME_RE = /^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/
+
+// Selalu ditolak walau spec mendeklarasikannya: hop-by-hop / kredensial portal /
+// header yang ditentukan isi request itu sendiri.
+const FORBIDDEN_HEADERS: Record<string, true> = {
+  host: true, 'content-length': true, 'transfer-encoding': true, connection: true, cookie: true,
+  'set-cookie': true, 'proxy-authorization': true, upgrade: true, te: true, trailer: true,
+  expect: true, 'content-type': true, apikey: true, 'x-real-ip': true, forwarded: true,
+}
+
+// Header yang boleh dikirim user = parameter `in: header` dari spec (path-item +
+// operation, case-insensitive) plus Authorization. Menerima daftar parameter atau
+// objek yang punya `parameters` (path-item/operation); $ref parameter tidak bisa
+// di-resolve di sini -> dilewati, bukan error.
+export function specHeaderParams(...sources: unknown[]): HeaderParam[] {
+  const out: HeaderParam[] = []
+  const seen = new Set<string>()
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue
+    const list: unknown = Array.isArray(source) ? source : 'parameters' in source ? source.parameters : undefined
+    if (!Array.isArray(list)) continue
+    for (const param of list) {
+      if (!param || typeof param !== 'object' || Array.isArray(param)) continue
+      if (!('in' in param) || param.in !== 'header' || !('name' in param)) continue
+      const { name } = param
+      if (typeof name !== 'string' || !name) continue
+      const key = name.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({ name, required: 'required' in param && param.required === true })
+    }
+  }
+  return out
+}
+
+// Satu-satunya validasi header user (dipakai JSON & multipart): nama harus
+// diizinkan server, token RFC, tanpa CR/LF/NUL, maksimum 10, tanpa duplikat
+// case-insensitive. Nilai kosong dibuang diam-diam (UI hanya mengirim baris terisi).
+export function resolveHeaders(raw: unknown, allowedNames: string[]): Record<string, string> {
+  if (raw === undefined || raw === null) return {}
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new TryItError('Format header tidak valid.', 400, 'invalidHeader')
+  }
+  const entries = Object.entries(raw)
+  if (entries.length > MAX_HEADERS) {
+    throw new TryItError(`Maksimal ${MAX_HEADERS} header.`, 400, 'invalidHeader')
+  }
+
+  const allowed = new Set(['authorization'])
+  for (const name of allowedNames) allowed.add(name.toLowerCase())
+  const out: Record<string, string> = {}
+  const seen = new Set<string>()
+
+  for (const [name, value] of entries) {
+    if (
+      typeof value !== 'string' ||
+      name.length > MAX_HEADER_NAME ||
+      !HEADER_NAME_RE.test(name) ||
+      value.length > MAX_HEADER_VALUE ||
+      /[\r\n\0]/.test(value)
+    ) {
+      throw new TryItError(`Header tidak valid: ${name}.`, 400, 'invalidHeader')
+    }
+    const key = name.toLowerCase()
+    if (seen.has(key)) throw new TryItError(`Header duplikat: ${name}.`, 400, 'invalidHeader')
+    seen.add(key)
+    if (value === '') continue
+    if (Object.hasOwn(FORBIDDEN_HEADERS, key) || key.startsWith('x-forwarded-') || !allowed.has(key)) {
+      throw new TryItError(`Header tidak diizinkan: ${name}.`, 400, 'headerNotAllowed')
+    }
+    out[key] = value
+  }
+  return out
+}
+
+// `@headers` = JSON objek string->string. JSON rusak / bukan objek / nilai
+// non-string = 400 invalidControl (bentuk nama/nilai divalidasi resolveHeaders).
+function parseHeaderControl(raw: string | undefined): Record<string, string> | undefined {
+  if (raw === undefined) return undefined
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new TryItError('@headers harus JSON objek.', 400, 'invalidControl')
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new TryItError('@headers harus JSON objek.', 400, 'invalidControl')
+  }
+  const out: Record<string, string> = {}
+  for (const [name, value] of Object.entries(parsed)) {
+    if (typeof value !== 'string') throw new TryItError('@headers harus berisi string.', 400, 'invalidControl')
+    out[name] = value
+  }
+  return out
 }
 
 const CONTROL_PREFIX = '@'
@@ -74,11 +179,13 @@ export function parseControlEnvelope(form: FormData): ControlEnvelope {
   }
 
   const apiKey = controls.get('@apiKey')
+  const headers = parseHeaderControl(controls.get('@headers'))
   return {
     productId: controls.get('@productId')!,
     method: controls.get('@method')!,
     path: controls.get('@path')!,
     ...(apiKey ? { apiKey } : {}),
+    ...(headers ? { headers } : {}),
     parts,
   }
 }

@@ -6,6 +6,10 @@ import { MAX_MULTIPART_BYTES, type FormField, type TryEndpoint } from '@/lib/try
 
 type TryResult = { status?: number; durationMs?: number; headers?: Record<string, string>; body?: string; error?: string; code?: string }
 
+// Baris header: `spec` = dideklarasikan spec (nama read-only, wajib diisi jika required),
+// sisanya baris bebas user.
+type HeaderRow = { name: string; value: string; spec: boolean; required: boolean }
+
 const MB = MAX_MULTIPART_BYTES / (1024 * 1024)
 
 const methodChip: Record<string, string> = {
@@ -18,6 +22,10 @@ const methodChip: Record<string, string> = {
 
 function fmtBytes(n: number) {
   return n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`
+}
+
+function specRows(endpoint?: TryEndpoint): HeaderRow[] {
+  return (endpoint?.headerParams ?? []).map((h) => ({ name: h.name, value: '', spec: true, required: h.required }))
 }
 
 // Dropdown custom — popup select native dirender OS (posisi/tema di luar kendali halaman).
@@ -89,6 +97,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   const [method, setMethod] = useState(first?.method?.toUpperCase() ?? 'GET')
   const [path, setPath] = useState(first?.path ?? '/')
   const [apiKey, setApiKey] = useState('')
+  const [headerRows, setHeaderRows] = useState<HeaderRow[]>(() => specRows(first))
   const [body, setBody] = useState('')
   const [text, setText] = useState<Record<string, string>>({})
   const [files, setFiles] = useState<Record<string, File[]>>({})
@@ -106,13 +115,24 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     setPath(p)
     setText({})
     setFiles({})
+    setHeaderRows(specRows(endpoints.find((e) => e.method.toUpperCase() === m && e.path === p)))
     setFormError(null)
     setResult(null)
   }
 
+  // Hanya baris terisi yang dikirim; validasi nama/izin tetap di server.
+  function headerValues(): Record<string, string> {
+    const out: Record<string, string> = {}
+    for (const row of headerRows) {
+      const name = row.name.trim()
+      if (name && row.value !== '') out[name] = row.value
+    }
+    return out
+  }
+
   // Bangun FormData upstream: kontrol berprefiks @ (F5), field mengikuti schema.
   // Nama field/file berprefiks @ dari spec dilewati supaya tidak menabrak kontrol.
-  function buildMultipart(): FormData | null {
+  function buildMultipart(headers: Record<string, string>): FormData | null {
     const fields: FormField[] = (current?.formFields ?? []).filter((f) => !f.unsupported && !f.name.startsWith('@'))
     const filled = fields.some((f) =>
       f.type === 'binary' ? (files[f.name]?.length ?? 0) > 0 : (text[f.name] ?? '') !== '')
@@ -126,6 +146,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     fd.set('@method', method)
     fd.set('@path', path)
     if (apiKey) fd.set('@apiKey', apiKey)
+    if (Object.keys(headers).length > 0) fd.set('@headers', JSON.stringify(headers))
 
     let total = 0
     for (const f of fields) {
@@ -167,7 +188,13 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
 
   async function send() {
     setFormError(null)
-    const fd = multipart ? buildMultipart() : null
+    const missing = headerRows.find((row) => row.spec && row.required && row.value === '')
+    if (missing) {
+      setFormError(t('headerRequired', { name: missing.name }))
+      return
+    }
+    const headers = headerValues()
+    const fd = multipart ? buildMultipart(headers) : null
     if (multipart && !fd) return
 
     setBusy(true)
@@ -180,6 +207,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId, method, path, apiKey,
+            ...(Object.keys(headers).length > 0 ? { headers } : {}),
             ...(method !== 'GET' && body ? { body, contentType: 'application/json' } : {}),
           }),
         })
@@ -188,6 +216,8 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
       // body {status:429} (HTTP proxy 200) sehingga tidak tertimpa di sini.
       if (data.code === 'uploadTooLarge') data.error = t('uploadTooLarge', { size: MB })
       else if (data.code === 'tooManyConcurrent') data.error = t('tooManyConcurrent')
+      else if (data.code === 'invalidHeader') data.error = t('invalidHeader')
+      else if (data.code === 'headerNotAllowed') data.error = t('headerNotAllowed')
       setResult(data)
     } catch {
       setResult({ error: t('requestFailed') })
@@ -221,6 +251,38 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
           {busy ? t('sending') : t('send')}
         </button>
       </div>
+
+      <div className="mt-3">
+        <span className="label">{t('headersTitle')}</span>
+        <div className="space-y-2">
+          {headerRows.map((row, i) => (
+            <div key={`${row.name}-${i}`} className="flex flex-wrap items-center gap-2">
+              {row.spec ? (
+                <span className="w-56 truncate font-mono text-xs">
+                  {row.name}
+                  {row.required && <span className="text-stop" aria-hidden> *</span>}
+                </span>
+              ) : (
+                <input value={row.name} aria-label={t('headerName')} placeholder="Authorization"
+                  onChange={(e) => setHeaderRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  className="input w-56 font-mono" />
+              )}
+              <input value={row.value} aria-label={`${t('headerValue')}: ${row.name || t('headerName')}`}
+                placeholder={t('headerValue')}
+                onChange={(e) => setHeaderRows((prev) => prev.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))}
+                className="input min-w-40 flex-1 font-mono" />
+              {!row.spec && (
+                <button type="button" onClick={() => setHeaderRows((prev) => prev.filter((_, j) => j !== i))}
+                  className="text-sm text-stop underline">{t('headerRemove')}</button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button type="button"
+          onClick={() => setHeaderRows((prev) => [...prev, { name: '', value: '', spec: false, required: false }])}
+          className="btn-ghost mt-2 text-sm">{t('headerAdd')}</button>
+      </div>
+
       {blocked && <p className="mt-2 text-sm text-warn">{t('notRoutableHint')}</p>}
       {unsupported && <p className="mt-2 text-sm text-warn">{t('endpointUnsupportedRef')}</p>}
 

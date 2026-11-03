@@ -124,7 +124,15 @@
     "multipartBodyEmpty": "Isi minimal satu field atau lampirkan berkas sebelum mengirim.",
     "uploadTooLarge": "Unggahan terlalu besar — total harus di bawah {size} MB.",
     "tooManyConcurrent": "Terlalu banyak unggahan berjalan. Tunggu sebentar lalu coba lagi.",
-    "textValuePlaceholder": "Nilai"
+    "textValuePlaceholder": "Nilai",
+    "headersTitle": "Header",
+    "headerName": "Nama header",
+    "headerValue": "Nilai header",
+    "headerAdd": "Tambah header",
+    "headerRemove": "Hapus",
+    "headerRequired": "{name} wajib diisi sesuai spec.",
+    "invalidHeader": "Header tidak valid — periksa nama dan nilainya (tanpa baris baru, maksimal 10 header).",
+    "headerNotAllowed": "Header tidak diizinkan — hanya header yang dideklarasikan di spec plus Authorization yang diteruskan."
   },
   "reference": {
     "parameters": "Parameter",

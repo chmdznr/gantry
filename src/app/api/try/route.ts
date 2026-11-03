@@ -2,13 +2,15 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
-import { findSpecOperation, matchesSpecOperation } from '@/lib/routable'
+import { findSpecOperationMatch } from '@/lib/routable'
 import {
   MAX_JSON_BODY,
   MAX_MULTIPART_BYTES,
   TryItError,
   assertCanonicalTarget,
   parseControlEnvelope,
+  resolveHeaders,
+  specHeaderParams,
   type ControlEnvelope,
 } from '@/lib/tryit'
 
@@ -73,6 +75,7 @@ async function handleJson(req: Request) {
     method?: string
     path?: string
     apiKey?: string
+    headers?: Record<string, string>
     body?: string
     contentType?: string
   }
@@ -96,7 +99,8 @@ async function handleJson(req: Request) {
   // Mencegah user memakai portal untuk probing path yang tidak terdokumentasi
   // (authz asli tetap ditegakkan Kong; ini lapisan tambahan sesuai maksud portal).
   const spec = product.openapiSpec as { paths?: Record<string, Record<string, unknown>> } | null
-  if (!spec?.paths || !matchesSpecOperation(path, method, spec.paths)) {
+  const match = spec?.paths ? findSpecOperationMatch(path, method, spec.paths) : undefined
+  if (!match) {
     return Response.json({ error: 'Endpoint tidak terdaftar pada spec API ini.' }, { status: 400 })
   }
 
@@ -110,6 +114,12 @@ async function handleJson(req: Request) {
   const headers: Record<string, string> = {}
   if (payload.apiKey) headers['apikey'] = String(payload.apiKey).slice(0, 512)
   if (payload.contentType) headers['Content-Type'] = String(payload.contentType).slice(0, 128)
+  try {
+    const allowed = specHeaderParams(match.pathItem, match.operation).map((p) => p.name)
+    Object.assign(headers, resolveHeaders(payload.headers, allowed))
+  } catch (err) {
+    return errorResponse(err)
+  }
 
   return proxy(target, method, headers, payload.body?.slice(0, MAX_JSON_BODY))
 }
@@ -136,12 +146,12 @@ async function handleMultipart(req: Request) {
 
   // Guard spec dibaca ulang dari DB (JANGAN percaya bodyContentType dari client).
   const spec = product.openapiSpec as { paths?: Record<string, Record<string, unknown>> } | null
-  if (!spec?.paths || !matchesSpecOperation(path, method, spec.paths)) {
+  const match = spec?.paths ? findSpecOperationMatch(path, method, spec.paths) : undefined
+  if (!match) {
     return Response.json({ error: 'Endpoint tidak terdaftar pada spec API ini.' }, { status: 400 })
   }
-  const operation = findSpecOperation(path, method, spec.paths)
   // F4: hard-block upload multipart ke operasi yang tidak mendeklarasikannya.
-  if (!operation || !declaresMultipart(operation)) {
+  if (!declaresMultipart(match.operation)) {
     return Response.json(
       { error: 'Endpoint tidak mendeklarasikan multipart/form-data pada spec API ini.', code: 'multipartUnsupportedBySpec' },
       { status: 400 },
@@ -163,6 +173,12 @@ async function handleMultipart(req: Request) {
 
   const headers: Record<string, string> = {}
   if (controls.apiKey) headers['apikey'] = controls.apiKey.slice(0, 512)
+  try {
+    const allowed = specHeaderParams(match.pathItem, match.operation).map((p) => p.name)
+    Object.assign(headers, resolveHeaders(controls.headers, allowed))
+  } catch (err) {
+    return errorResponse(err)
+  }
 
   return proxy(target, method, headers, outbound)
 }

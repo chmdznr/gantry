@@ -9,7 +9,7 @@ import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import { listServiceRoutes } from '@/lib/kong'
 import { isEndpointRoutable, type GatewayRoute } from '@/lib/routable'
-import { type FormField, type TryEndpoint } from '@/lib/tryit'
+import { type FormField, type TryEndpoint, specHeaderParams } from '@/lib/tryit'
 import SubscribeForm from '@/components/SubscribeForm'
 import TryIt from '@/components/TryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -35,6 +35,8 @@ type OpenApiOperation = {
   requestBody?: { content?: Record<string, { schema?: SpecSchema }> }
 }
 type OpenApiSpec = { paths?: Record<string, Record<string, OpenApiOperation>> }
+
+const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
 // F6: media type body ditentukan dari requestBody.content, schema inline saja.
 // $ref/allOf/anyOf/oneOf tidak pernah di-dereference: endpoint yang schema
@@ -148,13 +150,16 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
                 baseUrl={product.proxyBaseUrl}
                 endpoints={spec?.paths
                   ? Object.entries(spec.paths).flatMap(([p, methods]) =>
-                      Object.entries(methods).map(([method, op]) => ({
-                        method,
-                        path: p,
-                        summary: op?.summary,
-                        routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
-                        ...deriveBody(op),
-                      })))
+                      Object.entries(methods)
+                        .filter(([method]) => HTTP_METHODS.includes(method.toLowerCase()))
+                        .map(([method, op]) => ({
+                          method,
+                          path: p,
+                          summary: op?.summary,
+                          routable: gatewayRoutes ? isEndpointRoutable(p, method, gatewayRoutes) : true,
+                          ...deriveBody(op),
+                          headerParams: specHeaderParams(methods, op),
+                        })))
                   : []}
               />
             </section>

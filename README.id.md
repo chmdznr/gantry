@@ -159,7 +159,9 @@ revoke credential siapa pun, hapus app.
 **Try-It console** — `/api/try` proxy server-side (target terkunci ke proxyBaseUrl produk,
 bukan open relay); developer menempel API key-nya sendiri. Body JSON plus upload file
 `multipart/form-data` yang dideklarasikan di spec (batas 10 MB agregat, 3 upload bersamaan);
-envelope respons memuat status, header terpilih, dan 100 KB pertama body.
+envelope respons memuat status, header terpilih, dan 100 KB pertama body. Header request
+tambahan hanya diteruskan bila dideklarasikan spec (`in: header`, level path-item atau
+operation) atau untuk `Authorization`; selain itu ditolak 400.
 
 **Analytics** — pemakaian per app (request per service×status, dari PromQL label consumer).
 

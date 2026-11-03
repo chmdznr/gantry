@@ -33,6 +33,16 @@ export function findSpecOperation(
   method: string,
   specPaths: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> | undefined {
+  return findSpecOperationMatch(reqPath, method, specPaths)?.operation
+}
+
+// Sama seperti findSpecOperation, tapi juga mengembalikan path-item-nya supaya
+// parameter level path (mis. header) bisa dibaca tanpa menebak template.
+export function findSpecOperationMatch(
+  reqPath: string,
+  method: string,
+  specPaths: Record<string, Record<string, unknown>>,
+): { pathItem: Record<string, unknown>; operation: Record<string, unknown> } | undefined {
   const m = method.toLowerCase()
   const reqSegs = reqPath.split('?')[0].split('/').filter(Boolean)
   for (const [tmpl, ops] of Object.entries(specPaths)) {
@@ -42,7 +52,12 @@ export function findSpecOperation(
     if (tmplSegs.length !== reqSegs.length) continue
     const ok = tmplSegs.every((seg, i) =>
       seg.startsWith('{') && seg.endsWith('}') ? reqSegs[i].length > 0 : seg === reqSegs[i])
-    if (ok) return (entry[1] && typeof entry[1] === 'object' ? entry[1] : {}) as Record<string, unknown>
+    if (ok) {
+      return {
+        pathItem: ops,
+        operation: (entry[1] && typeof entry[1] === 'object' ? entry[1] : {}) as Record<string, unknown>,
+      }
+    }
   }
   return undefined
 }

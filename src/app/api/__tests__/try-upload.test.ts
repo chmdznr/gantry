@@ -133,6 +133,7 @@ function makeProduct() {
       openapi: '3.0.0',
       paths: {
         '/upload': {
+          parameters: [{ name: 'X-Tenant', in: 'header' }],
           post: {
             requestBody: {
               content: {
@@ -268,6 +269,7 @@ type TryResponse = {
   headers?: Record<string, string>
   body?: string
   error?: string
+  code?: string
 }
 
 describe('POST /api/try multipart upload', () => {
@@ -406,6 +408,52 @@ describe('POST /api/try multipart upload', () => {
     }
   })
 
+  it('forwards @headers to the upstream and never as a form part', async () => {
+    const res = await POST(
+      multipartRequest(
+        {
+          ...CONTROLS,
+          '@path': '/upload',
+          '@headers': JSON.stringify({ 'X-Tenant': 'acme', Authorization: 'Bearer multipart' }),
+        },
+        [{ name: 'file', value: new File([new Uint8Array([9]) as unknown as BlobPart], 'x.bin') }],
+      ),
+    )
+
+    expect(res.status).toBe(200)
+    expect(received).toHaveLength(1)
+    expect(received[0].headers['x-tenant']).toBe('acme')
+    expect(received[0].headers.authorization).toBe('Bearer multipart')
+    expect(received[0].headers.apikey).toBe(APP_KEY)
+    expect(received[0].parts.map((part) => part.name)).not.toContain('@headers')
+  })
+
+  it('rejects a malformed @headers control with 400 before forwarding', async () => {
+    const res = await POST(
+      multipartRequest(
+        { ...CONTROLS, '@path': '/upload', '@headers': '{not json' },
+        [{ name: 'file', value: new File([new Uint8Array([1]) as unknown as BlobPart], 'x.bin') }],
+      ),
+    )
+
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as TryResponse).code).toBe('invalidControl')
+    expect(received).toHaveLength(0)
+  })
+
+  it('rejects an undeclared multipart header with 400 and forwards nothing', async () => {
+    const res = await POST(
+      multipartRequest(
+        { ...CONTROLS, '@path': '/upload', '@headers': JSON.stringify({ 'X-Nope': '1' }) },
+        [{ name: 'file', value: new File([new Uint8Array([1]) as unknown as BlobPart], 'x.bin') }],
+      ),
+    )
+
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as TryResponse).code).toBe('headerNotAllowed')
+    expect(received).toHaveLength(0)
+  })
+
   it('allows exactly 3 concurrent uploads and answers the 4th with 429', async () => {
     const jobs = Array.from({ length: 4 }, (_, i) =>
       POST(
@@ -469,5 +517,48 @@ describe('POST /api/try legacy JSON path', () => {
     expect(json.body?.length).toBe(MAX_JSON_BODY)
     expect(typeof json.durationMs).toBe('number')
     expect(json.durationMs).toBeLessThan(15000)
+  })
+
+  it('forwards Authorization from the JSON payload alongside apikey', async () => {
+    const res = await POST(
+      new Request(PORTAL_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          productId: 'prod-1',
+          method: 'POST',
+          path: '/echo',
+          apiKey: 'json-key',
+          headers: { Authorization: 'Bearer json' },
+          body: '{}',
+          contentType: 'application/json',
+        }),
+      }),
+    )
+
+    expect(res.status).toBe(200)
+    expect(received).toHaveLength(1)
+    expect(received[0].headers.authorization).toBe('Bearer json')
+    expect(received[0].headers.apikey).toBe('json-key')
+  })
+
+  it('rejects an undeclared JSON header with 400 and forwards nothing', async () => {
+    const res = await POST(
+      new Request(PORTAL_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          productId: 'prod-1',
+          method: 'POST',
+          path: '/echo',
+          headers: { 'X-Nope': '1' },
+        }),
+      }),
+    )
+
+    expect(res.status).toBe(400)
+    const json = (await res.json()) as TryResponse
+    expect(json.code).toBe('headerNotAllowed')
+    expect(received).toHaveLength(0)
   })
 })
