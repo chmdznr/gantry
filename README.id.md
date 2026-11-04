@@ -161,7 +161,10 @@ bukan open relay); developer menempel API key-nya sendiri. Body JSON plus upload
 `multipart/form-data` yang dideklarasikan di spec (batas 10 MB agregat, 3 upload bersamaan);
 envelope respons memuat status, header terpilih, dan 100 KB pertama body. Header request
 tambahan hanya diteruskan bila dideklarasikan spec (`in: header`, level path-item atau
-operation) atau untuk `Authorization`; selain itu ditolak 400. Panel ringkas
+operation) atau untuk `Authorization`; selain itu ditolak 400. Body request,
+parameter path/query, dan header yang dideklarasikan diisi awal dari contoh
+spec (`example`/`examples`/`default`); field mirip kredensial (password, token,
+API key, Authorization) dibiarkan kosong untuk diisi nilai asli. Panel ringkas
 menampilkan perintah `curl` setara (termasuk API key asli) dan bisa disalin,
 dengan fallback untuk deployment HTTP biasa.
 

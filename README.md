@@ -170,6 +170,10 @@ JSON bodies plus `multipart/form-data` file uploads declared in the spec
 selected headers and the first 100 KB of the body. Custom request headers are
 forwarded only when the spec declares them (`in: header`, path-item or
 operation level) or for `Authorization`; anything else is rejected with 400.
+Request bodies, path/query parameters and declared headers are prefilled from
+spec `example`/`examples`/`default` values; credential-like fields (password,
+token, API key, Authorization) stay empty for developers to fill with real
+values.
 A collapsible panel previews the equivalent `curl` command (real key included)
 and copies it, with a fallback for plain-HTTP deployments.
 

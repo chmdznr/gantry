@@ -10,7 +10,10 @@ import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import { listServiceRoutes } from '@/lib/kong'
 import { type GatewayRoute } from '@/lib/routable'
-import { type FormField, publicBaseUrl, specHeaderParams, type TryEndpoint } from '@/lib/tryit'
+import {
+  type FormField, headerDefaults, jsonExampleBody, jsonMedia, publicBaseUrl, samplePath, specHeaderParams,
+  textFieldDefault, type TryEndpoint,
+} from '@/lib/tryit'
 import SubscribeForm from '@/components/SubscribeForm'
 import RoutableTryIt from '@/components/RoutableTryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -30,10 +33,22 @@ type SpecSchema = {
   required?: string[]
   properties?: Record<string, SpecSchema>
   items?: SpecSchema
+  example?: unknown
+  default?: unknown
 }
+type OpenApiParameter = {
+  name: string
+  in: string
+  required?: boolean
+  example?: unknown
+  default?: unknown
+  schema?: SpecSchema
+}
+type OpenApiMedia = { schema?: SpecSchema; example?: unknown; examples?: unknown }
 type OpenApiOperation = {
   summary?: string
-  requestBody?: { content?: Record<string, { schema?: SpecSchema }> }
+  parameters?: OpenApiParameter[]
+  requestBody?: { content?: Record<string, OpenApiMedia> }
 }
 type OpenApiSpec = { paths?: Record<string, Record<string, OpenApiOperation>> }
 
@@ -42,7 +57,7 @@ const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'
 // F6: media type body ditentukan dari requestBody.content, schema inline saja.
 // $ref/allOf/anyOf/oneOf tidak pernah di-dereference: endpoint yang schema
 // multipart-nya tidak bisa dibaca ditandai 'unsupported' (UI mematikan Try It).
-function deriveBody(op: OpenApiOperation | undefined): Pick<TryEndpoint, 'bodyContentType' | 'formFields'> {
+function deriveBody(op: OpenApiOperation | undefined): Pick<TryEndpoint, 'bodyContentType' | 'formFields' | 'exampleBody'> {
   const content = op?.requestBody?.content
   if (!content || Object.keys(content).length === 0) return { bodyContentType: 'application/json', formFields: [] }
 
@@ -57,17 +72,22 @@ function deriveBody(op: OpenApiOperation | undefined): Pick<TryEndpoint, 'bodyCo
       const p = prop ?? {}
       const isBinary = [p.format, p.items?.format].some((f) => f === 'binary' || f === 'byte')
       const composed = Boolean(p.$ref || p.allOf || p.anyOf || p.oneOf)
+      const defaultValue = !isBinary && !composed ? textFieldDefault(name, p) : undefined
       return {
         name,
         type: isBinary ? 'binary' : 'text',
         required: required.has(name),
         ...(composed ? { unsupported: '$ref/composed schema not supported in v1' } : {}),
+        ...(defaultValue ? { defaultValue } : {}),
       }
     })
     return { bodyContentType: 'multipart/form-data', formFields }
   }
 
-  if (content['application/json']) return { bodyContentType: 'application/json', formFields: [] }
+  if (jsonMedia(content)) {
+    const exampleBody = jsonExampleBody(content)
+    return { bodyContentType: 'application/json', formFields: [], ...(exampleBody ? { exampleBody } : {}) }
+  }
   return { bodyContentType: 'unsupported', formFields: [] }
 }
 
@@ -131,13 +151,18 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
     ? Object.entries(spec.paths).flatMap(([path, methods]) =>
         Object.entries(methods)
           .filter(([method]) => HTTP_METHODS.includes(method.toLowerCase()))
-          .map(([method, op]) => ({
-            method,
-            path,
-            summary: op?.summary,
-            ...deriveBody(op),
-            headerParams: specHeaderParams(methods, op),
-          })))
+          .map(([method, op]) => {
+            const defaults = headerDefaults(methods, op)
+            return {
+              method,
+              path,
+              summary: op?.summary,
+              ...deriveBody(op),
+              headerParams: specHeaderParams(methods, op),
+              samplePath: samplePath(path, methods, op),
+              ...(Object.keys(defaults).length > 0 ? { headerDefaults: defaults } : {}),
+            }
+          }))
     : []
 
   return (

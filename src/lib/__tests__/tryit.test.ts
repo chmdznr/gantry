@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { TryItError, parseControlEnvelope, publicBaseUrl, resolveHeaders, specHeaderParams } from '../tryit'
+import {
+  TryItError, headerDefaults, jsonExampleBody, parseControlEnvelope, publicBaseUrl, resolveHeaders, samplePath,
+  specHeaderParams, textFieldDefault,
+} from '../tryit'
 
 function codeOf(fn: () => unknown): string | undefined {
   try {
@@ -112,5 +115,107 @@ describe('publicBaseUrl', () => {
     for (const spec of [null, {}, { servers: [] }, { servers: [{ url: '/relative' }] }]) {
       expect(publicBaseUrl(spec, 'http://10.120.1.93:8000')).toBe('http://10.120.1.93:8000')
     }
+  })
+})
+
+describe('Try It example prefill', () => {
+  const pretty = (value: unknown) => JSON.stringify(value, null, 2)
+
+  it('prefers media example, then the first examples value, then schema.example', () => {
+    expect(jsonExampleBody({ 'application/json': { example: { from: 'example' } } }))
+      .toBe(pretty({ from: 'example' }))
+    expect(jsonExampleBody({
+      'application/json': {
+        examples: { first: { value: { from: 'examples' } }, second: { value: { from: 'second' } } },
+        schema: { example: { from: 'schema' } },
+      },
+    })).toBe(pretty({ from: 'examples' }))
+    expect(jsonExampleBody({ 'application/json': { schema: { example: { from: 'schema' } } } }))
+      .toBe(pretty({ from: 'schema' }))
+  })
+
+  it('accepts vendor +json media and keeps string examples verbatim', () => {
+    expect(jsonExampleBody({ 'application/vnd.api+json': { example: { ok: true } } })).toBe(pretty({ ok: true }))
+    expect(jsonExampleBody({ 'application/json': { example: '{"raw":true}' } })).toBe('{"raw":true}')
+  })
+
+  it('returns an empty body when the spec has no example (never mocks a schema)', () => {
+    expect(jsonExampleBody({
+      'application/json': { schema: { type: 'object', properties: { id: { type: 'string' } } } },
+    })).toBe('')
+    expect(jsonExampleBody(undefined)).toBe('')
+  })
+
+  it('blanks nested sensitive values but keeps ordinary fields and shape', () => {
+    const body = JSON.parse(jsonExampleBody({
+      'application/json': {
+        example: {
+          username: 'ani',
+          password: 'rahasia',
+          role_id: 7,
+          'token-id': 123,
+          profile: { nip: '1987', date: '2026-01-01', client_secret: 's' },
+          items: [{ api_key: 'k', keep: 'yes' }],
+        },
+      },
+    }))
+    expect(body).toEqual({
+      username: 'ani',
+      password: '',
+      role_id: 7,
+      'token-id': '',
+      profile: { nip: '1987', date: '2026-01-01', client_secret: '' },
+      items: [{ api_key: '', keep: 'yes' }],
+    })
+  })
+
+  it('prefills multipart text fields from example then default, skipping sensitive ones', () => {
+    expect(textFieldDefault('email', { example: 'a@b.c', default: 'x@y.z' })).toBe('a@b.c')
+    expect(textFieldDefault('email', { default: 'x@y.z' })).toBe('x@y.z')
+    expect(textFieldDefault('retries', { example: 3 })).toBe('3')
+    for (const name of ['password', 'access_token', 'apiKey', 'client_secret', 'Authorization']) {
+      expect(textFieldDefault(name, { example: 'secret', default: 'secret' }), name).toBeUndefined()
+    }
+  })
+
+  it('substitutes path examples and appends only query params with an explicit example', () => {
+    const pathItem = {
+      parameters: [
+        { name: 'tenant', in: 'path', example: 'acme' },
+        { name: 'limit', in: 'query', example: 5 },
+        { name: 'q', in: 'query', example: 'a b&c' },
+        { name: 'lang', in: 'query', default: 'id' },
+        { name: 'page', in: 'query', required: true },
+        { name: 'api_key', in: 'query', example: 'secret' },
+      ],
+    }
+    const operation = { parameters: [{ name: 'tenant', in: 'path', example: 'opco' }] }
+    expect(samplePath('/t/{tenant}/items', pathItem, operation)).toBe('/t/opco/items?limit=5&q=a+b%26c')
+    expect(samplePath('/x?keep=1', pathItem)).toBe('/x?keep=1&limit=5&q=a+b%26c')
+  })
+
+  it('leaves placeholders without an example and never substitutes sensitive path params', () => {
+    expect(samplePath('/t/{tenant}/items/{id}', {
+      parameters: [{ name: 'tenant', in: 'path', default: 'acme' }],
+    })).toBe('/t/acme/items/{id}')
+    expect(samplePath('/u/{token}', {
+      parameters: [{ name: 'token', in: 'path', example: 'abc' }],
+    })).toBe('/u/{token}')
+  })
+
+  it('prefills only non-sensitive header examples/defaults', () => {
+    expect(headerDefaults(
+      { parameters: [{ name: 'Accept', in: 'header', example: 'application/json' }] },
+      {
+        parameters: [
+          { name: 'X-Tenant', in: 'header', default: 'acme' },
+          { name: 'X-Required', in: 'header', required: true },
+          { name: 'Authorization', in: 'header', example: 'Bearer x' },
+          { name: 'token-id', in: 'header', example: 't' },
+          { name: 'apikey', in: 'header', example: 'k' },
+          { name: 'Content-Type', in: 'header', example: 'application/json' },
+        ],
+      },
+    )).toEqual({ Accept: 'application/json', 'X-Tenant': 'acme' })
   })
 })

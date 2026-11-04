@@ -27,7 +27,24 @@ function fmtBytes(n: number) {
 }
 
 function specRows(endpoint?: TryEndpoint): HeaderRow[] {
-  return (endpoint?.headerParams ?? []).map((h) => ({ name: h.name, value: '', spec: true, required: h.required }))
+  const defaults = new Map(
+    Object.entries(endpoint?.headerDefaults ?? {}).map(([name, value]) => [name.toLowerCase(), value]),
+  )
+  return (endpoint?.headerParams ?? []).map((h) => ({
+    name: h.name,
+    value: defaults.get(h.name.toLowerCase()) ?? '',
+    spec: true,
+    required: h.required,
+  }))
+}
+
+// Nilai awal field teks multipart dari schema (contoh/default non-sensitif).
+function textDefaults(endpoint?: TryEndpoint): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const field of endpoint?.formFields ?? []) {
+    if (field.defaultValue) out[field.name] = field.defaultValue
+  }
+  return out
 }
 
 function CurlPanel({ command, showFileHint }: { command: string; showFileHint: boolean }) {
@@ -84,10 +101,11 @@ function CurlPanel({ command, showFileHint }: { command: string; showFileHint: b
 }
 
 // Dropdown custom — popup select native dirender OS (posisi/tema di luar kendali halaman).
-function EndpointPicker({ endpoints, method, path, onPick }: {
+function EndpointPicker({ endpoints, method, path, selected, onPick }: {
   endpoints: TryEndpoint[]
   method: string
   path: string
+  selected: string
   onPick: (method: string, path: string) => void
 }) {
   const t = useTranslations('tryit')
@@ -105,7 +123,7 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc) }
   }, [open])
 
-  const current = endpoints.find((x) => x.method.toUpperCase() === method && x.path === path)
+  const current = endpoints.find((x) => x.method.toUpperCase() === method && x.path === selected)
 
   return (
     <div ref={ref} className="relative mb-3 max-w-xl">
@@ -121,7 +139,7 @@ function EndpointPicker({ endpoints, method, path, onPick }: {
         <ul role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-line bg-surface py-1 shadow-[0_8px_24px_-6px_rgb(16_49_43_/_0.25)]">
           {endpoints.map((x) => {
             const m = x.method.toUpperCase()
-            const active = m === method && x.path === path
+            const active = m === method && x.path === selected
             return (
               <li key={m + x.path} role="option" aria-selected={active}>
                 <button type="button" disabled={x.routable === false}
@@ -150,17 +168,20 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   const t = useTranslations('tryit')
   const first = endpoints.find((e) => e.routable !== false) ?? endpoints[0]
   const [method, setMethod] = useState(first?.method?.toUpperCase() ?? 'GET')
-  const [path, setPath] = useState(first?.path ?? '/')
+  // templatePath = endpoint terpilih (path spec), path = isian user yang sudah
+  // diisi contoh sehingga tetap bisa diedit tanpa kehilangan endpoint aktif.
+  const [templatePath, setTemplatePath] = useState(first?.path ?? '/')
+  const [path, setPath] = useState(first?.samplePath ?? first?.path ?? '/')
   const [apiKey, setApiKey] = useState('')
   const [headerRows, setHeaderRows] = useState<HeaderRow[]>(() => specRows(first))
-  const [body, setBody] = useState('')
-  const [text, setText] = useState<Record<string, string>>({})
+  const [body, setBody] = useState(first?.exampleBody ?? '')
+  const [text, setText] = useState<Record<string, string>>(() => textDefaults(first))
   const [files, setFiles] = useState<Record<string, File[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [result, setResult] = useState<TryResult | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const current = endpoints.find((e) => e.method.toUpperCase() === method && e.path === path)
+  const current = endpoints.find((e) => e.method.toUpperCase() === method && e.path === templatePath)
   // GET tidak punya body; endpoint dengan schema yang tidak bisa dibaca dimatikan.
   const multipart = method !== 'GET' && current?.bodyContentType === 'multipart/form-data'
   const unsupported = method !== 'GET' && current?.bodyContentType === 'unsupported'
@@ -169,12 +190,17 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     ? (current?.formFields ?? []).filter((f) => !f.unsupported && !f.name.startsWith('@'))
     : []
 
+  // Ganti endpoint: semua isian ikut default endpoint baru, tidak ada nilai lama
+  // yang terbawa (termasuk body/header yang sudah diedit user).
   function pick(m: string, p: string) {
+    const next = endpoints.find((e) => e.method.toUpperCase() === m && e.path === p)
     setMethod(m)
-    setPath(p)
-    setText({})
+    setTemplatePath(next?.path ?? p)
+    setPath(next?.samplePath ?? next?.path ?? p)
+    setBody(next?.exampleBody ?? '')
+    setText(textDefaults(next))
     setFiles({})
-    setHeaderRows(specRows(endpoints.find((e) => e.method.toUpperCase() === m && e.path === p)))
+    setHeaderRows(specRows(next))
     setFormError(null)
     setResult(null)
   }
@@ -285,7 +311,7 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
     }
   }
 
-  const blocked = endpoints.some((e) => e.routable === false && e.method.toUpperCase() === method && e.path === path)
+  const blocked = current?.routable === false
 
   const statusColor = (s?: number) =>
     !s ? '' : s < 300 ? 'text-go' : s < 500 ? 'text-warn' : 'text-stop'
@@ -312,11 +338,11 @@ export default function TryIt({ productId, baseUrl, endpoints }: {
   return (
     <div className="card">
       {endpoints.length > 0 && (
-        <EndpointPicker endpoints={endpoints} method={method} path={path}
+        <EndpointPicker endpoints={endpoints} method={method} path={path} selected={templatePath}
           onPick={(m, p) => pick(m, p)} />
       )}
       <div className="flex flex-wrap items-end gap-2">
-        <select value={method} onChange={(e) => pick(e.target.value, path)} className="input w-auto">
+        <select value={method} onChange={(e) => pick(e.target.value, templatePath)} className="input w-auto">
           {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => <option key={m}>{m}</option>)}
         </select>
         <span className="pb-2 font-mono text-xs text-muted">{baseUrl}</span>
