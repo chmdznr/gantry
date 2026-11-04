@@ -1,9 +1,11 @@
-import { desc, eq } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { adminApiTokens, users } from '@/db/schema'
 import { revokeAdminToken } from '@/actions/admin-tokens'
 import AdminTokenForm from '@/components/AdminTokenForm'
 import PendingButton from '@/components/PendingButton'
+import Pagination from '@/components/Pagination'
+import { resolvePagination, type PageSearchParams } from '@/lib/pagination'
 import { ADMIN_API_SCOPES, ADMIN_API_SCOPE_LABELS } from '@/lib/admin-api-tokens'
 
 function formatDate(d: Date | null): string {
@@ -16,7 +18,13 @@ function statusOf(t: { revokedAt: Date | null; expiresAt: Date }): { label: stri
   return { label: 'active', className: 'badge-go' }
 }
 
-export default async function AdminTokensPage() {
+export default async function AdminTokensPage({ searchParams }: { searchParams: Promise<PageSearchParams> }) {
+  const sp = await searchParams
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(adminApiTokens)
+    .innerJoin(users, eq(adminApiTokens.userId, users.id))
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/admin/tokens', total)
   const rows = await db
     .select({
       id: adminApiTokens.id,
@@ -32,7 +40,8 @@ export default async function AdminTokensPage() {
     })
     .from(adminApiTokens)
     .innerJoin(users, eq(adminApiTokens.userId, users.id))
-    .orderBy(desc(adminApiTokens.createdAt))
+    .orderBy(desc(adminApiTokens.createdAt), adminApiTokens.id)
+    .limit(pageSize).offset(offset)
 
   const scopes = ADMIN_API_SCOPES.map((value) => ({ value, label: ADMIN_API_SCOPE_LABELS[value] }))
 
@@ -90,6 +99,14 @@ export default async function AdminTokensPage() {
           )}
         </tbody>
       </table>
+      <Pagination
+        basePath="/admin/tokens"
+        searchParams={sp}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        total={total}
+      />
     </main>
   )
 }

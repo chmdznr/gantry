@@ -6,14 +6,25 @@ import { db } from '@/db'
 import { appCredentials, applications, subscriptions } from '@/db/schema'
 import NewAppForm from '@/components/NewAppForm'
 import { getTranslations } from 'next-intl/server'
+import Pagination from '@/components/Pagination'
+import { resolvePagination, type PageSearchParams } from '@/lib/pagination'
 
-export default async function AppsPage() {
+export default async function AppsPage({ searchParams }: { searchParams: Promise<PageSearchParams> }) {
   const t = await getTranslations()
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
+  const sp = await searchParams
+
+  const totalRows = await db.select({ n: count() }).from(applications)
+    .where(eq(applications.ownerUserId, session.user.id))
+  const total = Number(totalRows[0]?.n ?? 0)
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/apps', total)
+
   const apps = await db.select().from(applications)
     .where(eq(applications.ownerUserId, session.user.id))
-    .orderBy(desc(applications.createdAt))
+    .orderBy(desc(applications.createdAt), desc(applications.id))
+    .limit(pageSize)
+    .offset(offset)
 
   const appIds = apps.map((a) => a.id)
   const [creds, subs] = appIds.length ? await Promise.all([
@@ -50,6 +61,14 @@ export default async function AppsPage() {
           ))}
         </div>
       )}
+      <Pagination
+        basePath="/apps"
+        searchParams={sp}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        total={total}
+      />
     </main>
   )
 }

@@ -1,9 +1,11 @@
-import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { users } from '@/db/schema'
 import { approveUser, suspendUser, activateUser } from '@/actions/admin-users'
 import PendingButton from '@/components/PendingButton'
 import FilterBar, { countActive } from '@/components/FilterBar'
+import Pagination from '@/components/Pagination'
+import { resolvePagination } from '@/lib/pagination'
 import NewUserForm from '@/components/NewUserForm'
 import SetPasswordForm from '@/components/SetPasswordForm'
 
@@ -30,16 +32,20 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   if (sp.role === 'developer' || sp.role === 'portal-admin') conds.push(eq(users.role, sp.role))
   if (sp.type === 'internal' || sp.type === 'external') conds.push(eq(users.type, sp.type))
 
+  const where = conds.length ? and(...conds) : undefined
+  const [{ total }] = await db.select({ total: count() }).from(users).where(where)
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/admin/users', total)
   const rows = await db.select().from(users)
-    .where(conds.length ? and(...conds) : undefined)
-    .orderBy(desc(users.createdAt))
+    .where(where)
+    .orderBy(desc(users.createdAt), desc(users.id))
+    .limit(pageSize).offset(offset)
   const active = countActive(sp, ['q', 'status', 'role', 'type'])
 
   return (
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Users</h1>
-        <span className="text-sm text-muted">{rows.length} users{active > 0 ? ` · ${active} active filters` : ''}</span>
+        <span className="text-sm text-muted">{total} users{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
 
       <NewUserForm />
@@ -118,6 +124,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">No users match the filters.</td></tr>}
         </tbody>
       </table>
+
+      <Pagination basePath="/admin/users" searchParams={sp} page={page} pageSize={pageSize} totalPages={totalPages} total={total} />
     </main>
   )
 }

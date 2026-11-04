@@ -1,9 +1,11 @@
-import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts, applications, plans, subscriptions, users } from '@/db/schema'
 import { approveSubscription, rejectSubscription, revokeSubscription } from '@/actions/subscriptions'
 import PendingButton from '@/components/PendingButton'
 import FilterBar, { countActive } from '@/components/FilterBar'
+import Pagination from '@/components/Pagination'
+import { resolvePagination } from '@/lib/pagination'
 
 const badge: Record<string, string> = {
   requested: 'badge-warn',
@@ -31,6 +33,15 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
     )!)
   }
 
+  const where = conds.length ? and(...conds) : undefined
+  const [{ total }] = await db.select({ total: count() }).from(subscriptions)
+    .innerJoin(applications, eq(subscriptions.applicationId, applications.id))
+    .innerJoin(users, eq(applications.ownerUserId, users.id))
+    .innerJoin(apiProducts, eq(subscriptions.apiProductId, apiProducts.id))
+    .innerJoin(plans, eq(subscriptions.planId, plans.id))
+    .where(where)
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/admin/subscriptions', total)
+
   const [rows, productOpts, planOpts] = await Promise.all([
     db.select({
       id: subscriptions.id,
@@ -45,8 +56,9 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
       .innerJoin(users, eq(applications.ownerUserId, users.id))
       .innerJoin(apiProducts, eq(subscriptions.apiProductId, apiProducts.id))
       .innerJoin(plans, eq(subscriptions.planId, plans.id))
-      .where(conds.length ? and(...conds) : undefined)
-      .orderBy(desc(subscriptions.requestedAt)),
+      .where(where)
+      .orderBy(desc(subscriptions.requestedAt), desc(subscriptions.id))
+      .limit(pageSize).offset(offset),
     db.select({ id: apiProducts.id, name: apiProducts.name }).from(apiProducts).orderBy(apiProducts.name),
     db.select({ id: plans.id, name: plans.name }).from(plans).orderBy(plans.name),
   ])
@@ -56,7 +68,7 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Subscriptions</h1>
-        <span className="text-sm text-muted">{rows.length} subscriptions{active > 0 ? ` · ${active} active filters` : ''}</span>
+        <span className="text-sm text-muted">{total} subscriptions{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
 
       {sp.error && (
@@ -131,6 +143,8 @@ export default async function AdminSubscriptionsPage({ searchParams }: { searchP
           {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted">No subscriptions match the filters.</td></tr>}
         </tbody>
       </table>
+
+      <Pagination basePath="/admin/subscriptions" searchParams={sp} page={page} pageSize={pageSize} totalPages={totalPages} total={total} />
     </main>
   )
 }

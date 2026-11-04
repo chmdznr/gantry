@@ -140,6 +140,14 @@
     "curlCopyFailed": "Copy failed — select manually",
     "curlFileHint": "Files use the selected file name only — run this from the file's folder or replace them with full paths."
   },
+  "pagination": {
+    "label": "Pagination",
+    "showing": "Showing {first}–{last} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {totalPages}",
+    "perPage": "Per page:"
+  },
   "reference": {
     "parameters": "Parameters",
     "name": "Name",

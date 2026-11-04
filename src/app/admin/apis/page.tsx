@@ -1,10 +1,12 @@
 import Link from 'next/link'
-import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { apiProducts } from '@/db/schema'
 import FilterBar, { countActive } from '@/components/FilterBar'
 import { setProductStatus } from '@/actions/admin-products'
 import PendingButton from '@/components/PendingButton'
+import Pagination from '@/components/Pagination'
+import { resolvePagination } from '@/lib/pagination'
 
 const badge: Record<string, string> = {
   draft: 'badge-muted',
@@ -29,14 +31,18 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
   if (sp.status && ['draft', 'published', 'deprecated', 'retired'].includes(sp.status)) {
     conds.push(eq(apiProducts.status, sp.status as 'draft'))
   }
+  const where = conds.length ? and(...conds) : undefined
+  const [{ total }] = await db.select({ total: count() }).from(apiProducts).where(where)
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/admin/apis', total)
   const rows = await db.select().from(apiProducts)
-    .where(conds.length ? and(...conds) : undefined)
-    .orderBy(desc(apiProducts.updatedAt))
+    .where(where)
+    .orderBy(desc(apiProducts.updatedAt), apiProducts.id)
+    .limit(pageSize).offset(offset)
   const active = countActive(sp, ['q', 'status'])
   return (
     <main>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">API Products <span className="ml-1 align-middle text-sm font-normal text-muted">{rows.length}{active > 0 ? ` · ${active} active filters` : ''}</span></h1>
+        <h1 className="text-xl font-bold">API Products <span className="ml-1 align-middle text-sm font-normal text-muted">{total}{active > 0 ? ` · ${active} active filters` : ''}</span></h1>
         <div className="flex gap-2">
           <Link href="/admin/apis/import" className="btn-outline btn-sm">Import from Kong</Link>
           <Link href="/admin/apis/new" className="btn-primary btn-sm">+ New API</Link>
@@ -91,6 +97,14 @@ export default async function AdminApisPage({ searchParams }: { searchParams: Pr
           ))}
         </tbody>
       </table>
+      <Pagination
+        basePath="/admin/apis"
+        searchParams={sp}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        total={total}
+      />
     </main>
   )
 }

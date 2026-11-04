@@ -140,6 +140,14 @@
     "curlCopyFailed": "Gagal menyalin — pilih manual",
     "curlFileHint": "Berkas memakai nama berkas yang dipilih saja — jalankan dari folder berkas atau ganti dengan path lengkap."
   },
+  "pagination": {
+    "label": "Paginasi",
+    "showing": "Menampilkan {first}–{last} dari {total}",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "pageOf": "Halaman {page} dari {totalPages}",
+    "perPage": "Per halaman:"
+  },
   "reference": {
     "parameters": "Parameter",
     "name": "Nama",

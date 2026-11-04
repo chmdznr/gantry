@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { and, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { getTranslations } from 'next-intl/server'
 import { db } from '@/db'
 import { appCredentials, applications, subscriptions, users } from '@/db/schema'
@@ -11,8 +11,10 @@ import { allConsumersUsage, type AllConsumersUsage } from '@/lib/metrics'
 import { RANGES } from '@/lib/ranges'
 import { RangeSelector } from '@/components/RangeSelector'
 import { BandwidthTable, RequestTable } from '@/components/AppStats'
+import Pagination from '@/components/Pagination'
+import { resolvePagination } from '@/lib/pagination'
 
-type Filters = { q?: string; blocked?: string; range?: string }
+type Filters = { q?: string; blocked?: string; range?: string; page?: string; rows?: string }
 
 function fmtDateTime(d: Date): string {
   return d.toISOString().slice(0, 16).replace('T', ' ')
@@ -98,6 +100,13 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
   // Mulai query Prometheus lebih awal, tapi jangan di-await di sini.
   const usagePromise = allConsumersUsage(range)
 
+  // Hitung dengan filter yang sama sebelum mengambil baris halaman aktif.
+  const totalRows = await db.select({ n: count() }).from(applications)
+    .innerJoin(users, eq(applications.ownerUserId, users.id))
+    .where(conds.length ? and(...conds) : undefined)
+  const total = Number(totalRows[0]?.n ?? 0)
+  const { page, pageSize, totalPages, offset } = resolvePagination(sp, '/admin/consumers', total)
+
   const apps = await db.select({
     id: applications.id,
     name: applications.name,
@@ -109,11 +118,19 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
   }).from(applications)
     .innerJoin(users, eq(applications.ownerUserId, users.id))
     .where(conds.length ? and(...conds) : undefined)
-    .orderBy(desc(applications.createdAt))
+    .orderBy(desc(applications.createdAt), desc(applications.id))
+    .limit(pageSize)
+    .offset(offset)
 
+  const appIds = apps.map((a) => a.id)
   const [creds, subs, t] = await Promise.all([
-    db.select().from(appCredentials),
-    db.select({ applicationId: subscriptions.applicationId, status: subscriptions.status }).from(subscriptions),
+    appIds.length
+      ? db.select().from(appCredentials).where(inArray(appCredentials.applicationId, appIds))
+      : [],
+    appIds.length
+      ? db.select({ applicationId: subscriptions.applicationId, status: subscriptions.status }).from(subscriptions)
+        .where(inArray(subscriptions.applicationId, appIds))
+      : [],
     getTranslations('apps'),
   ])
 
@@ -121,7 +138,7 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
     <main>
       <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-bold">Consumers (Applications)</h1>
-        <span className="text-sm text-muted">{apps.length} applications{active > 0 ? ` · ${active} active filters` : ''}</span>
+        <span className="text-sm text-muted">{total} applications{active > 0 ? ` · ${active} active filters` : ''}</span>
       </div>
       <FilterBar resetHref="/admin/consumers" activeCount={active}>
         <label className="text-sm">
@@ -234,6 +251,14 @@ export default async function AdminConsumersPage({ searchParams }: { searchParam
           )
         })}
       </div>
+      <Pagination
+        basePath="/admin/consumers"
+        searchParams={sp}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        total={total}
+      />
     </main>
   )
 }
