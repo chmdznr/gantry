@@ -25,6 +25,18 @@ export type TryEndpoint = {
 
 export type BodyContentType = TryEndpoint['bodyContentType']
 
+// URL untuk ditampilkan/cURL berasal dari spec publik. proxyBaseUrl di DB bisa
+// berupa alamat internal yang hanya dapat dijangkau pod Try It.
+export function publicBaseUrl(spec: unknown, fallback: string): string {
+  const servers = spec && typeof spec === 'object' && 'servers' in spec ? spec.servers : undefined
+  if (!Array.isArray(servers)) return fallback
+  for (const entry of servers) {
+    const url = entry && typeof entry === 'object' && 'url' in entry ? entry.url : undefined
+    if (typeof url === 'string' && /^https?:\/\//.test(url)) return url.replace(/\/+$/, '')
+  }
+  return fallback
+}
+
 export const MAX_JSON_BODY = 100 * 1024 // byte; perilaku lama (truncate, bukan tolak)
 export const MAX_MULTIPART_BYTES = 10 * 1024 * 1024 // 10 MB agregat TERMASUK overhead multipart
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TryItError, parseControlEnvelope, resolveHeaders, specHeaderParams } from '../tryit'
+import { TryItError, parseControlEnvelope, publicBaseUrl, resolveHeaders, specHeaderParams } from '../tryit'
 
 function codeOf(fn: () => unknown): string | undefined {
   try {
@@ -98,6 +98,19 @@ describe('parseControlEnvelope @headers', () => {
   it('rejects bad JSON, non-objects and non-string values with invalidControl', () => {
     for (const raw of ['nope', '[]', '"x"', '{"X-Tenant":1}', 'null']) {
       expect(codeOf(() => parseControlEnvelope(controlForm({ '@headers': raw }))), raw).toBe('invalidControl')
+    }
+  })
+})
+
+describe('publicBaseUrl', () => {
+  it('uses the public OpenAPI server instead of an internal proxy URL', () => {
+    expect(publicBaseUrl({ servers: [{ url: 'https://api-bimtek.arsip.go.id/' }] }, 'http://10.120.1.93:8000'))
+      .toBe('https://api-bimtek.arsip.go.id')
+  })
+
+  it('falls back when the spec has no usable public server', () => {
+    for (const spec of [null, {}, { servers: [] }, { servers: [{ url: '/relative' }] }]) {
+      expect(publicBaseUrl(spec, 'http://10.120.1.93:8000')).toBe('http://10.120.1.93:8000')
     }
   })
 })

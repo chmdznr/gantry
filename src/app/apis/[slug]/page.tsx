@@ -10,7 +10,7 @@ import { getTranslations } from 'next-intl/server'
 import { serviceLatencyP95 } from '@/lib/metrics'
 import { listServiceRoutes } from '@/lib/kong'
 import { type GatewayRoute } from '@/lib/routable'
-import { type FormField, type TryEndpoint, specHeaderParams } from '@/lib/tryit'
+import { type FormField, publicBaseUrl, specHeaderParams, type TryEndpoint } from '@/lib/tryit'
 import SubscribeForm from '@/components/SubscribeForm'
 import RoutableTryIt from '@/components/RoutableTryIt'
 import SpecHistory from '@/components/SpecHistory'
@@ -126,6 +126,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
   const subscribableApps = myApps.filter((a) =>
     !mySubs.some((s) => s.applicationId === a.id && (s.status === 'requested' || s.status === 'approved')))
   const spec = product.openapiSpec as OpenApiSpec | null
+  const displayBaseUrl = publicBaseUrl(spec, product.proxyBaseUrl)
   const endpoints: TryEndpoint[] = session?.user && spec?.paths
     ? Object.entries(spec.paths).flatMap(([path, methods]) =>
         Object.entries(methods)
@@ -152,7 +153,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
       <div className="prose prose-sm mt-2 max-w-none text-ink-soft">
         <Markdown>{product.description}</Markdown>
       </div>
-      <p className="mt-2 text-sm text-muted">{t('catalog.baseUrl')} <code className="code-chip">{product.proxyBaseUrl}</code></p>
+      <p className="mt-2 text-sm text-muted">{t('catalog.baseUrl')} <code className="code-chip">{displayBaseUrl}</code></p>
       <Suspense fallback={null}>
         <LatencyNote serviceNames={product.kongServiceNames} />
       </Suspense>
@@ -165,7 +166,7 @@ export default async function ApiDetailPage({ params }: { params: Promise<{ slug
               <h2 className="section-title !mt-0">{t('catalog.tryItTitle')}</h2>
               <RoutableTryIt
                 productId={product.id}
-                baseUrl={product.proxyBaseUrl}
+                baseUrl={displayBaseUrl}
                 endpoints={endpoints}
                 routesPromise={routesPromise}
               />
